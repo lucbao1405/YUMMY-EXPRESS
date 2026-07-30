@@ -6,7 +6,7 @@ public class CustomerSpawner : MonoBehaviour
 {
     [Header("Spawn Settings")]
     [SerializeField] private GameObject customerPrefab;
-    [SerializeField] private List<CustomerSlotUI> customerSlots = new List<CustomerSlotUI>();
+    [SerializeField] private List<CustomerSlot> customerSlots = new List<CustomerSlot>();
     [SerializeField] private List<CustomerData> customerDatabase = new List<CustomerData>();
     [SerializeField] private float minSpawnTime = 4.0f;
     [SerializeField] private float maxSpawnTime = 6.0f;
@@ -22,7 +22,7 @@ public class CustomerSpawner : MonoBehaviour
     {
         if (customerSlots == null || customerSlots.Count == 0)
         {
-            customerSlots.AddRange(FindObjectsOfType<CustomerSlotUI>());
+            customerSlots.AddRange(FindObjectsOfType<CustomerSlot>());
         }
 
         isSlotOccupied = new bool[Mathf.Max(1, customerSlots.Count)];
@@ -73,7 +73,7 @@ public class CustomerSpawner : MonoBehaviour
             return;
         }
 
-        CustomerSlotUI targetSlotUI = GetAvailableCustomerSlot();
+        CustomerSlot targetSlotUI = GetAvailableCustomerSlot();
         if (targetSlotUI == null)
         {
             return;
@@ -129,14 +129,14 @@ public class CustomerSpawner : MonoBehaviour
         return emptyIndices[Random.Range(0, emptyIndices.Count)];
     }
 
-    private CustomerSlotUI GetAvailableCustomerSlot()
+    private CustomerSlot GetAvailableCustomerSlot()
     {
         if (customerSlots == null || customerSlots.Count == 0)
         {
             return null;
         }
 
-        foreach (CustomerSlotUI slot in customerSlots)
+        foreach (CustomerSlot slot in customerSlots)
         {
             if (slot != null && !slot.IsOccupied)
             {

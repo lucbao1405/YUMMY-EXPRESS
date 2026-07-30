@@ -3,22 +3,39 @@ using UnityEngine;
 
 public class PlateManager : MonoBehaviour
 {
-    [Header("Plates")]
+    public static PlateManager Instance { get; private set; }
+
+    [Header("Danh sách đĩa")]
     [SerializeField] private List<Plate> plates = new List<Plate>();
 
-    /// <summary>
-    /// Trả về đĩa trống đầu tiên trên bàn.
-    /// </summary>
-    public Plate GetAvailablePlate()
+    private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        RefreshPlateList();
+    }
+
+    /// <summary>
+    /// Trả về đĩa trống đầu tiên trong danh sách.
+    /// </summary>
+    public Plate GetEmptyPlate()
+    {
+        RefreshPlateList();
+
         if (plates == null || plates.Count == 0)
         {
+            Debug.LogWarning("PlateManager chưa có đĩa nào được gán.");
             return null;
         }
 
         foreach (Plate plate in plates)
         {
-            if (plate != null && !plate.HasFood)
+            if (plate != null && plate.IsEmpty)
             {
                 return plate;
             }
@@ -32,7 +49,7 @@ public class PlateManager : MonoBehaviour
     /// </summary>
     public bool ServeFoodToAvailablePlate(FoodData foodData, Sprite foodSprite)
     {
-        Plate plate = GetAvailablePlate();
+        Plate plate = GetEmptyPlate();
         if (plate == null)
         {
             return false;
@@ -40,5 +57,26 @@ public class PlateManager : MonoBehaviour
 
         plate.SetFood(foodData, foodSprite);
         return true;
+    }
+
+    /// <summary>
+    /// Alias cho method mới để giữ tương thích với code cũ.
+    /// </summary>
+    public Plate GetAvailablePlate()
+    {
+        return GetEmptyPlate();
+    }
+
+    private void RefreshPlateList()
+    {
+        if (plates == null)
+        {
+            plates = new List<Plate>();
+        }
+
+        if (plates.Count == 0)
+        {
+            plates.AddRange(GetComponentsInChildren<Plate>(true));
+        }
     }
 }

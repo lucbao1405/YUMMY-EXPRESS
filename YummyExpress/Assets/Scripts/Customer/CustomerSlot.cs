@@ -1,11 +1,4 @@
 using UnityEngine;
-
-// Compatibility shim: some scenes or assets may still reference the old `CustomerSlotUI` type.
-public class CustomerSlotUI : CustomerSlot
-{
-    // Intentionally empty — inherits behavior from CustomerSlot.
-}
-using UnityEngine;
 using UnityEngine.UI;
 
 public class CustomerSlot : MonoBehaviour
