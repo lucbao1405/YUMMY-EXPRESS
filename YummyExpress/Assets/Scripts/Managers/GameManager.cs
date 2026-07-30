@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI textThoiGian;
     public TextMeshProUGUI textVang;
     [SerializeField] private CustomerSpawner customerSpawner;
-    [SerializeField] private CustomerSlotUI[] customerSlots;
+    [SerializeField] private CustomerSlot[] customerSlots;
 
     [Header("Cấu hình các màn chơi")]
     public LevelConfig[] danhSachManChoi;
@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
 
         if (customerSlots == null || customerSlots.Length == 0)
         {
-            customerSlots = FindObjectsOfType<CustomerSlotUI>();
+            customerSlots = FindObjectsOfType<CustomerSlot>();
         }
 
         BatDauManChoi(manChoiHienTai);
