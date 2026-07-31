@@ -4,190 +4,165 @@ using UnityEngine;
 
 public class CustomerSpawner : MonoBehaviour
 {
-    [Header("Spawn Settings")]
-    [SerializeField] private GameObject customerPrefab;
-    [SerializeField] private List<CustomerSlot> customerSlots = new List<CustomerSlot>();
-    [SerializeField] private List<CustomerData> customerDatabase = new List<CustomerData>();
-    [SerializeField] private float minSpawnTime = 4.0f;
-    [SerializeField] private float maxSpawnTime = 6.0f;
-    [SerializeField] private float demoDuration = 180f;
-    [SerializeField] private Transform entryPoint;
+    // ---- Singleton ----
+    public static CustomerSpawner Instance { get; private set; }
 
-    private bool[] isSlotOccupied;
-    private float elapsedTime;
-    private bool isDemoRunning = true;
-    public List<Customer> ActiveCustomers { get; private set; } = new List<Customer>();
+    [Header("--- Settings ---")]
+    [SerializeField] private List<CustomerSlotUI> customerSlots = new List<CustomerSlotUI>();
+    [SerializeField] private List<CustomerData> customerDatabase = new List<CustomerData>();
+
+    [Header("--- Spawn Config ---")]
+    [SerializeField] private float minSpawnDelay = 3f;
+    [SerializeField] private float maxSpawnDelay = 6f;
+
+    private bool isSpawning = true;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
 
     private void Start()
     {
-        if (customerSlots == null || customerSlots.Count == 0)
-        {
-            customerSlots.AddRange(FindObjectsOfType<CustomerSlot>());
-        }
-
-        isSlotOccupied = new bool[Mathf.Max(1, customerSlots.Count)];
         StartCoroutine(SpawnRoutine());
-    }
-
-    private void Update()
-    {
-        if (!isDemoRunning)
-        {
-            return;
-        }
-
-        elapsedTime += Time.deltaTime;
-        if (elapsedTime >= demoDuration)
-        {
-            isDemoRunning = false;
-            Debug.Log("<color=yellow>[DEMO]</color> Demo kết thúc sau 3 phút.");
-        }
     }
 
     private IEnumerator SpawnRoutine()
     {
-        while (isDemoRunning)
+        while (isSpawning)
         {
-            if (HasEmptySlot())
-            {
-                yield return new WaitForSeconds(Random.Range(minSpawnTime, maxSpawnTime));
-                SpawnCustomer();
-            }
-            else
-            {
-                yield return new WaitForSeconds(1f);
-            }
+            float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+            yield return new WaitForSeconds(delay);
+
+            TrySpawnCustomer();
         }
     }
 
-    private void SpawnCustomer()
+    private void TrySpawnCustomer()
     {
-        if (!isDemoRunning)
-        {
-            return;
-        }
+        CustomerSlotUI emptySlot = GetRandomEmptySlot();
+        if (emptySlot == null) return; // Không còn slot trống
 
-        int emptySlotIndex = GetRandomEmptySlot();
-        if (emptySlotIndex == -1)
-        {
-            return;
-        }
+        CustomerData randomCustomer = GetRandomCustomerData();
+        if (randomCustomer == null) return;
 
-        CustomerSlot targetSlotUI = GetAvailableCustomerSlot();
-        if (targetSlotUI == null)
-        {
-            return;
-        }
-
-        Vector3 startPosition = entryPoint != null ? entryPoint.position : Vector3.left * 8f;
-        Vector3 targetPosition = targetSlotUI.transform.position;
-
-        GameObject newCustomerObj = customerPrefab != null
-            ? Instantiate(customerPrefab, startPosition, Quaternion.identity)
-            : new GameObject("CustomerTemp");
-
-        Customer customer = newCustomerObj.GetComponent<Customer>();
-        if (customer == null)
-        {
-            customer = newCustomerObj.AddComponent<Customer>();
-        }
-
-        customer.InitCustomer("BanhMi", emptySlotIndex, startPosition, targetPosition);
-        customer.OnCustomerServed += HandleCustomerServed;
-        isSlotOccupied[emptySlotIndex] = true;
-        ActiveCustomers.Add(customer);
-
-        CustomerData selectedData = GetRandomCustomerData();
-        if (selectedData == null)
-        {
-            selectedData = new CustomerData();
-        }
-
-        targetSlotUI.AssignCustomer(selectedData);
-
-        Debug.Log($"<color=green>[YUM-75 LOGIC]</color> Sinh khách vào slot {emptySlotIndex}.");
+        // Gán data cho slot trống tìm được
+        emptySlot.SetCustomer(randomCustomer);
     }
 
-    private bool HasEmptySlot()
+    /// <summary>
+    /// Tìm 1 slot ngẫu nhiên đang còn trống
+    /// </summary>
+    private CustomerSlotUI GetRandomEmptySlot()
     {
-        for (int i = 0; i < isSlotOccupied.Length; i++)
-        {
-            if (!isSlotOccupied[i]) return true;
-        }
-        return false;
-    }
+        List<CustomerSlotUI> emptySlots = new List<CustomerSlotUI>();
 
-    private int GetRandomEmptySlot()
-    {
-        List<int> emptyIndices = new List<int>();
-        for (int i = 0; i < isSlotOccupied.Length; i++)
-        {
-            if (!isSlotOccupied[i]) emptyIndices.Add(i);
-        }
-
-        if (emptyIndices.Count == 0) return -1;
-        return emptyIndices[Random.Range(0, emptyIndices.Count)];
-    }
-
-    private CustomerSlot GetAvailableCustomerSlot()
-    {
-        if (customerSlots == null || customerSlots.Count == 0)
-        {
-            return null;
-        }
-
-        foreach (CustomerSlot slot in customerSlots)
+        foreach (var slot in customerSlots)
         {
             if (slot != null && !slot.IsOccupied)
             {
-                return slot;
+                emptySlots.Add(slot);
             }
+        }
+
+        if (emptySlots.Count > 0)
+        {
+            int randomIndex = Random.Range(0, emptySlots.Count);
+            return emptySlots[randomIndex];
         }
 
         return null;
     }
 
+    /// <summary>
+    /// Lấy Data khách ngẫu nhiên nhưng hạn chế trùng với khách đang xuất hiện
+    /// </summary>
     private CustomerData GetRandomCustomerData()
     {
-        if (customerDatabase == null || customerDatabase.Count == 0)
+        if (customerDatabase == null || customerDatabase.Count == 0) return null;
+
+        List<CustomerData> availableCustomers = new List<CustomerData>();
+
+        // Lọc ra danh sách khách chưa ngồi ở slot nào
+        foreach (var customer in customerDatabase)
         {
-            return null;
+            bool isAlreadyOnScreen = false;
+            foreach (var slot in customerSlots)
+            {
+                if (slot.IsOccupied && slot.CurrentData == customer)
+                {
+                    isAlreadyOnScreen = true;
+                    break;
+                }
+            }
+
+            if (!isAlreadyOnScreen)
+            {
+                availableCustomers.Add(customer);
+            }
         }
 
-        return customerDatabase[Random.Range(0, customerDatabase.Count)];
+        // Chọn ngẫu nhiên trong danh sách khách chưa xuất hiện
+        if (availableCustomers.Count > 0)
+        {
+            int randomIndex = Random.Range(0, availableCustomers.Count);
+            return availableCustomers[randomIndex];
+        }
+
+        // Nếu tất cả loại khách đã ra hết thì lấy ngẫu nhiên từ DB gốc
+        int fallbackIndex = Random.Range(0, customerDatabase.Count);
+        return customerDatabase[fallbackIndex];
     }
 
-    private void HandleCustomerServed(Customer customer)
+    /// <summary>
+    /// Dừng spawn khách mới (gọi từ GameManager khi kết thúc game)
+    /// </summary>
+    public void StopSpawning()
     {
-        if (customer == null)
-        {
-            return;
-        }
-
-        if (customer.TargetSlotIndex >= 0 && customer.TargetSlotIndex < customerSlots.Count)
-        {
-            customerSlots[customer.TargetSlotIndex].ClearSlot();
-        }
-
-        ActiveCustomers.Remove(customer);
-        if (customer.TargetSlotIndex >= 0 && customer.TargetSlotIndex < isSlotOccupied.Length)
-        {
-            isSlotOccupied[customer.TargetSlotIndex] = false;
-        }
-
-        Destroy(customer.gameObject);
+        isSpawning = false;
     }
 
-    public void FreeSlot(int slotIndex)
+    /// <summary>
+    /// Thử phục vụ món ăn cho khách đang ngồi.
+    /// Duyệt qua các slot đang có khách, kiểm tra foodID trùng khớp.
+    /// Nếu khớp: cộng tiền, clear slot, trả về true.
+    /// Nếu không khớp: trả về false.
+    /// </summary>
+    public bool TryServeFood(FoodData food)
     {
-        if (slotIndex >= 0 && slotIndex < isSlotOccupied.Length)
+        if (food == null) return false;
+
+        foreach (var slot in customerSlots)
         {
-            isSlotOccupied[slotIndex] = false;
+            if (slot == null || !slot.IsOccupied || slot.CurrentData == null)
+                continue;
+
+            // Kiểm tra foodID của món khách yêu cầu có khớp với món đang phục vụ không
+            if (slot.CurrentData.requiredFood != null &&
+                string.Equals(slot.CurrentData.requiredFood.foodID, food.foodID, System.StringComparison.OrdinalIgnoreCase))
+            {
+                // Lấy thông tin khách TRƯỚC KHI clear slot
+                string customerName = slot.CurrentData != null ? slot.CurrentData.customerName : "Unknown";
+
+                // Phục vụ thành công: cộng tiền
+                if (EconomyManager.Instance != null)
+                {
+                    EconomyManager.Instance.AddGold(food.price);
+                }
+
+                // Dọn slot
+                slot.ClearSlot();
+
+                Debug.Log($"Phục vụ {food.foodName} cho khách {customerName} thành công! +{food.price} vàng.");
+                return true;
+            }
         }
 
-        if (customerSlots != null && customerSlots.Count > 0 && slotIndex >= 0 && slotIndex < customerSlots.Count)
-        {
-            customerSlots[slotIndex].ClearSlot();
-        }
+        return false;
     }
 }

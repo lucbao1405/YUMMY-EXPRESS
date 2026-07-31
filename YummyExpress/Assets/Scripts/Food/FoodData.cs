@@ -1,10 +1,11 @@
 using UnityEngine;
+using UnityEngine.UI;
 
-[System.Serializable]
-public class FoodData
+[CreateAssetMenu(fileName = "NewFoodData", menuName = "YummyExpress/FoodData")]
+public class FoodData : ScriptableObject
 {
     public string foodID = "BanhMi";
     public string foodName = "Bánh mì";
-    public int price = 25; // 25 vàng/ổ
-    public Sprite foodIcon; // Dev UI sẽ gán sau
+    public Sprite foodIcon;
+    public int price = 25;
 }

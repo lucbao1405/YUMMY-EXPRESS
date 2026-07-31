@@ -1,22 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlateManager : MonoBehaviour
+public class PlateManager : SingletonBehaviour<PlateManager>
 {
-    public static PlateManager Instance { get; private set; }
-
     [Header("Danh sách đĩa")]
     [SerializeField] private List<Plate> plates = new List<Plate>();
 
-    private void Awake()
+    protected override void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
+        base.Awake();
         RefreshPlateList();
     }
 
@@ -44,30 +36,7 @@ public class PlateManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Gán món ăn lên đĩa trống đầu tiên nếu còn trống.
-    /// </summary>
-    public bool ServeFoodToAvailablePlate(FoodData foodData, Sprite foodSprite)
-    {
-        Plate plate = GetEmptyPlate();
-        if (plate == null)
-        {
-            return false;
-        }
-
-        plate.SetFood(foodData, foodSprite);
-        return true;
-    }
-
-    /// <summary>
-    /// Alias cho method mới để giữ tương thích với code cũ.
-    /// </summary>
-    public Plate GetAvailablePlate()
-    {
-        return GetEmptyPlate();
-    }
-
-    private void RefreshPlateList()
+private void RefreshPlateList()
     {
         if (plates == null)
         {

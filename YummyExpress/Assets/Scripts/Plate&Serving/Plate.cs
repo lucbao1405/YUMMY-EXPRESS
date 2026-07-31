@@ -7,18 +7,9 @@ public class Plate : MonoBehaviour
     [SerializeField] private Image foodImage;
     [SerializeField] private Button plateButton;
 
-    [Header("Plate State")]
-    [SerializeField] private bool hasFood;
-
-    [Header("Food Data")]
-    [SerializeField] private FoodData currentFoodData;
-    [SerializeField] private Sprite currentFoodSprite;
-
+    // ---- Properties ----
     public bool IsEmpty { get; private set; } = true;
     public FoodData CurrentFood { get; private set; }
-    public bool HasFood => !IsEmpty;
-    public FoodData CurrentFoodData => CurrentFood;
-    public Sprite CurrentFoodSprite => currentFoodSprite;
 
     private void Awake()
     {
@@ -57,9 +48,6 @@ public class Plate : MonoBehaviour
         }
 
         CurrentFood = food;
-        currentFoodData = food;
-        currentFoodSprite = food.foodIcon;
-        hasFood = true;
         IsEmpty = false;
 
         RefreshVisualState();
@@ -72,59 +60,53 @@ public class Plate : MonoBehaviour
     public void ClearPlate()
     {
         CurrentFood = null;
-        currentFoodData = null;
-        currentFoodSprite = null;
-        hasFood = false;
         IsEmpty = true;
 
         RefreshVisualState();
     }
 
     /// <summary>
-    /// Cài đặt món ăn cho các đoạn code cũ còn dùng SpriteRenderer hoặc API cũ.
+    /// Hàm sự kiện tap trên đĩa (gán vào Button.OnClick).
+    /// Khi bấm vào đĩa có món:
+    ///   - Gọi CustomerSpawner.Instance.TryServeFood(CurrentFood) để phục vụ khách.
+    ///   - Nếu thành công, dọn đĩa.
+    ///   - Nếu thất bại, giữ nguyên món trên đĩa.
     /// </summary>
-    public void SetFood(FoodData foodData, Sprite foodSprite)
+public void OnPlateClicked()
     {
-        if (foodData == null && foodSprite == null)
+        if (IsEmpty || CurrentFood == null)
         {
-            ClearPlate();
+            Debug.Log("Đĩa đang trống, không có gì để phục vụ.");
             return;
         }
 
-        CurrentFood = foodData;
-        currentFoodData = foodData;
-        currentFoodSprite = foodSprite != null ? foodSprite : (foodData != null ? foodData.foodIcon : null);
-        hasFood = true;
-        IsEmpty = false;
+        string foodName = CurrentFood.foodName;
+        Debug.Log($"Đĩa được tap: {foodName}");
 
-        RefreshVisualState();
-    }
-
-    /// <summary>
-    /// Alias cho ClearPlate để giữ tương thích với code cũ.
-    /// </summary>
-    public void ClearFood()
-    {
-        ClearPlate();
-    }
-
-    private void RefreshVisualState()
-    {
-        if (foodImage != null)
+        if (CustomerSpawner.Instance != null)
         {
-            if (!IsEmpty && currentFoodSprite != null)
+            bool isServed = CustomerSpawner.Instance.TryServeFood(CurrentFood);
+
+            if (isServed)
             {
-                foodImage.sprite = currentFoodSprite;
-                foodImage.gameObject.SetActive(true);
-                foodImage.enabled = true;
+                ClearPlate();
+                Debug.Log($"Phục vụ {foodName} thành công! Đĩa đã được dọn.");
             }
             else
             {
-                foodImage.sprite = null;
-                foodImage.gameObject.SetActive(false);
-                foodImage.enabled = false;
+                Debug.Log("Không có khách nào cần món này.");
             }
         }
+        else
+        {
+            Debug.LogWarning("CustomerSpawner.Instance chưa được khởi tạo.");
+        }
+    }
+
+private void RefreshVisualState()
+    {
+        Sprite spriteToShow = (!IsEmpty && CurrentFood != null) ? CurrentFood.foodIcon : null;
+        foodImage.SetSprite(spriteToShow);
 
         if (plateButton != null)
         {
@@ -132,3 +114,4 @@ public class Plate : MonoBehaviour
         }
     }
 }
+
