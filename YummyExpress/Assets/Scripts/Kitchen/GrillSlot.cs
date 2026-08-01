@@ -38,6 +38,11 @@ public class GrillSlot : MonoBehaviour
         RefreshVisualState();
     }
 
+    private void OnMouseDown()
+    {
+        OnGrillClicked();
+    }
+
     /// <summary>
     /// Gọi từ OnClick() trên Unity Inspector.
     /// </summary>
@@ -97,22 +102,12 @@ public class GrillSlot : MonoBehaviour
         RefreshVisualState();
     }
 
-    private void RefreshVisualState()
+private void RefreshVisualState()
     {
+        bool showFood = currentState == GrillState.Cooked && currentFood != null;
         if (foodImage != null)
         {
-            if (currentState == GrillState.Cooked && currentFood != null && currentFood.foodIcon != null)
-            {
-                foodImage.sprite = currentFood.foodIcon;
-                foodImage.gameObject.SetActive(true);
-                foodImage.enabled = true;
-            }
-            else
-            {
-                foodImage.sprite = null;
-                foodImage.gameObject.SetActive(false);
-                foodImage.enabled = false;
-            }
+            foodImage.SetSprite(showFood ? currentFood.foodIcon : null);
         }
 
         if (slotButton != null)
