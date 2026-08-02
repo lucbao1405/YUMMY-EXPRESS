@@ -87,6 +87,51 @@ public class CustomerSlotUI : MonoBehaviour
     }
 
     /// <summary>
+    /// Kiểm tra xem khách trong slot này có đang chờ đúng món ăn food hay không.
+    /// Điều kiện khớp:
+    ///   - Slot đang có khách (IsOccupied).
+    ///   - CustomerData không null.
+    ///   - Món yêu cầu (requiredFood) không null VÀ reference bằng chính food được truyền vào.
+    /// </summary>
+    /// <param name="food">Món ăn đang nằm trên đĩa (FoodData).</param>
+    /// <returns>true nếu khách đang chờ đúng món này, ngược lại false.</returns>
+    public bool IsWaitingFor(FoodData food)
+    {
+        // Không có khách trong slot → không ai chờ món này
+        if (!IsOccupied) return false;
+
+        // Không có dữ liệu khách → không xác định được món đang chờ
+        if (CurrentData == null) return false;
+
+        // Khách không có món yêu cầu (requiredFood null) → không khớp
+        if (CurrentData.requiredFood == null) return false;
+
+        // So sánh reference (==) vì FoodData là ScriptableObject — mỗi asset chỉ tồn tại 1 instance duy nhất.
+        // Nên "đúng khách" nghĩa là cùng tham chiếu đến đúng asset FoodData đó.
+        return CurrentData.requiredFood == food;
+    }
+
+    /// <summary>
+    /// Xử lý khi khách nhận được đúng món ăn.
+    /// - Ghi log khách đã được phục vụ.
+    /// - Gọi ClearSlot() để ẩn/xóa khách khỏi màn hình (giải phóng slot cho khách mới).
+    /// Tiền thưởng sẽ do GameManager cộng (trước hoặc sau khi gọi hàm này).
+    /// </summary>
+    public void OnReceiveFood()
+    {
+        // Lấy tên khách TRƯỚC khi ClearSlot() (vì ClearSlot sẽ gán CurrentData = null)
+        string customerName = CurrentData != null ? CurrentData.customerName : "Unknown";
+        string foodName = CurrentData != null && CurrentData.requiredFood != null
+            ? CurrentData.requiredFood.foodName
+            : "Unknown";
+
+        Debug.Log($"Khách {customerName} đã nhận món {foodName}.");
+
+        // Ẩn/xóa khách khỏi slot để slot trống đón khách mới
+        ClearSlot();
+    }
+
+    /// <summary>
     /// Xử lý khi khách hết kiên nhẫn bỏ đi
     /// </summary>
     public void OnCustomerLeft()

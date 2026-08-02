@@ -15,6 +15,13 @@ public class CustomerSpawner : MonoBehaviour
     [SerializeField] private float minSpawnDelay = 3f;
     [SerializeField] private float maxSpawnDelay = 6f;
 
+    // ---- Public Accessors ----
+    /// <summary>
+    /// Expose danh sách slot khách cho GameManager duyệt khi phục vụ món.
+    /// Chỉ đọc (read-only) để tránh bên ngoài sửa danh sách ngoài ý muốn.
+    /// </summary>
+    public List<CustomerSlotUI> CustomerSlots => customerSlots;
+
     private bool isSpawning = true;
 
     private void Awake()
@@ -125,44 +132,5 @@ public class CustomerSpawner : MonoBehaviour
     public void StopSpawning()
     {
         isSpawning = false;
-    }
-
-    /// <summary>
-    /// Thử phục vụ món ăn cho khách đang ngồi.
-    /// Duyệt qua các slot đang có khách, kiểm tra foodID trùng khớp.
-    /// Nếu khớp: cộng tiền, clear slot, trả về true.
-    /// Nếu không khớp: trả về false.
-    /// </summary>
-    public bool TryServeFood(FoodData food)
-    {
-        if (food == null) return false;
-
-        foreach (var slot in customerSlots)
-        {
-            if (slot == null || !slot.IsOccupied || slot.CurrentData == null)
-                continue;
-
-            // Kiểm tra foodID của món khách yêu cầu có khớp với món đang phục vụ không
-            if (slot.CurrentData.requiredFood != null &&
-                string.Equals(slot.CurrentData.requiredFood.foodID, food.foodID, System.StringComparison.OrdinalIgnoreCase))
-            {
-                // Lấy thông tin khách TRƯỚC KHI clear slot
-                string customerName = slot.CurrentData != null ? slot.CurrentData.customerName : "Unknown";
-
-                // Phục vụ thành công: cộng tiền
-                if (EconomyManager.Instance != null)
-                {
-                    EconomyManager.Instance.AddGold(food.price);
-                }
-
-                // Dọn slot
-                slot.ClearSlot();
-
-                Debug.Log($"Phục vụ {food.foodName} cho khách {customerName} thành công! +{food.price} vàng.");
-                return true;
-            }
-        }
-
-        return false;
     }
 }

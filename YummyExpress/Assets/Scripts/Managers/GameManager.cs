@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
@@ -32,7 +33,7 @@ public class GameManager : SingletonBehaviour<GameManager>
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI timerText;           // Text đếm ngược thời gian (vd: "45s")
     [SerializeField] private TextMeshProUGUI goldProgressText;    // Text tiến độ vàng (vd: "75/100")
-    [SerializeField] private EndGameUI endGameUI;                 // EndGame UI (quản lý Win/Lose Panel)
+    // Lưu ý: EndGameUI truy cập qua Singleton EndGameUI.Instance — KHÔNG cần wire field này.
 
     [Header("Level Configurations")]
     [SerializeField] private LevelConfig[] levelConfigs;          // Danh sách cấu hình các màn chơi
@@ -105,6 +106,9 @@ public class GameManager : SingletonBehaviour<GameManager>
         currentLevelIndex = Mathf.Clamp(levelIndex, 0, levelConfigs.Length - 1);
         currentLevel = levelConfigs[currentLevelIndex];
 
+        // Đảm bảo game chạy lại bình thường (tránh bị kẹt timeScale = 0 từ lần thua trước)
+        Time.timeScale = 1f;
+
         // Reset trạng thái
         currentState = GameState.Playing;
         timeRemaining = currentLevel.levelTimeLimit;
@@ -121,10 +125,11 @@ public class GameManager : SingletonBehaviour<GameManager>
             }
         }
 
-        // Ẩn panel thắng/thua qua EndGameUI
-        if (endGameUI != null)
+        // Ẩn panel thắng/thua qua EndGameUI (Singleton — không cần wire Inspector)
+        EndGameUI endGameUIRef = GetEndGameUI();
+        if (endGameUIRef != null)
         {
-            endGameUI.HideAllPanels();
+            endGameUIRef.HideAllPanels();
         }
 
         // Cập nhật UI
@@ -235,8 +240,8 @@ public class GameManager : SingletonBehaviour<GameManager>
             }
         }
 
-        // Điều kiện 2: Quá nhiều khách bỏ đi
-        if (lostCustomerCount > currentLevel.maxLostCustomers)
+// Điều kiện 2: Quá nhiều khách bỏ đi (>= vì maxLostCustomers là giới hạn tối đa)
+        if (lostCustomerCount >= currentLevel.maxLostCustomers)
         {
             EndGame(false);
         }
@@ -248,7 +253,8 @@ public class GameManager : SingletonBehaviour<GameManager>
     /// Kết thúc game với kết quả thắng hoặc thua.
     /// - Dừng spawn khách mới.
     /// - Set Time.timeScale = 0 để pause game.
-    /// - Hiển thị panel tương ứng qua EndGameUI.
+    /// - Hiển thị Popup tương ứng qua EndGameUI:
+    ///   Thắng → ShowWinPopup(stars, totalGold); Thua → ShowLosePopup(reason).
     /// </summary>
     /// <param name="isWin">true nếu thắng, false nếu thua</param>
     public void EndGame(bool isWin)
@@ -257,7 +263,7 @@ public class GameManager : SingletonBehaviour<GameManager>
 
         currentState = isWin ? GameState.Win : GameState.Lose;
 
-if (isWin)
+        if (isWin)
         {
             Debug.Log($"<color=green>🎉 THẮNG! Đã đạt {EconomyManager.Instance?.CurrentGold}/{currentLevel?.targetGold} vàng!</color>");
         }
@@ -275,11 +281,86 @@ if (isWin)
         // Pause game
         Time.timeScale = 0f;
 
-        // Hiển thị Panel qua EndGameUI
-        if (endGameUI != null)
+        // Hiển thị Popup qua EndGameUI (Singleton — không cần wire Inspector, null-check an toàn)
+        EndGameUI endGameUIRef = GetEndGameUI();
+        if (endGameUIRef != null)
         {
-            endGameUI.ShowEndGame(isWin);
+            if (isWin)
+            {
+                int totalGold = EconomyManager.Instance != null ? EconomyManager.Instance.CurrentGold : 0;
+                int stars = CalculateStars();
+                endGameUIRef.ShowWinPopup(stars, totalGold);
+            }
+            else
+            {
+                string reason = GetLoseReason();
+                endGameUIRef.ShowLosePopup(reason);
+            }
         }
+        else
+        {
+            Debug.LogWarning("EndGame() không hiển thị được Popup vì không tìm thấy EndGameUI. " +
+                             "Kiểm tra script EndGameUI đã gắn lên GameObject Popup_Overlay chưa.", this);
+        }
+    }
+
+    /// <summary>
+    /// Lấy tham chiếu EndGameUI một cách an toàn:
+    /// 1. Ưu tiên Singleton EndGameUI.Instance (nếu Popup_Overlay đang active → Awake đã set Instance).
+    /// 2. Fallback: FindObjectOfType<EndGameUI>(true) — tìm cả GameObject đang inactive
+    ///    (trường hợp Popup_Overlay bị tắt từ đầu scene thì Awake chưa chạy nên Instance == null).
+    /// </summary>
+    private EndGameUI GetEndGameUI()
+    {
+        if (EndGameUI.Instance != null)
+        {
+            return EndGameUI.Instance;
+        }
+
+        // Unity 2022.3: tham số includeInactive = true để tìm cả GameObject đang bị tắt.
+        return FindObjectOfType<EndGameUI>(true);
+    }
+
+    /// <summary>
+    /// Tính số sao đạt được khi THẮNG dựa trên thời gian còn lại so với giới hạn.
+    /// - Còn ≥ 80% thời gian → 3 sao.
+    /// - Còn ≥ 50% thời gian → 2 sao.
+    /// - Còn lại → 1 sao.
+    /// </summary>
+    private int CalculateStars()
+    {
+        if (currentLevel == null || currentLevel.levelTimeLimit <= 0f)
+        {
+            return 1;
+        }
+
+        float ratio = timeRemaining / currentLevel.levelTimeLimit;
+        if (ratio >= 0.8f) return 3;
+        if (ratio >= 0.5f) return 2;
+        return 1;
+    }
+
+    /// <summary>
+    /// Xác định lý do THUA để hiển thị trong Lose_Popup.
+    /// - Quá số khách bỏ đi → "Khách bỏ đi quá nhiều!"
+    /// - Hết giờ mà chưa đủ vàng → "Hết thời gian!"
+    /// - Trường hợp khác → "Chưa đạt chỉ tiêu tiền!"
+    /// </summary>
+    private string GetLoseReason()
+    {
+        if (currentLevel == null) return "Thua cuộc!";
+
+if (lostCustomerCount >= currentLevel.maxLostCustomers)
+        {
+            return "Khách bỏ đi quá nhiều!";
+        }
+
+        if (timeRemaining <= 0f)
+        {
+            return "Hết thời gian!";
+        }
+
+        return "Chưa đạt chỉ tiêu tiền!";
     }
 
     // ---- Public Methods ----
@@ -297,6 +378,73 @@ if (isWin)
 
         // Kiểm tra ngay điều kiện thua do quá số khách cho phép
         CheckLoseCondition();
+    }
+
+    /// <summary>
+    /// Phục vụ món ăn cho khách hàng đang chờ đúng món đó.
+    /// Business flow:
+    ///   1. Kiểm tra món ăn (food) không null.
+    ///   2. Kiểm tra CustomerSpawner đã sẵn sàng.
+    ///   3. Duyệt danh sách CustomerSlotUI, tìm khách ĐẦU TIÊN đang chờ đúng món.
+    ///   4. Nếu tìm thấy: trả món cho khách (OnReceiveFood → ẩn/xóa khách),
+    ///      cộng tiền thưởng (EconomyManager.AddGold) và trả về true.
+    ///   5. Nếu không có khách khớp: trả về false (Plate giữ nguyên món).
+    /// </summary>
+    /// <param name="food">Món ăn đang nằm trên đĩa (FoodData).</param>
+    /// <returns>true nếu có khách nhận món, false nếu không ai khớp.</returns>
+    public bool ServeFoodToCustomer(FoodData food)
+    {
+        // Null-check: không có món thì không thể phục vụ
+        if (food == null)
+        {
+            Debug.LogWarning("ServeFoodToCustomer: FoodData bị null, không thể phục vụ.");
+            return false;
+        }
+
+        // Null-check: spawner chưa sẵn sàng thì không có danh sách khách để duyệt
+        if (customerSpawner == null)
+        {
+            Debug.LogWarning("ServeFoodToCustomer: CustomerSpawner chưa được gán/khởi tạo.");
+            return false;
+        }
+
+        // Duyệt danh sách slot khách (lấy runtime từ CustomerSpawner, không cần wire thêm)
+        List<CustomerSlotUI> slots = customerSpawner.CustomerSlots;
+        if (slots == null || slots.Count == 0)
+        {
+            Debug.LogWarning("ServeFoodToCustomer: Danh sách CustomerSlotUI trống.");
+            return false;
+        }
+
+        foreach (CustomerSlotUI slot in slots)
+        {
+            // Bỏ qua slot null hoặc slot không có khách đang chờ đúng món
+            if (slot == null) continue;
+            if (!slot.IsWaitingFor(food)) continue;
+
+            // Lấy giá món để cộng tiền TRƯỚC khi khách bị ẩn (sau khi xác nhận khớp)
+            int earnedGold = food.price;
+
+            // Trả món cho khách: OnReceiveFood tự ẩn/xóa khách khỏi slot
+            slot.OnReceiveFood();
+
+            // Cộng tiền thưởng (null-check an toàn)
+            if (EconomyManager.Instance != null)
+            {
+                EconomyManager.Instance.AddGold(earnedGold);
+            }
+            else
+            {
+                Debug.LogWarning("ServeFoodToCustomer: EconomyManager.Instance chưa được khởi tạo, không cộng được vàng.");
+            }
+
+            Debug.Log($"Phục vụ {food.foodName} cho khách thành công! +{earnedGold} vàng.");
+            return true;
+        }
+
+        // Không có khách nào khớp món → giữ nguyên món trên đĩa
+        Debug.Log("ServeFoodToCustomer: Không có khách nào đang chờ món này.");
+        return false;
     }
 
     // ---- Event Handlers ----
