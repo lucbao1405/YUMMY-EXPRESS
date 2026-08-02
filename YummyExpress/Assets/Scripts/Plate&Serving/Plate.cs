@@ -68,38 +68,42 @@ public class Plate : MonoBehaviour
     /// <summary>
     /// Hàm sự kiện tap trên đĩa (gán vào Button.OnClick).
     /// Khi bấm vào đĩa có món:
-    ///   - Gọi CustomerSpawner.Instance.TryServeFood(CurrentFood) để phục vụ khách.
-    ///   - Nếu thành công, dọn đĩa.
-    ///   - Nếu thất bại, giữ nguyên món trên đĩa.
+    ///   - Gọi GameManager.Instance.ServeFoodToCustomer(CurrentFood) để phục vụ khách.
+    ///   - Nếu thành công (có khách nhận món), dọn đĩa.
+    ///   - Nếu thất bại (không có khách khớp món), giữ nguyên món trên đĩa.
     /// </summary>
-public void OnPlateClicked()
+    public void OnPlateClicked()
     {
+        // Đĩa trống hoặc không có FoodData → không có gì để phục vụ
         if (IsEmpty || CurrentFood == null)
         {
             Debug.Log("Đĩa đang trống, không có gì để phục vụ.");
             return;
         }
 
+        // Null-check: GameManager chưa sẵn sàng thì không thể phục vụ
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("GameManager.Instance chưa được khởi tạo, không thể phục vụ khách.");
+            return;
+        }
+
         string foodName = CurrentFood.foodName;
         Debug.Log($"Đĩa được tap: {foodName}");
 
-        if (CustomerSpawner.Instance != null)
-        {
-            bool isServed = CustomerSpawner.Instance.TryServeFood(CurrentFood);
+        // Nhờ GameManager tìm khách đang chờ đúng món này
+        bool isServed = GameManager.Instance.ServeFoodToCustomer(CurrentFood);
 
-            if (isServed)
-            {
-                ClearPlate();
-                Debug.Log($"Phục vụ {foodName} thành công! Đĩa đã được dọn.");
-            }
-            else
-            {
-                Debug.Log("Không có khách nào cần món này.");
-            }
+        if (isServed)
+        {
+            // Phục vụ thành công → dọn trống đĩa
+            ClearPlate();
+            Debug.Log($"Phục vụ {foodName} thành công! Đĩa đã được dọn.");
         }
         else
         {
-            Debug.LogWarning("CustomerSpawner.Instance chưa được khởi tạo.");
+            // Không có khách nhận món → GIỮ NGUYÊN món trên đĩa
+            Debug.Log("Không có khách nào cần món này. Giữ nguyên món trên đĩa.");
         }
     }
 
