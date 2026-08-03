@@ -31,6 +31,33 @@ public class CustomerSlotUI : MonoBehaviour
     private float currentPatience;
     private float maxPatience = 1f;
 
+    private void Awake()
+    {
+        if (patienceBar != null)
+        {
+            if (patienceBar.type != Image.Type.Filled)
+            {
+                patienceBar.type = Image.Type.Filled;
+            }
+
+            patienceBar.fillMethod = Image.FillMethod.Horizontal;
+            patienceBar.fillOrigin = 0;
+            patienceBar.fillAmount = 1f;
+
+            // Đảm bảo Fill kéo giãn toàn bộ vùng thanh (chống lại SizeDelta 10x0 mặc định trong scene).
+            // Phần gốc bên trái cố định, fill sẽ co dần về bên phải khi đếm ngược thời gian.
+            RectTransform fillRect = patienceBar.rectTransform;
+            if (fillRect != null)
+            {
+                fillRect.anchorMin = Vector2.zero;
+                fillRect.anchorMax = Vector2.one;
+                fillRect.offsetMin = Vector2.zero;
+                fillRect.offsetMax = Vector2.zero;
+                fillRect.pivot = new Vector2(0f, 0.5f);
+            }
+        }
+    }
+
     /// <summary>
     /// Bóc tách dữ liệu từ CustomerData và cập nhật lên UI
     /// </summary>
@@ -113,22 +140,29 @@ public class CustomerSlotUI : MonoBehaviour
 
     /// <summary>
     /// Xử lý khi khách nhận được đúng món ăn.
+    /// - Lấy giá món (tiền thưởng) trước khi ClearSlot() (vì ClearSlot gán CurrentData = null).
     /// - Ghi log khách đã được phục vụ.
     /// - Gọi ClearSlot() để ẩn/xóa khách khỏi màn hình (giải phóng slot cho khách mới).
-    /// Tiền thưởng sẽ do GameManager cộng (trước hoặc sau khi gọi hàm này).
     /// </summary>
-    public void OnReceiveFood()
+    /// <returns>Số vàng thưởng khi khách nhận món (0 nếu không có dữ liệu món).</returns>
+    public int OnReceiveFood()
     {
-        // Lấy tên khách TRƯỚC khi ClearSlot() (vì ClearSlot sẽ gán CurrentData = null)
+        // Lấy tên khách + giá món TRƯỚC khi ClearSlot() (vì ClearSlot sẽ gán CurrentData = null)
         string customerName = CurrentData != null ? CurrentData.customerName : "Unknown";
         string foodName = CurrentData != null && CurrentData.requiredFood != null
             ? CurrentData.requiredFood.foodName
             : "Unknown";
+        int earnedGold = CurrentData != null && CurrentData.requiredFood != null
+            ? CurrentData.requiredFood.price
+            : 0;
 
-        Debug.Log($"Khách {customerName} đã nhận món {foodName}.");
+        Debug.Log($"Khách {customerName} đã nhận món {foodName}. +{earnedGold} vàng.");
 
         // Ẩn/xóa khách khỏi slot để slot trống đón khách mới
         ClearSlot();
+
+        // Trả về tiền thưởng để GameManager cộng vàng
+        return earnedGold;
     }
 
     /// <summary>
@@ -138,10 +172,9 @@ public class CustomerSlotUI : MonoBehaviour
     {
         Debug.Log($"Khách {CurrentData?.customerName} đã bỏ đi!");
 
-        // Báo cho GameManager biết khách bỏ đi để kiểm tra điều kiện thua
-        if (GameManager.Instance != null)
+        if (CustomerManager.Instance != null)
         {
-            GameManager.Instance.OnCustomerLost();
+            CustomerManager.Instance.NotifyCustomerLeft();
         }
 
         ClearSlot();
