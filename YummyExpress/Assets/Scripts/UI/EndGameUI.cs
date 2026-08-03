@@ -5,27 +5,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Quản lý giao diện Thắng/Thua (Win_Popup / Lose_Popup) trong Popup_Overlay.
-/// Gắn script này lên GameObject "Popup_Overlay".
-///
-/// ✅ KHỚP với Hierarchy thực tế trong UI.unity:
-///   Popup_Overlay [Image]
-///   ├── Win_Popup [Image]
-///   │   ├── icon_Win                → Image
-///   │   ├── Khung_3_Sao             → container (HorizontalLayoutGroup)
-///   │   │   ├── Sao_1 / Sao_2 / Sao_3 → Image (sao sáng)
-///   │   ├── Bang_Thong_Ke           → container (VerticalLayoutGroup)
-///   │   │   └── Dong_Vang / Dong_Khach / Dong_Combo (mỗi dòng có TextMeshProUGUI)
-///   │   ├── Btn_TiepTuc             → Button (màn tiếp theo)
-///   │   └── Btn_XemVideo            → Button (xem QC nhân đôi thưởng)
-///   └── Lose_Popup [Image]
-///       ├── Icon_Lose               → Image
-///       ├── KhuVuc_LyDoThua         → container
-///       │   ├── Text_LyDo_Chinh     → TextMeshProUGUI (lý do thua)
-///       │   └── Text_Meo_Tip        → TextMeshProUGUI (gợi ý)
-///       └── Btn [HorizontalLayoutGroup]
-///           ├── Btn_ChoiLai         → Button (chơi lại)
-///           └── Btn_CuuTro          → Button (quay về MainMenu / trợ giúp)
-/// </summary>
+
 public class EndGameUI : SingletonBehaviour<EndGameUI>
 {
     [Header("=== Panels (Popup_Overlay) ===")]
@@ -289,15 +269,13 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
         }
     }
 
-    private void UpdateThongKe(int totalGold, string customers, string combo)
+private void UpdateThongKe(int totalGold, string customers, string combo)
     {
+        // thongKeGoldText được tự tìm/tạo trong ResolveReferences() → đã có sẵn,
+        // chỉ cần null-check để an toàn tuyệt đối (không bắn Warning spam).
         if (thongKeGoldText != null)
         {
             thongKeGoldText.text = totalGold.ToString();
-        }
-        else
-        {
-            Debug.LogWarning("EndGameUI: thongKeGoldText chưa được gán (không hiển thị vàng thưởng).", this);
         }
 
         SetThongKe(null, customers, combo);
@@ -333,26 +311,17 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
                 starImages[2] = GetComponentInChild<Image>(khung3Sao.transform, "Sao_3");
         }
 
-        if (bangThongKe == null && win != null) bangThongKe = FindChild(win, "Bang_Thong_Ke");
+if (bangThongKe == null && win != null) bangThongKe = FindChild(win, "Bang_Thong_Ke");
 
+        // ✅ Tự động tìm TextMeshProUGUI trong từng dòng của Bang_Thong_Ke.
+        // Nếu Dong_Vang/Dong_Khach/Dong_Combo CHƯA có TMP (chỉ có Icon_Vang Image),
+        // script sẽ tự TẠO 1 child Text (TMP) để hiển thị số thưởng — không bắn Warning spam.
         if (thongKeGoldText == null && bangThongKe != null)
-            thongKeGoldText = GetComponentInChild<TextMeshProUGUI>(bangThongKe.transform, "Dong_Vang");
+            thongKeGoldText = EnsureThongKeText(bangThongKe.transform, "Dong_Vang", "Vàng");
         if (thongKeCustomerText == null && bangThongKe != null)
-            thongKeCustomerText = GetComponentInChild<TextMeshProUGUI>(bangThongKe.transform, "Dong_Khach");
+            thongKeCustomerText = EnsureThongKeText(bangThongKe.transform, "Dong_Khach", "Khách");
         if (thongKeComboText == null && bangThongKe != null)
-            thongKeComboText = GetComponentInChild<TextMeshProUGUI>(bangThongKe.transform, "Dong_Combo");
-
-        // Gợi ý: Trong scene hiện tại, Dong_Vang/Dong_Khach/Dong_Combo chỉ chứa Icon_Vang (Image),
-        // chưa có TextMeshProUGUI → cần tạo thêm 1 child Text (TMP) trong mỗi dòng nếu muốn hiển thị số thưởng.
-        if (thongKeGoldText == null)
-            Debug.LogWarning("EndGameUI: Không tìm thấy TextMeshProUGUI trong Bang_Thong_Ke/Dong_Vang. " +
-                             "Hãy tạo 1 Text (TMP) bên trong Dong_Vang hoặc kéo thủ công vào field 'Thong Ke Gold Text'.", this);
-        if (thongKeCustomerText == null)
-            Debug.LogWarning("EndGameUI: Không tìm thấy TextMeshProUGUI trong Bang_Thong_Ke/Dong_Khach. " +
-                             "Hãy tạo 1 Text (TMP) bên trong Dong_Khach hoặc kéo thủ công vào field 'Thong Ke Customer Text'.", this);
-        if (thongKeComboText == null)
-            Debug.LogWarning("EndGameUI: Không tìm thấy TextMeshProUGUI trong Bang_Thong_Ke/Dong_Combo. " +
-                             "Hãy tạo 1 Text (TMP) bên trong Dong_Combo hoặc kéo thủ công vào field 'Thong Ke Combo Text'.", this);
+            thongKeComboText = EnsureThongKeText(bangThongKe.transform, "Dong_Combo", "Combo");
 
         if (btnTiepTuc == null && win != null)
             btnTiepTuc = GetComponentInChild<Button>(win, "Btn_TiepTuc");
@@ -400,6 +369,64 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
         GameObject child = FindChild(parent, path);
         if (child == null) return null;
         return child.GetComponent<T>() ?? child.GetComponentInChildren<T>();
+    }
+
+    /// <summary>
+    /// Tìm (hoặc TỰ TẠO) TextMeshProUGUI trong một dòng của Bang_Thong_Ke.
+    /// - Ưu tiên: chính node dòng có TMP → dùng luôn.
+    /// - Kế tiếp: con/cháu của dòng có TMP → dùng TMP đầu tiên tìm được.
+    /// - Không có: tự tạo 1 child GameObject "Text_<label>" gắn TextMeshProUGUI vào dòng
+    ///   (tránh bắn Warning spam khi scene chưa được dựng TMP thủ công).
+    /// </summary>
+    /// <param name="rowParent">Transform của dòng (VD: Bang_Thong_Ke/Dong_Vang).</param>
+    /// <param name="rowName">Tên dòng để log (VD: "Dong_Vang").</param>
+    /// <param name="label">Nhãn hiển thị mặc định khi tạo mới (VD: "Vàng").</param>
+    /// <returns>TextMeshProUGUI đã tìm/tạo, hoặc null nếu không thể tạo.</returns>
+    private static TextMeshProUGUI EnsureThongKeText(Transform rowParent, string rowName, string label)
+    {
+        if (rowParent == null) return null;
+
+        // 1. Chính node dòng có TMP không?
+        TextMeshProUGUI tmp = rowParent.GetComponent<TextMeshProUGUI>();
+        // 2. Ngược lại tìm TMP trong con/cháu (VD: nếu User đã kéo 1 Text TMP vào dòng).
+        if (tmp == null) tmp = rowParent.GetComponentInChildren<TextMeshProUGUI>();
+
+        if (tmp != null) return tmp;
+
+        // 3. Không có TMP → TỰ TẠO 1 child Text (TMP) trong dòng.
+        try
+        {
+            GameObject textGO = new GameObject(
+                $"Text_{label}",
+                typeof(RectTransform),
+                typeof(TextMeshProUGUI)
+            );
+
+            textGO.transform.SetParent(rowParent, false);
+
+            // Stretch to fill dòng (để text căn giữa theo LayoutGroup).
+            RectTransform rt = textGO.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI newTmp = textGO.GetComponent<TextMeshProUGUI>();
+            newTmp.text = label;               // Hiển thị nhãn mặc định
+            newTmp.fontSize = 36f;             // Font size vừa phải cho dòng thống kê
+            newTmp.alignment = TextAlignmentOptions.Center;
+            newTmp.color = Color.white;
+            newTmp.raycastTarget = false;      // Không chặn click vào panel
+
+            Debug.Log($"EndGameUI: Không tìm thấy TMP trong {rowName} — đã tự tạo child 'Text_{label}'. " +
+                      "Bạn có thể thay font/size/màu ngay trên Inspector.", textGO);
+            return newTmp;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"EndGameUI: Không thể tự tạo TMP cho {rowName}. Lỗi: {e.Message}");
+            return null;
+        }
     }
 }
 

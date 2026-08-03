@@ -234,7 +234,7 @@
 | `Popup_Overlay/Win_Popup/Btn_TiepTuc` | *(không cần)* | — | EndGameUI tự gán `OnNextLevelClicked` |
 | `Popup_Overlay/Lose_Popup/Btn/Btn_CuuTro` | *(không cần)* | — | EndGameUI tự gán `OnMainMenuClicked` |
 | `Popup_Overlay/Win_Popup/Btn_XemVideo` | *(không dùng)* | — | Không có hàm xử lý trong các script chính |
-| Nguyên liệu `Rau/Pate/Banh/Thit/Hot_Sauce/Mayone` | *(chưa có script)* | — | Luồng nấu ăn cần script riêng (chưa thấy trong dự án) |
+| Nguyên liệu `Rau/Pate/Banh/Thit/Hot_Sauce/Mayone` | *(không cần)* | — | **`IngredientButton`** tự gắn listener trong `Awake()` → bấm sẽ đặt `FoodData` lên đĩa trống. Chỉ cần gán **`Food Data`** (asset) trên Inspector cho từng nút. |
 
 ---
 

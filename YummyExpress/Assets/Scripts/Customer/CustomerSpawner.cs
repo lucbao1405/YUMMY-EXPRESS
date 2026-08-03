@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class CustomerSpawner : MonoBehaviour
 {
-    // ---- Singleton ----
     public static CustomerSpawner Instance { get; private set; }
 
     [Header("--- Settings ---")]
@@ -15,14 +14,9 @@ public class CustomerSpawner : MonoBehaviour
     [SerializeField] private float minSpawnDelay = 3f;
     [SerializeField] private float maxSpawnDelay = 6f;
 
-    // ---- Public Accessors ----
-    /// <summary>
-    /// Expose danh sách slot khách cho GameManager duyệt khi phục vụ món.
-    /// Chỉ đọc (read-only) để tránh bên ngoài sửa danh sách ngoài ý muốn.
-    /// </summary>
     public List<CustomerSlotUI> CustomerSlots => customerSlots;
 
-    private bool isSpawning = true;
+    private bool isSpawning = false;
 
     private void Awake()
     {
@@ -36,7 +30,7 @@ public class CustomerSpawner : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(SpawnRoutine());
+        StartSpawning();
     }
 
     private IEnumerator SpawnRoutine()
@@ -46,25 +40,33 @@ public class CustomerSpawner : MonoBehaviour
             float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
             yield return new WaitForSeconds(delay);
 
-            TrySpawnCustomer();
+            if (isSpawning)
+            {
+                TrySpawnCustomer();
+            }
         }
+    }
+
+    public void StartSpawning()
+    {
+        if (isSpawning) return;
+
+        isSpawning = true;
+        StopAllCoroutines();
+        StartCoroutine(SpawnRoutine());
     }
 
     private void TrySpawnCustomer()
     {
         CustomerSlotUI emptySlot = GetRandomEmptySlot();
-        if (emptySlot == null) return; // Không còn slot trống
+        if (emptySlot == null) return;
 
         CustomerData randomCustomer = GetRandomCustomerData();
         if (randomCustomer == null) return;
 
-        // Gán data cho slot trống tìm được
         emptySlot.SetCustomer(randomCustomer);
     }
 
-    /// <summary>
-    /// Tìm 1 slot ngẫu nhiên đang còn trống
-    /// </summary>
     private CustomerSlotUI GetRandomEmptySlot()
     {
         List<CustomerSlotUI> emptySlots = new List<CustomerSlotUI>();
@@ -86,16 +88,12 @@ public class CustomerSpawner : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Lấy Data khách ngẫu nhiên nhưng hạn chế trùng với khách đang xuất hiện
-    /// </summary>
     private CustomerData GetRandomCustomerData()
     {
         if (customerDatabase == null || customerDatabase.Count == 0) return null;
 
         List<CustomerData> availableCustomers = new List<CustomerData>();
 
-        // Lọc ra danh sách khách chưa ngồi ở slot nào
         foreach (var customer in customerDatabase)
         {
             bool isAlreadyOnScreen = false;
@@ -114,23 +112,19 @@ public class CustomerSpawner : MonoBehaviour
             }
         }
 
-        // Chọn ngẫu nhiên trong danh sách khách chưa xuất hiện
         if (availableCustomers.Count > 0)
         {
             int randomIndex = Random.Range(0, availableCustomers.Count);
             return availableCustomers[randomIndex];
         }
 
-        // Nếu tất cả loại khách đã ra hết thì lấy ngẫu nhiên từ DB gốc
         int fallbackIndex = Random.Range(0, customerDatabase.Count);
         return customerDatabase[fallbackIndex];
     }
 
-    /// <summary>
-    /// Dừng spawn khách mới (gọi từ GameManager khi kết thúc game)
-    /// </summary>
     public void StopSpawning()
     {
         isSpawning = false;
+        StopAllCoroutines();
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlateManager : MonoBehaviour
@@ -10,6 +11,10 @@ public class PlateManager : MonoBehaviour
     public RectTransform vegetablePoint;
     public RectTransform topBreadPoint;
 
+    [Header("Plates")]
+    [Tooltip("Danh sách đĩa con (Dia1, Dia 2, Dia 3). Để trống — Awake() tự quét GetComponentsInChildren<Plate>().")]
+    [SerializeField] private List<Plate> plates = new List<Plate>();
+
     private GameObject bottomBread;
     private GameObject meat;
     private GameObject vegetable;
@@ -17,7 +22,41 @@ public class PlateManager : MonoBehaviour
 
     private void Awake()
     {
+        // Singleton an toàn (không destroy nếu trùng, chỉ set Instance).
         Instance = this;
+
+        // Tự động quét toàn bộ Plate con/cháu (bao gồm cả đang inactive).
+        RefreshPlates();
+    }
+
+    /// <summary>
+    /// Quét lại danh sách đĩa từ các component Plate nằm ở con/cháu.
+    /// Gọi 1 lần trong Awake(); có thể gọi lại nếu đĩa được thêm/xoá runtime.
+    /// </summary>
+    [ContextMenu("Refresh Plates")]
+    private void RefreshPlates()
+    {
+        plates.Clear();
+        plates.AddRange(GetComponentsInChildren<Plate>(true));
+    }
+
+    /// <summary>
+    /// Tìm đĩa TRỐNG đầu tiên trong danh sách (IsEmpty == true).
+    /// Dùng bởi IngredientButton để đặt nguyên liệu/món lên đĩa.
+    /// </summary>
+    /// <returns>Đĩa trống đầu tiên, hoặc null nếu không có đĩa trống nào.</returns>
+    public Plate GetEmptyPlate()
+    {
+        if (plates == null) return null;
+
+        foreach (Plate plate in plates)
+        {
+            if (plate != null && plate.IsEmpty)
+            {
+                return plate;
+            }
+        }
+        return null;
     }
 
     // ================= Bottom Bread =================
