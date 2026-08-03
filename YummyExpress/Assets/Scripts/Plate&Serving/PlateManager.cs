@@ -1,51 +1,114 @@
-using System.Collections.Generic;
 using UnityEngine;
 
-public class PlateManager : SingletonBehaviour<PlateManager>
+public class PlateManager : MonoBehaviour
 {
-    [Header("Danh sách đĩa")]
-    [SerializeField] private List<Plate> plates = new List<Plate>();
+    public static PlateManager Instance;
 
-    protected override void Awake()
+    [Header("Points")]
+    public RectTransform bottomBreadPoint;
+    public RectTransform meatPoint;
+    public RectTransform vegetablePoint;
+    public RectTransform topBreadPoint;
+
+    private GameObject bottomBread;
+    private GameObject meat;
+    private GameObject vegetable;
+    private GameObject topBread;
+
+    private void Awake()
     {
-        base.Awake();
-        RefreshPlateList();
+        Instance = this;
     }
 
-    /// <summary>
-    /// Trả về đĩa trống đầu tiên trong danh sách.
-    /// </summary>
-    public Plate GetEmptyPlate()
+    // ================= Bottom Bread =================
+
+    public bool HasBottomBread()
     {
-        RefreshPlateList();
-
-        if (plates == null || plates.Count == 0)
-        {
-            Debug.LogWarning("PlateManager chưa có đĩa nào được gán.");
-            return null;
-        }
-
-        foreach (Plate plate in plates)
-        {
-            if (plate != null && plate.IsEmpty)
-            {
-                return plate;
-            }
-        }
-
-        return null;
+        return bottomBread != null;
     }
 
-private void RefreshPlateList()
+    public void PlaceBottomBread(GameObject bread)
     {
-        if (plates == null)
-        {
-            plates = new List<Plate>();
-        }
+        if (bottomBread != null)
+            return;
 
-        if (plates.Count == 0)
-        {
-            plates.AddRange(GetComponentsInChildren<Plate>(true));
-        }
+        bottomBread = bread;
+
+        bread.transform.SetParent(bottomBreadPoint, false);
+
+        RectTransform rt = bread.GetComponent<RectTransform>();
+        rt.anchoredPosition = Vector2.zero;
+        rt.localScale = Vector3.one;
+    }
+
+    // ================= Meat =================
+
+    public bool HasMeat()
+    {
+        return meat != null;
+    }
+
+    public void PlaceMeat(GameObject meatObj)
+    {
+        if (meat != null)
+            return;
+
+        meat = meatObj;
+
+        meatObj.transform.SetParent(meatPoint, false);
+
+        RectTransform rt = meatObj.GetComponent<RectTransform>();
+        rt.anchoredPosition = Vector2.zero;
+        rt.localScale = Vector3.one;
+    }
+
+    // ================= Vegetable =================
+
+    public bool HasVegetable()
+    {
+        return vegetable != null;
+    }
+
+    public void PlaceVegetable(GameObject vegetableObj)
+    {
+        if (vegetable != null)
+            return;
+
+        vegetable = vegetableObj;
+
+        vegetableObj.transform.SetParent(vegetablePoint, false);
+
+        RectTransform rt = vegetableObj.GetComponent<RectTransform>();
+        rt.anchoredPosition = Vector2.zero;
+        rt.localScale = Vector3.one;
+    }
+
+    // ================= Top Bread =================
+
+    public bool HasTopBread()
+    {
+        return topBread != null;
+    }
+
+    public bool CanPlaceTopBread()
+    {
+        return bottomBread != null &&
+               meat != null &&
+               vegetable != null &&
+               topBread == null;
+    }
+
+    public void PlaceTopBread(GameObject bread)
+    {
+        if (!CanPlaceTopBread())
+            return;
+
+        topBread = bread;
+
+        bread.transform.SetParent(topBreadPoint, false);
+
+        RectTransform rt = bread.GetComponent<RectTransform>();
+        rt.anchoredPosition = Vector2.zero;
+        rt.localScale = Vector3.one;
     }
 }
