@@ -40,7 +40,7 @@ public class PlateManager : MonoBehaviour
         plates.AddRange(GetComponentsInChildren<Plate>(true));
     }
 
-    /// <summary>
+/// <summary>
     /// Tìm đĩa TRỐNG đầu tiên trong danh sách (IsEmpty == true).
     /// Dùng bởi IngredientButton để đặt nguyên liệu/món lên đĩa.
     /// </summary>
@@ -56,6 +56,37 @@ public class PlateManager : MonoBehaviour
                 return plate;
             }
         }
+        return null;
+    }
+
+    /// <summary>
+    /// Tìm đĩa TRỐNG hoặc đang GHÉP DỞ (chưa hoàn thành món) đầu tiên.
+    /// Ưu tiên đĩa đang ghép dở (để tiếp tục xếp thêm nguyên liệu), sau đó đến đĩa trống.
+    /// Dùng bởi IngredientButton để thêm nguyên liệu vào đĩa phù hợp.
+    /// </summary>
+    /// <returns>Đĩa trống/đang ghép dở đầu tiên, hoặc null nếu tất cả đĩa đã hoàn thành món.</returns>
+    public Plate GetAvailablePlate()
+    {
+        if (plates == null) return null;
+
+        // Ưu tiên đĩa đang ghép dở (có nguyên liệu lẻ, chưa hoàn thành).
+        foreach (Plate plate in plates)
+        {
+            if (plate != null && plate.IsInProgress)
+            {
+                return plate;
+            }
+        }
+
+        // Không có đĩa nào đang ghép dở → tìm đĩa trống.
+        foreach (Plate plate in plates)
+        {
+            if (plate != null && plate.IsEmpty)
+            {
+                return plate;
+            }
+        }
+
         return null;
     }
 

@@ -25,9 +25,9 @@ public class ServingManager : SingletonBehaviour<ServingManager>
             return false;
         }
 
-        foreach (var slot in slots)
+foreach (var slot in slots)
         {
-            if (slot == null || !slot.IsWaitingFor(food))
+            if (slot == null || !slot.IsOrdering(food))
             {
                 continue;
             }

@@ -27,13 +27,15 @@ public class EconomyManager : SingletonBehaviour<EconomyManager>
     /// Cộng thêm vàng. Tự động cập nhật UI.
     /// </summary>
     /// <param name="amount">Số vàng cộng thêm</param>
-    public void AddGold(int amount)
+public void AddGold(int amount)
     {
         if (amount <= 0) return;
 
         CurrentGold += amount;
         OnGoldChanged?.Invoke(CurrentGold);
         UpdateUI();
+
+        Debug.Log($"<color=green>[ECONOMY] Cộng +{amount} vàng → Tổng: {CurrentGold}.</color>");
     }
 
     /// <summary>
