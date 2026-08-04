@@ -2,42 +2,39 @@ using UnityEngine;
 
 public class GrillStation : MonoBehaviour
 {
-    public static GrillStation Instance;
+    public Transform grillPoint;
 
-    public RectTransform cookPoint;
-
-    private GameObject currentFood;
-
-    private void Awake()
-    {
-        Instance = this;
-    }
+    private GameObject currentMeat;
 
     public bool IsOccupied()
     {
-        return currentFood != null;
+        return currentMeat != null;
     }
 
-    public void PlaceMeat(GameObject meat)
+    public bool PlaceMeat(GameObject meat)
     {
-        if (currentFood != null)
-            return;
+        if (currentMeat != null)
+            return false;
 
-        currentFood = meat;
+        currentMeat = meat;
 
-        meat.transform.SetParent(cookPoint, false);
+        meat.transform.SetParent(grillPoint, false);
 
         RectTransform rt = meat.GetComponent<RectTransform>();
         rt.anchoredPosition = Vector2.zero;
         rt.localScale = Vector3.one;
 
-        CookingProcess cooking = meat.GetComponent<CookingProcess>();
-        if (cooking != null)
-            cooking.StartCooking();
+        MeatController mc = meat.GetComponent<MeatController>();
+        if (mc != null)
+        {
+            mc.SetGrill(this);
+        }
+
+        return true;
     }
 
     public void ClearGrill()
     {
-        currentFood = null;
+        currentMeat = null;
     }
 }
