@@ -34,10 +34,11 @@ public class GameManager : SingletonBehaviour<GameManager>
     // ServingManager chịu trách nhiệm so khớp món với khách.
     // EconomyManager chịu trách nhiệm vàng/tiền tệ.
 
-    private int currentLevelIndex = 0;
+private int currentLevelIndex = 0;
     private float timeRemaining = 0f;
     private GameState currentState = GameState.Playing;
     private LevelConfig currentLevel;
+    private int servedCustomerCount = 0;
 
     #endregion
 
@@ -47,6 +48,7 @@ public class GameManager : SingletonBehaviour<GameManager>
     public int CurrentLevelIndex => currentLevelIndex;
     public int LostCustomerCount => customerManager != null ? customerManager.LostCustomerCount : 0;
     public float TimeRemaining => timeRemaining;
+    public int ServedCustomerCount => servedCustomerCount;
 
     #endregion
 
@@ -115,9 +117,10 @@ public class GameManager : SingletonBehaviour<GameManager>
         currentLevelIndex = Mathf.Clamp(levelIndex, 0, levelConfigs.Length - 1);
         currentLevel = levelConfigs[currentLevelIndex];
 
-        Time.timeScale = 1f;
+Time.timeScale = 1f;
         currentState = GameState.Playing;
         timeRemaining = currentLevel.levelTimeLimit;
+        servedCustomerCount = 0;
 
         if (customerManager != null)
         {
@@ -259,7 +262,7 @@ public class GameManager : SingletonBehaviour<GameManager>
         }
     }
 
-    public void OnCustomerLost(int lostCount)
+public void OnCustomerLost(int lostCount)
     {
         if (currentState != GameState.Playing) return;
 
@@ -275,6 +278,87 @@ public class GameManager : SingletonBehaviour<GameManager>
     }
 
     #endregion
+
+    #region Serving
+
+/// <summary>
+    /// Phục vụ món ăn cho khách.
+    /// Duyệt danh sách slot khách (CustomerSlotUI) xem có khách nào đang order đúng món này không.
+    ///
+    /// - TÌM THẤY: khách nhận món (slot.OnReceiveFood()), cộng tiền (EconomyManager.AddGold),
+    ///   tăng servedCustomerCount, dọn đĩa nguồn (sourcePlate.ClearPlate()), trả về true.
+    /// - KHÔNG TÌM THẤY: trả về false, GIỮ NGUYÊN món trên đĩa (Plate sẽ rung + warning).
+    /// </summary>
+    /// <param name="servedFood">Món ăn hoàn chỉnh đang trên đĩa.</param>
+    /// <param name="sourcePlate">Đĩa nguồn chứa món (dọn sau khi phục vụ thành công).</param>
+    /// <returns>true nếu phục vụ thành công (có khách nhận món); false nếu không có khách nào gọi món này.</returns>
+    public bool ServeFoodToCustomer(FoodData servedFood, Plate sourcePlate)
+    {
+        // Null-check: không có món thì không phục vụ được.
+        if (servedFood == null)
+        {
+            Debug.LogWarning("[SERVE FAILED] GameManager.ServeFoodToCustomer: FoodData (servedFood) bị null, không thể phục vụ.", this);
+            return false;
+        }
+
+        // Null-check: CustomerSpawner chưa sẵn sàng.
+        if (CustomerSpawner.Instance == null)
+        {
+            Debug.LogWarning("[SERVE FAILED] GameManager.ServeFoodToCustomer: CustomerSpawner.Instance chưa được khởi tạo.", this);
+            return false;
+        }
+
+        var slots = CustomerSpawner.Instance.CustomerSlots;
+        if (slots == null || slots.Count == 0)
+        {
+            Debug.LogWarning("[SERVE FAILED] GameManager.ServeFoodToCustomer: Danh sách slot khách trống.", this);
+            return false;
+        }
+
+        // Duyệt danh sách slot khách để tìm ai đang order đúng món này.
+        foreach (var slot in slots)
+        {
+            if (slot == null || !slot.IsOrdering(servedFood))
+            {
+                continue;
+            }
+
+            // 1. Cho khách nhận món và hoàn tất order → trả về tiền thưởng.
+            int earnedGold = slot.OnReceiveFood();
+            if (earnedGold <= 0)
+            {
+                earnedGold = servedFood.price;
+            }
+
+            // 2. Cộng tiền thưởng vào EconomyManager.
+            if (EconomyManager.Instance != null)
+            {
+                EconomyManager.Instance.AddGold(earnedGold);
+            }
+            else
+            {
+                Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: EconomyManager.Instance chưa được khởi tạo → không cộng được vàng.", this);
+            }
+
+            // 3. Tăng số khách đã phục vụ thành công.
+            servedCustomerCount++;
+
+            // 4. Dọn đĩa nguồn về trạng thái trống (chỉ khi thành công).
+            if (sourcePlate != null)
+            {
+                sourcePlate.ClearPlate();
+            }
+
+            Debug.Log($"<color=green>[SERVE SUCCESS] Đã giao món '{servedFood.foodName}' cho khách! Cộng +{earnedGold} vàng. (Tổng khách đã phục vụ: {servedCustomerCount})</color>", this);
+            return true;
+        }
+
+        // Không có khách nào đang chờ món này → giữ nguyên món trên đĩa.
+        Debug.LogWarning($"[SERVE FAILED] Không có khách nào đang chờ món '{servedFood.foodName}'!", this);
+        return false;
+    }
+
+#endregion
 
     #region UI
 

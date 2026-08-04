@@ -1,6 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Quản lý toàn bộ UI của một Slot khách hàng.
+/// - Hiển thị (Show) slot khi khách được spawn (SetupCustomer).
+/// - Ẩn toàn bộ slot (Hide) khi khách rời đi / được phục vụ (ClearSlot).
+/// - Ẩn GỐC (gameObject.SetActive(false)) để không còn khung nền trắng rác trên màn hình.
+/// - Đếm ngược kiên nhẫn dùng Update (không dùng Coroutine) → không bị đè lên nhau.
+/// </summary>
 public class CustomerSlotUI : MonoBehaviour
 {
     [Header("--- UI References ---")]
@@ -21,18 +28,30 @@ public class CustomerSlotUI : MonoBehaviour
     [Header("--- Blink Settings ---")]
     [SerializeField] private float blinkSpeed = 5f;          // Tốc độ chớp nháy
 
-    // --- Properties ---
-    public bool IsOccupied { get; private set; }
-    public CustomerData CurrentData { get; private set; }
+    #region State
+
+    // --- Trạng thái slot (bổ sung theo yêu cầu) ---
+    private bool hasCustomer = false;
+    private CustomerData currentCustomerData;
+    private FoodData orderedFood;
+
+    // --- Properties (giữ nguyên tên cũ để tương thích GameManager / ServingManager / CustomerSpawner) ---
+    public bool IsOccupied => hasCustomer;
+    public CustomerData CurrentData => currentCustomerData;
 
     // Rút trực tiếp FoodData từ CustomerData
-    public FoodData RequiredFood => CurrentData != null ? CurrentData.requiredFood : null;
+    public FoodData RequiredFood => currentCustomerData != null ? currentCustomerData.requiredFood : null;
 
     private float currentPatience;
     private float maxPatience = 1f;
 
+    #endregion
+
+    #region Unity Lifecycle
+
     private void Awake()
     {
+        // Chuẩn bị thanh kiên nhẫn (chỉ cấu hình 1 lần).
         if (patienceBar != null)
         {
             if (patienceBar.type != Image.Type.Filled)
@@ -42,7 +61,6 @@ public class CustomerSlotUI : MonoBehaviour
 
             patienceBar.fillMethod = Image.FillMethod.Horizontal;
             patienceBar.fillOrigin = 0;
-            patienceBar.fillAmount = 1f;
 
             // Đảm bảo Fill kéo giãn toàn bộ vùng thanh (chống lại SizeDelta 10x0 mặc định trong scene).
             // Phần gốc bên trái cố định, fill sẽ co dần về bên phải khi đếm ngược thời gian.
@@ -56,155 +74,24 @@ public class CustomerSlotUI : MonoBehaviour
                 fillRect.pivot = new Vector2(0f, 0.5f);
             }
         }
-    }
 
-    /// <summary>
-    /// Bóc tách dữ liệu từ CustomerData và cập nhật lên UI
-    /// </summary>
-    public void SetCustomer(CustomerData data)
-    {
-        if (data == null)
-        {
-            ClearSlot();
-            return;
-        }
-
-        CurrentData = data;
-        IsOccupied = true;
-
-        // Lấy thời gian chờ đếm ngược từ CustomerData
-        maxPatience = Mathf.Max(1f, data.maxPatienceTime);
-        currentPatience = maxPatience;
-
-        // 1. Hiển thị Avatar khách
-        if (avatarImage != null)
-        {
-            avatarImage.gameObject.SetActive(true);
-            if (data.avatarSprite != null)
-            {
-                avatarImage.sprite = data.avatarSprite;
-            }
-        }
-
-        // 2. Hiển thị Order Bubble & Icon món ăn
-        if (data.requiredFood != null)
-        {
-            if (orderBubble != null) orderBubble.SetActive(true);
-
-            if (orderItemImage != null)
-            {
-                orderItemImage.gameObject.SetActive(true);
-                // Lấy foodIcon từ FoodData
-                orderItemImage.sprite = data.requiredFood.foodIcon;
-            }
-        }
-        else
-        {
-            if (orderBubble != null) orderBubble.SetActive(false);
-        }
-
-        // 3. Khởi tạo thanh kiên nhẫn
-        if (patienceBar != null)
-        {
-            patienceBar.gameObject.SetActive(true);
-            patienceBar.enabled = true;        // Reset enabled (tránh bị tắt từ chớp nháy trước đó)
-            patienceBar.color = greenColor;    // Mặc định xanh lá
-            patienceBar.fillAmount = 1f;
-        }
-    }
-
-    /// <summary>
-    /// Kiểm tra xem khách trong slot này có đang chờ đúng món ăn food hay không.
-    /// Điều kiện khớp:
-    ///   - Slot đang có khách (IsOccupied).
-    ///   - CustomerData không null.
-    ///   - Món yêu cầu (requiredFood) không null VÀ reference bằng chính food được truyền vào.
-    /// </summary>
-    /// <param name="food">Món ăn đang nằm trên đĩa (FoodData).</param>
-    /// <returns>true nếu khách đang chờ đúng món này, ngược lại false.</returns>
-    public bool IsWaitingFor(FoodData food)
-    {
-        // Không có khách trong slot → không ai chờ món này
-        if (!IsOccupied) return false;
-
-        // Không có dữ liệu khách → không xác định được món đang chờ
-        if (CurrentData == null) return false;
-
-        // Khách không có món yêu cầu (requiredFood null) → không khớp
-        if (CurrentData.requiredFood == null) return false;
-
-        // So sánh reference (==) vì FoodData là ScriptableObject — mỗi asset chỉ tồn tại 1 instance duy nhất.
-        // Nên "đúng khách" nghĩa là cùng tham chiếu đến đúng asset FoodData đó.
-        return CurrentData.requiredFood == food;
-    }
-
-    /// <summary>
-    /// Xử lý khi khách nhận được đúng món ăn.
-    /// - Lấy giá món (tiền thưởng) trước khi ClearSlot() (vì ClearSlot gán CurrentData = null).
-    /// - Ghi log khách đã được phục vụ.
-    /// - Gọi ClearSlot() để ẩn/xóa khách khỏi màn hình (giải phóng slot cho khách mới).
-    /// </summary>
-    /// <returns>Số vàng thưởng khi khách nhận món (0 nếu không có dữ liệu món).</returns>
-    public int OnReceiveFood()
-    {
-        // Lấy tên khách + giá món TRƯỚC khi ClearSlot() (vì ClearSlot sẽ gán CurrentData = null)
-        string customerName = CurrentData != null ? CurrentData.customerName : "Unknown";
-        string foodName = CurrentData != null && CurrentData.requiredFood != null
-            ? CurrentData.requiredFood.foodName
-            : "Unknown";
-        int earnedGold = CurrentData != null && CurrentData.requiredFood != null
-            ? CurrentData.requiredFood.price
-            : 0;
-
-        Debug.Log($"Khách {customerName} đã nhận món {foodName}. +{earnedGold} vàng.");
-
-        // Ẩn/xóa khách khỏi slot để slot trống đón khách mới
+        // KHỞI TẠO NGHỈ: ẩn toàn bộ slot ngay khi vào game (tránh khung nền trắng rác).
         ClearSlot();
-
-        // Trả về tiền thưởng để GameManager cộng vàng
-        return earnedGold;
-    }
-
-    /// <summary>
-    /// Xử lý khi khách hết kiên nhẫn bỏ đi
-    /// </summary>
-    public void OnCustomerLeft()
-    {
-        Debug.Log($"Khách {CurrentData?.customerName} đã bỏ đi!");
-
-        if (CustomerManager.Instance != null)
-        {
-            CustomerManager.Instance.NotifyCustomerLeft();
-        }
-
-        ClearSlot();
-    }
-
-    /// <summary>
-    /// Reset slot và ẩn toàn bộ UI
-    /// </summary>
-    public void ClearSlot()
-    {
-        CurrentData = null;
-        IsOccupied = false;
-
-        if (avatarImage != null) avatarImage.gameObject.SetActive(false);
-        if (orderBubble != null) orderBubble.SetActive(false);
-        if (patienceBar != null) patienceBar.gameObject.SetActive(false);
     }
 
     private void Update()
     {
-        if (!IsOccupied) return;
+        // Chỉ chạy đếm ngược khi có khách trong slot.
+        if (!hasCustomer) return;
 
-        // Đếm ngược thời gian
+        // Đếm ngược thời gian kiên nhẫn.
         currentPatience -= Time.deltaTime;
 
         if (patienceBar != null)
         {
-            patienceBar.fillAmount = currentPatience / maxPatience;
+            patienceBar.fillAmount = Mathf.Clamp01(currentPatience / maxPatience);
 
-            // Đổi màu theo % thời gian còn lại
+            // Đổi màu theo % thời gian còn lại.
             float patiencePercent = patienceBar.fillAmount;
 
             if (patiencePercent > greenThreshold)
@@ -229,10 +116,228 @@ public class CustomerSlotUI : MonoBehaviour
             }
         }
 
-        // Hết thời gian kiên nhẫn
-        if (currentPatience <= 0)
+        // Hết thời gian kiên nhẫn → khách bỏ đi.
+        if (currentPatience <= 0f)
         {
-            OnCustomerLeft();
+            OnTimeout();
         }
     }
+
+    #endregion
+
+    #region Show / Setup
+
+    /// <summary>
+    /// Wrapper tương thích ngược: giữ nguyên tên cũ SetCustomer(data) để CustomerSpawner tiếp tục hoạt động.
+    /// Dữ liệu món order được lấy trực tiếp từ data.requiredFood.
+    /// </summary>
+    public void SetCustomer(CustomerData data)
+    {
+        if (data == null)
+        {
+            ClearSlot();
+            return;
+        }
+
+        SetupCustomer(data, data.requiredFood);
+    }
+
+    /// <summary>
+    /// XUẤT HIỆN KHÁCH HÀNG: Bật toàn bộ UI của Slot lên và gán dữ liệu.
+    /// </summary>
+    /// <param name="data">Dữ liệu khách hàng (avatar, thời gian kiên nhẫn...).</param>
+    /// <param name="orderedFood">Món ăn khách đang order (hiển thị lên bong bóng).</param>
+    public void SetupCustomer(CustomerData data, FoodData orderedFood)
+    {
+        if (data == null)
+        {
+            ClearSlot();
+            return;
+        }
+
+        // 1. Bật toàn bộ GameObject của Slot (hiện cả khung nền slot).
+        gameObject.SetActive(true);
+
+        // 2. Lưu trạng thái.
+        currentCustomerData = data;
+        this.orderedFood = orderedFood;
+        hasCustomer = true;
+
+        // 3. Lấy thời gian chờ đếm ngược từ CustomerData.
+        maxPatience = Mathf.Max(1f, data.maxPatienceTime);
+        currentPatience = maxPatience;
+
+        // 4. Hiển thị Avatar khách.
+        if (avatarImage != null)
+        {
+            avatarImage.gameObject.SetActive(true);
+            if (data.avatarSprite != null)
+            {
+                avatarImage.sprite = data.avatarSprite;
+            }
+        }
+
+        // 5. Hiển thị Order Bubble & Icon món ăn.
+        if (orderedFood != null)
+        {
+            if (orderBubble != null) orderBubble.SetActive(true);
+
+            if (orderItemImage != null)
+            {
+                orderItemImage.gameObject.SetActive(true);
+                orderItemImage.sprite = orderedFood.foodIcon;
+            }
+        }
+        else
+        {
+            if (orderBubble != null) orderBubble.SetActive(false);
+        }
+
+        // 6. Reset thanh kiên nhẫn: đầy 100%, màu xanh, bật enabled.
+        if (patienceBar != null)
+        {
+            patienceBar.gameObject.SetActive(true);
+            patienceBar.enabled = true;
+            patienceBar.color = greenColor;
+            patienceBar.fillAmount = 1f;
+        }
+    }
+
+    #endregion
+
+    #region Matching
+
+    /// <summary>
+    /// Kiểm tra xem khách trong slot này có đang đặt (order) đúng món ăn food hay không.
+    /// Đây là API chính được GameManager/ServingManager dùng để so khớp món.
+    /// </summary>
+    /// <param name="food">Món ăn đang nằm trên đĩa (FoodData).</param>
+    /// <returns>true nếu khách đang order đúng món này, ngược lại false.</returns>
+    public bool IsOrdering(FoodData food)
+    {
+        // Null-check: không có món thì không khớp.
+        if (food == null) return false;
+
+        // Không có khách trong slot → không ai đang order món này.
+        if (!hasCustomer) return false;
+
+        // Không có dữ liệu khách → không xác định được món đang order.
+        if (currentCustomerData == null) return false;
+
+        // Khách không có món yêu cầu (requiredFood null) → không khớp.
+        if (currentCustomerData.requiredFood == null) return false;
+
+        // So sánh reference (==) vì FoodData là ScriptableObject — mỗi asset chỉ tồn tại 1 instance duy nhất.
+        return currentCustomerData.requiredFood == food;
+    }
+
+    /// <summary>
+    /// Alias tương thích ngược cho IsOrdering (giữ nguyên tên cũ để không hỏng code đang gọi).
+    /// </summary>
+    public bool IsWaitingFor(FoodData food) => IsOrdering(food);
+
+    #endregion
+
+    #region Serve / Timeout
+
+    /// <summary>
+    /// PHỤC VỤ KHÁCH (trả món thành công).
+    /// - Lấy giá món (tiền thưởng) TRƯỚC khi ClearSlot() (vì ClearSlot gán currentCustomerData = null).
+    /// - Phát hiệu ứng/âm thanh nhận món (nếu có).
+    /// - Gọi ClearSlot() để ẩn toàn bộ slot.
+    /// </summary>
+    /// <returns>Số vàng thưởng khi khách nhận món (0 nếu không có dữ liệu món).</returns>
+    public int OnReceiveFood()
+    {
+        // Lấy tên khách + giá món TRƯỚC khi ClearSlot().
+        string customerName = currentCustomerData != null ? currentCustomerData.customerName : "Unknown";
+        string foodName = currentCustomerData != null && currentCustomerData.requiredFood != null
+            ? currentCustomerData.requiredFood.foodName
+            : "Unknown";
+        int earnedGold = currentCustomerData != null && currentCustomerData.requiredFood != null
+            ? currentCustomerData.requiredFood.price
+            : 0;
+
+        // Phát hiệu ứng/âm thanh nhận món (nếu có).
+        PlayReceiveAnimation();
+        Debug.Log($"<color=green>[ORDER COMPLETE] Khách {customerName} đã nhận món {foodName}. +{earnedGold} vàng.</color>");
+
+        // Ẩn toàn bộ slot để giải phóng cho khách mới.
+        ClearSlot();
+
+        // Trả về tiền thưởng để GameManager/ServingManager cộng vàng.
+        return earnedGold;
+    }
+
+    /// <summary>
+    /// HẾT GIỜ / KHÁCH MẤT KIÊN NHẪN BỎ ĐI.
+    /// - Báo về GameManager qua CustomerManager.NotifyCustomerLeft() (giữ nguyên luồng thắng/thua hiện có).
+    /// - Gọi ClearSlot() để ẩn toàn bộ slot.
+    /// </summary>
+    public void OnTimeout()
+    {
+        Debug.Log($"Khách {currentCustomerData?.customerName} đã bỏ đi!");
+
+        // Báo về CustomerManager → GameManager.Instance.OnCustomerLost() để xử lý thắng/thua.
+        if (CustomerManager.Instance != null)
+        {
+            CustomerManager.Instance.NotifyCustomerLeft();
+        }
+
+        ClearSlot();
+    }
+
+    /// <summary>
+    /// Alias tương thích ngược cho OnTimeout (giữ nguyên tên cũ để không hỏng code đang gọi).
+    /// </summary>
+    public void OnCustomerLeft()
+    {
+        OnTimeout();
+    }
+
+    /// <summary>
+    /// Phát hiệu ứng/âm thanh nhận món (placeholder).
+    /// Nếu slot có Animator có thể trigger "Receive" ở đây.
+    /// </summary>
+    private void PlayReceiveAnimation()
+    {
+        if (this == null || gameObject == null) return;
+
+        Animator animator = GetComponent<Animator>();
+        if (animator != null)
+        {
+            // Nếu có Animator, trigger state nhận món (comment cho rõ để dễ thêm sau).
+            animator.SetTrigger("Receive");
+        }
+    }
+
+    #endregion
+
+    #region Clear
+
+    /// <summary>
+    /// DỌN SLOT KHI KHÁCH RỜI ĐI / DỰNG TRẢ MÓN.
+    /// - Reset trạng thái.
+    /// - Dừng đếm ngược kiên nhẫn (Update sẽ bỏ qua vì hasCustomer = false).
+    /// - Ẩn TOÀN BỘ GameObject cha để không còn khung nền trắng rác trên màn hình.
+    /// </summary>
+    public void ClearSlot()
+    {
+        // Reset trạng thái.
+        hasCustomer = false;
+        currentCustomerData = null;
+        orderedFood = null;
+
+        // Reset thanh kiên nhẫn về trạng thái nghỉ (chống đếm ngược/chớp nháy bị treo).
+        if (patienceBar != null)
+        {
+            patienceBar.fillAmount = 1f;
+            patienceBar.enabled = false;
+        }
+
+        // Ẩn toàn bộ slot (cả khung nền trắng) để không còn rác trên màn hình.
+        gameObject.SetActive(false);
+    }
+
+    #endregion
 }

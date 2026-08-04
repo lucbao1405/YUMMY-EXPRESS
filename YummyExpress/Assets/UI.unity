@@ -653,7 +653,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodImage: {fileID: 0}
-  plateButton: {fileID: 0}
+  plateButton: {fileID: 99860258}
+  ingredientSlots: []
   currentFood: {fileID: 0}
   isReady: 0
 --- !u!1 &139993223
@@ -822,10 +823,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 602988805}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 115.33825, y: -234.25946}
+  m_SizeDelta: {x: 210.6765, y: 142.83965}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &151506433
 MonoBehaviour:
@@ -1088,7 +1089,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodImage: {fileID: 0}
-  slotButton: {fileID: 0}
+  slotButton: {fileID: 159197332}
   currentFood: {fileID: 0}
   currentState: 0
 --- !u!1 &160153499
@@ -1411,7 +1412,10 @@ MonoBehaviour:
   meatPoint: {fileID: 867499261}
   vegetablePoint: {fileID: 492859335}
   topBreadPoint: {fileID: 1893502738}
-  plates: []
+  plates:
+  - {fileID: 596954340}
+  - {fileID: 1281813312}
+  - {fileID: 99860259}
 --- !u!1 &422586913
 GameObject:
   m_ObjectHideFlags: 0
@@ -2172,8 +2176,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 840}
+  m_AnchoredPosition: {x: 0, y: -20}
+  m_SizeDelta: {x: 0, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &595804647
 MonoBehaviour:
@@ -2360,7 +2364,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodImage: {fileID: 0}
-  plateButton: {fileID: 0}
+  plateButton: {fileID: 596954339}
+  ingredientSlots:
+  - {fileID: 1166574986}
+  - {fileID: 1476933606}
+  - {fileID: 1519364110}
   currentFood: {fileID: 0}
   isReady: 0
 --- !u!1 &598933046
@@ -2395,10 +2403,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1446298518}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 125, y: -235.05963}
+  m_SizeDelta: {x: 230, y: 143.3731}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &598933048
 MonoBehaviour:
@@ -2555,6 +2563,7 @@ GameObject:
   - component: {fileID: 608045593}
   - component: {fileID: 608045592}
   - component: {fileID: 608045591}
+  - component: {fileID: 608045594}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2595,7 +2604,7 @@ MonoBehaviour:
   - targetGold: 100
     levelTimeLimit: 90
     maxLostCustomers: 3
-  customerManager: {fileID: 0}
+  customerManager: {fileID: 608045593}
 --- !u!114 &608045591
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2634,6 +2643,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   customerSpawner: {fileID: 1344992291}
+--- !u!114 &608045594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 608045587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c4d5e6f708192a3b4c5d6e7f8091a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  recipes:
+  - recipeName: "b\xE1nh m\xEC"
+    resultFood: {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+    requiredIngredients: []
+  - recipeName: "b\xE1nh m\xEC s\u1ED1t"
+    resultFood: {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+    requiredIngredients: []
+  - recipeName: "M\xEC t\xF4n"
+    resultFood: {fileID: 11400000, guid: b85b31b990815654ebe5640f8401b42b, type: 2}
+    requiredIngredients: []
 --- !u!1 &609304596
 GameObject:
   m_ObjectHideFlags: 0
@@ -2975,7 +3006,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3599,7 +3630,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 772966413}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 772966410}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &772966413
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4464,10 +4507,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1201703756}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 125.90495, y: -81.23408}
+  m_SizeDelta: {x: 231.8099, y: 142.46815}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1041177803
 MonoBehaviour:
@@ -4614,10 +4657,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1201703756}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 125.90495, y: -233.70224}
+  m_SizeDelta: {x: 231.8099, y: 142.46815}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1083181319
 MonoBehaviour:
@@ -5001,7 +5044,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 0.1254902, g: 0.1254902, b: 0.1254902, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -5184,10 +5227,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1446298518}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 125, y: -81.68655}
+  m_SizeDelta: {x: 230, y: 143.3731}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1226784250
 MonoBehaviour:
@@ -5511,7 +5554,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodImage: {fileID: 0}
-  plateButton: {fileID: 0}
+  plateButton: {fileID: 1281813313}
+  ingredientSlots: []
   currentFood: {fileID: 0}
   isReady: 0
 --- !u!114 &1281813313
@@ -5772,10 +5816,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 602988805}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 115.33825, y: -81.41982}
+  m_SizeDelta: {x: 210.6765, y: 142.83965}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1328046404
 MonoBehaviour:
@@ -6303,7 +6347,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodImage: {fileID: 0}
-  slotButton: {fileID: 0}
+  slotButton: {fileID: 1372052319}
   currentFood: {fileID: 0}
   currentState: 0
 --- !u!1 &1381604884
@@ -6569,7 +6613,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
