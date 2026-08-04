@@ -69,12 +69,14 @@ private int currentLevelIndex = 0;
         StartLevel(0);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         if (EconomyManager.Instance != null)
         {
             EconomyManager.Instance.OnGoldChanged -= OnGoldChanged;
         }
+
+        base.OnDestroy();
     }
 
     private void Update()
@@ -287,12 +289,12 @@ public void OnCustomerLost(int lostCount)
     ///
     /// - TÌM THẤY: khách nhận món (slot.OnReceiveFood()), cộng tiền (EconomyManager.AddGold),
     ///   tăng servedCustomerCount, dọn đĩa nguồn (sourcePlate.ClearPlate()), trả về true.
-    /// - KHÔNG TÌM THẤY: trả về false, GIỮ NGUYÊN món trên đĩa (Plate sẽ rung + warning).
+/// - KHÔNG TÌM THẤY: trả về false, GIỮ NGUYÊN món trên đĩa (PlateManager sẽ rung + warning).
     /// </summary>
     /// <param name="servedFood">Món ăn hoàn chỉnh đang trên đĩa.</param>
     /// <param name="sourcePlate">Đĩa nguồn chứa món (dọn sau khi phục vụ thành công).</param>
     /// <returns>true nếu phục vụ thành công (có khách nhận món); false nếu không có khách nào gọi món này.</returns>
-    public bool ServeFoodToCustomer(FoodData servedFood, Plate sourcePlate)
+public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
     {
         // Null-check: không có món thì không phục vụ được.
         if (servedFood == null)

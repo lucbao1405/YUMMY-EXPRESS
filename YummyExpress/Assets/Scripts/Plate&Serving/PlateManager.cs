@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlateManager : MonoBehaviour
 {
@@ -10,87 +10,27 @@ public class PlateManager : MonoBehaviour
     public RectTransform meatPoint;
     public RectTransform vegetablePoint;
     public RectTransform topBreadPoint;
+    public RectTransform completeBanhMiPoint;
 
-    [Header("Plates")]
-    [Tooltip("Danh sách đĩa con (Dia1, Dia 2, Dia 3). Để trống — Awake() tự quét GetComponentsInChildren<Plate>().")]
-    [SerializeField] private List<Plate> plates = new List<Plate>();
+    [Header("Food Data")]
+    public FoodData banhMiFoodData;
+
+    [Header("UI")]
+    public Image completedBanhMiImage;
 
     private GameObject bottomBread;
     private GameObject meat;
     private GameObject vegetable;
     private GameObject topBread;
 
+    private bool completed = false;
+
     private void Awake()
     {
-        // Singleton an toàn (không destroy nếu trùng, chỉ set Instance).
         Instance = this;
-
-        // Tự động quét toàn bộ Plate con/cháu (bao gồm cả đang inactive).
-        RefreshPlates();
     }
 
-    /// <summary>
-    /// Quét lại danh sách đĩa từ các component Plate nằm ở con/cháu.
-    /// Gọi 1 lần trong Awake(); có thể gọi lại nếu đĩa được thêm/xoá runtime.
-    /// </summary>
-    [ContextMenu("Refresh Plates")]
-    private void RefreshPlates()
-    {
-        plates.Clear();
-        plates.AddRange(GetComponentsInChildren<Plate>(true));
-    }
-
-/// <summary>
-    /// Tìm đĩa TRỐNG đầu tiên trong danh sách (IsEmpty == true).
-    /// Dùng bởi IngredientButton để đặt nguyên liệu/món lên đĩa.
-    /// </summary>
-    /// <returns>Đĩa trống đầu tiên, hoặc null nếu không có đĩa trống nào.</returns>
-    public Plate GetEmptyPlate()
-    {
-        if (plates == null) return null;
-
-        foreach (Plate plate in plates)
-        {
-            if (plate != null && plate.IsEmpty)
-            {
-                return plate;
-            }
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// Tìm đĩa TRỐNG hoặc đang GHÉP DỞ (chưa hoàn thành món) đầu tiên.
-    /// Ưu tiên đĩa đang ghép dở (để tiếp tục xếp thêm nguyên liệu), sau đó đến đĩa trống.
-    /// Dùng bởi IngredientButton để thêm nguyên liệu vào đĩa phù hợp.
-    /// </summary>
-    /// <returns>Đĩa trống/đang ghép dở đầu tiên, hoặc null nếu tất cả đĩa đã hoàn thành món.</returns>
-    public Plate GetAvailablePlate()
-    {
-        if (plates == null) return null;
-
-        // Ưu tiên đĩa đang ghép dở (có nguyên liệu lẻ, chưa hoàn thành).
-        foreach (Plate plate in plates)
-        {
-            if (plate != null && plate.IsInProgress)
-            {
-                return plate;
-            }
-        }
-
-        // Không có đĩa nào đang ghép dở → tìm đĩa trống.
-        foreach (Plate plate in plates)
-        {
-            if (plate != null && plate.IsEmpty)
-            {
-                return plate;
-            }
-        }
-
-        return null;
-    }
-
-    // ================= Bottom Bread =================
+    // ================= Bottom bread =================
 
     public bool HasBottomBread()
     {
@@ -103,12 +43,7 @@ public class PlateManager : MonoBehaviour
             return;
 
         bottomBread = bread;
-
-        bread.transform.SetParent(bottomBreadPoint, false);
-
-        RectTransform rt = bread.GetComponent<RectTransform>();
-        rt.anchoredPosition = Vector2.zero;
-        rt.localScale = Vector3.one;
+        Attach(bread, bottomBreadPoint);
     }
 
     // ================= Meat =================
@@ -124,12 +59,7 @@ public class PlateManager : MonoBehaviour
             return;
 
         meat = meatObj;
-
-        meatObj.transform.SetParent(meatPoint, false);
-
-        RectTransform rt = meatObj.GetComponent<RectTransform>();
-        rt.anchoredPosition = Vector2.zero;
-        rt.localScale = Vector3.one;
+        Attach(meatObj, meatPoint);
     }
 
     // ================= Vegetable =================
@@ -139,21 +69,16 @@ public class PlateManager : MonoBehaviour
         return vegetable != null;
     }
 
-    public void PlaceVegetable(GameObject vegetableObj)
+    public void PlaceVegetable(GameObject vegObj)
     {
         if (vegetable != null)
             return;
 
-        vegetable = vegetableObj;
-
-        vegetableObj.transform.SetParent(vegetablePoint, false);
-
-        RectTransform rt = vegetableObj.GetComponent<RectTransform>();
-        rt.anchoredPosition = Vector2.zero;
-        rt.localScale = Vector3.one;
+        vegetable = vegObj;
+        Attach(vegObj, vegetablePoint);
     }
 
-    // ================= Top Bread =================
+    // ================= Top bread =================
 
     public bool HasTopBread()
     {
@@ -174,10 +99,67 @@ public class PlateManager : MonoBehaviour
             return;
 
         topBread = bread;
+        Attach(bread, topBreadPoint);
 
-        bread.transform.SetParent(topBreadPoint, false);
+        CompleteBanhMi();
+    }
 
-        RectTransform rt = bread.GetComponent<RectTransform>();
+    // ================= Complete =================
+
+    private void CompleteBanhMi()
+    {
+        if (completed)
+            return;
+
+        completed = true;
+
+        if (bottomBread != null) Destroy(bottomBread);
+        if (meat != null) Destroy(meat);
+        if (vegetable != null) Destroy(vegetable);
+        if (topBread != null) Destroy(topBread);
+
+        bottomBread = null;
+        meat = null;
+        vegetable = null;
+        topBread = null;
+
+        if (completedBanhMiImage != null && banhMiFoodData != null)
+        {
+            completedBanhMiImage.sprite = banhMiFoodData.foodIcon;
+            completedBanhMiImage.gameObject.SetActive(true);
+        }
+    }
+
+    // ================= Clear =================
+
+    public void ClearPlate()
+    {
+        if (bottomBread != null) Destroy(bottomBread);
+        if (meat != null) Destroy(meat);
+        if (vegetable != null) Destroy(vegetable);
+        if (topBread != null) Destroy(topBread);
+
+        bottomBread = null;
+        meat = null;
+        vegetable = null;
+        topBread = null;
+
+        completed = false;
+
+        if (completedBanhMiImage != null)
+        {
+            completedBanhMiImage.gameObject.SetActive(false);
+            completedBanhMiImage.sprite = null;
+        }
+    }
+
+    // ================= Helper =================
+
+    private void Attach(GameObject obj, RectTransform point)
+    {
+        obj.transform.SetParent(point, false);
+
+        RectTransform rt = obj.GetComponent<RectTransform>();
         rt.anchoredPosition = Vector2.zero;
         rt.localScale = Vector3.one;
     }

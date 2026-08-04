@@ -5,16 +5,11 @@ public class CookableFood : MonoBehaviour
 {
     public FoodState currentState = FoodState.Raw;
 
-    public float cookTime = 3f;
-    public float burnTime = 2f;
-
     public Sprite rawSprite;
     public Sprite cookedSprite;
     public Sprite burntSprite;
 
     private Image image;
-    private bool isCooking = false;
-    private float timer = 0f;
 
     private void Awake()
     {
@@ -22,48 +17,15 @@ public class CookableFood : MonoBehaviour
         UpdateSprite();
     }
 
-    private void Update()
+    public void SetState(FoodState state)
     {
-        if (!isCooking)
-            return;
-
-        timer += Time.deltaTime;
-
-        // Raw → Cooked
-        if (currentState == FoodState.Raw && timer >= cookTime)
-        {
-            currentState = FoodState.Cooked;
-            UpdateSprite();
-            Debug.Log("Meat Cooked");
-        }
-
-        // Cooked → Burnt
-        if (currentState == FoodState.Cooked &&
-            timer >= cookTime + burnTime)
-        {
-            currentState = FoodState.Burnt;
-            UpdateSprite();
-            Debug.Log("Meat Burnt");
-        }
-    }
-
-    public void StartCooking()
-    {
-        isCooking = true;
-        timer = 0f;
-        currentState = FoodState.Raw;
+        currentState = state;
         UpdateSprite();
-    }
-
-    public void StopCooking()
-    {
-        isCooking = false;
     }
 
     private void UpdateSprite()
     {
-        if (image == null)
-            return;
+        if (image == null) return;
 
         switch (currentState)
         {

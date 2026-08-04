@@ -2,30 +2,39 @@ using UnityEngine;
 
 public class MeatController : MonoBehaviour
 {
-    private CookableFood cookable;
+    private CookableFood food;
 
     private void Awake()
     {
-        cookable = GetComponent<CookableFood>();
+        food = GetComponent<CookableFood>();
     }
 
     public void OnClick()
     {
-        // Chỉ cho phép lấy thịt khi đã chín
-        if (cookable.currentState != FoodState.Cooked)
+        // Chỉ lấy khi đã chín
+        if (food.currentState != FoodState.Cooked)
             return;
 
-        // Nếu đĩa đã có thịt thì không lấy nữa
+        // Phải có ổ dưới trước
+        if (!PlateManager.Instance.HasBottomBread())
+        {
+            Debug.Log("Place bottom bread first");
+            return;
+        }
+
+        // Đĩa đã có thịt
         if (PlateManager.Instance.HasMeat())
             return;
 
-        // Báo bếp là đã lấy thịt ra
-        StoveManager.Instance.RemoveMeat();
+        // Giải phóng Grill
+        GrillStation.Instance.ClearGrill();
 
-        // Chuyển chính miếng thịt này lên đĩa
+        // Dừng quá trình nấu
+        CookingProcess cooking = GetComponent<CookingProcess>();
+        if (cooking != null)
+            cooking.StopCooking();
+
+        // Chuyển thịt lên đĩa
         PlateManager.Instance.PlaceMeat(gameObject);
-
-        // Dừng nấu
-        cookable.StopCooking();
     }
 }
