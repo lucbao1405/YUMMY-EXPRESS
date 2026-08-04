@@ -64,7 +64,7 @@ public class CustomerSpawner : MonoBehaviour
         CustomerData randomCustomer = GetRandomCustomerData();
         if (randomCustomer == null) return;
 
-        emptySlot.SetCustomer(randomCustomer);
+emptySlot.SpawnCustomerWithAnimation(randomCustomer);
     }
 
     private CustomerSlotUI GetRandomEmptySlot()

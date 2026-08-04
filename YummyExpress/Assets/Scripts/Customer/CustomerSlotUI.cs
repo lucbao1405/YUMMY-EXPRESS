@@ -1,11 +1,13 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
 /// Quản lý toàn bộ UI của một Slot khách hàng.
-/// - Hiển thị (Show) slot khi khách được spawn (SetupCustomer).
+/// - Hiển thị (Show) slot khi khách được spawn (SetupCustomer / SetCustomer).
 /// - Ẩn toàn bộ slot (Hide) khi khách rời đi / được phục vụ (ClearSlot).
 /// - Ẩn GỐC (gameObject.SetActive(false)) để không còn khung nền trắng rác trên màn hình.
+/// - Thanh kiên nhẫn dùng UI Slider (Patience_Bar) + Image Fill (Fill) để đổi độ dài & màu.
 /// - Đếm ngược kiên nhẫn dùng Update (không dùng Coroutine) → không bị đè lên nhau.
 /// </summary>
 public class CustomerSlotUI : MonoBehaviour
@@ -14,19 +16,19 @@ public class CustomerSlotUI : MonoBehaviour
     [SerializeField] private Image avatarImage;
     [SerializeField] private GameObject orderBubble;
     [SerializeField] private Image orderItemImage;
-    [SerializeField] private Image patienceBar;
+
+    // Slider Patience_Bar (gốc) + Image Fill nằm trong Fill Area.
+    [SerializeField] private Slider patienceSlider;
+    [SerializeField] private Image fillImage;
+
+[Header("--- Slide-In Animation ---")]
+    [SerializeField] private float moveDuration = 0.6f;   // Thời gian khách trượt vào (giây)
+    [SerializeField] private bool slideFromLeft = true;   // Trượt từ rìa trái (true) / rìa phải (false)
 
     [Header("--- Patience Bar Colors ---")]
-    [SerializeField] private Color greenColor = new Color(0.2f, 0.8f, 0.2f, 1f);   // Xanh lá
-    [SerializeField] private Color yellowColor = new Color(1f, 0.8f, 0f, 1f);       // Vàng
-    [SerializeField] private Color redColor = new Color(1f, 0.2f, 0.2f, 1f);        // Đỏ
-
-    [Header("--- Patience Thresholds (%) ---")]
-    [SerializeField] private float greenThreshold = 0.6f;   // > 60% → Xanh
-    [SerializeField] private float yellowThreshold = 0.24f; // 24% - 60% → Vàng, < 24% → Đỏ
-
-    [Header("--- Blink Settings ---")]
-    [SerializeField] private float blinkSpeed = 5f;          // Tốc độ chớp nháy
+    [SerializeField] private Color greenColor = new Color(0.2f, 0.8f, 0.2f, 1f);   // Xanh lá (kiên nhẫn 100%)
+    [SerializeField] private Color yellowColor = new Color(1f, 0.8f, 0f, 1f);       // Vàng (kiên nhẫn 50%)
+    [SerializeField] private Color redColor = new Color(1f, 0.2f, 0.2f, 1f);        // Đỏ (kiên nhẫn 0%)
 
     #region State
 
@@ -42,77 +44,69 @@ public class CustomerSlotUI : MonoBehaviour
     // Rút trực tiếp FoodData từ CustomerData
     public FoodData RequiredFood => currentCustomerData != null ? currentCustomerData.requiredFood : null;
 
-    private float currentPatience;
-    private float maxPatience = 1f;
+// --- Thời gian kiên nhẫn ---
+    private float currentPatience;      // Số giây còn lại
+    private float patienceDuration = 1f; // Tổng thời gian chờ (giây)
+
+    // --- Slide-In Animation ---
+    private RectTransform rectTransform; // Cache RectTransform để di chuyển slot
+    private bool isAnimating = false;    // true khi khách đang trượt vào (chưa đếm ngược)
 
     #endregion
 
     #region Unity Lifecycle
 
-    private void Awake()
+private void Awake()
     {
-        // Chuẩn bị thanh kiên nhẫn (chỉ cấu hình 1 lần).
-        if (patienceBar != null)
+        // Cache RectTransform để phục vụ hiệu ứng trượt vào.
+        rectTransform = GetComponent<RectTransform>();
+
+        // Cấu hình Slider chỉ 1 lần: min 0, max 1, giá trị ban đầu = 1 (100% đầy).
+        if (patienceSlider != null)
         {
-            if (patienceBar.type != Image.Type.Filled)
-            {
-                patienceBar.type = Image.Type.Filled;
-            }
-
-            patienceBar.fillMethod = Image.FillMethod.Horizontal;
-            patienceBar.fillOrigin = 0;
-
-            // Đảm bảo Fill kéo giãn toàn bộ vùng thanh (chống lại SizeDelta 10x0 mặc định trong scene).
-            // Phần gốc bên trái cố định, fill sẽ co dần về bên phải khi đếm ngược thời gian.
-            RectTransform fillRect = patienceBar.rectTransform;
-            if (fillRect != null)
-            {
-                fillRect.anchorMin = Vector2.zero;
-                fillRect.anchorMax = Vector2.one;
-                fillRect.offsetMin = Vector2.zero;
-                fillRect.offsetMax = Vector2.zero;
-                fillRect.pivot = new Vector2(0f, 0.5f);
-            }
+            patienceSlider.minValue = 0f;
+            patienceSlider.maxValue = 1f;
+            patienceSlider.value = 1f;
         }
 
         // KHỞI TẠO NGHỈ: ẩn toàn bộ slot ngay khi vào game (tránh khung nền trắng rác).
         ClearSlot();
     }
 
-    private void Update()
+private void Update()
     {
         // Chỉ chạy đếm ngược khi có khách trong slot.
         if (!hasCustomer) return;
 
-        // Đếm ngược thời gian kiên nhẫn.
+        // KHÔNG đếm ngược khi khách đang trượt vào (animation chưa hoàn tất).
+        if (isAnimating) return;
+
+        // Trừ thời gian kiên nhẫn.
         currentPatience -= Time.deltaTime;
 
-        if (patienceBar != null)
+        // Tính tỷ lệ thời gian còn lại (kẹp 0 → 1).
+        float ratio = Mathf.Clamp01(currentPatience / patienceDuration);
+
+        // Cập nhật độ đầy/vơi của Slider.
+        if (patienceSlider != null)
         {
-            patienceBar.fillAmount = Mathf.Clamp01(currentPatience / maxPatience);
+            patienceSlider.value = ratio;
+        }
 
-            // Đổi màu theo % thời gian còn lại.
-            float patiencePercent = patienceBar.fillAmount;
-
-            if (patiencePercent > greenThreshold)
+        // Cập nhật màu sắc (Dynamic Lerp) mượt mà.
+        if (fillImage != null)
+        {
+            if (ratio > 0.5f)
             {
-                // Trên 60%: Xanh lá cây
-                patienceBar.color = greenColor;
-                patienceBar.enabled = true;
-            }
-            else if (patiencePercent > yellowThreshold)
-            {
-                // 24% - 60%: Vàng
-                patienceBar.color = yellowColor;
-                patienceBar.enabled = true;
+                // Trên 50%: Lerp từ vàng → xanh lá.
+                float t = (ratio - 0.5f) / 0.5f; // ratio 0.5...1 → t 0...1
+                fillImage.color = Color.Lerp(yellowColor, greenColor, t);
             }
             else
             {
-                // Dưới 24%: Đỏ + chớp nháy
-                patienceBar.color = redColor;
-                // Chớp nháy: dùng Mathf.PingPong để nhấp nháy
-                float blink = Mathf.PingPong(Time.time * blinkSpeed, 1f);
-                patienceBar.enabled = blink > 0.3f;
+                // Dưới/ bằng 50%: Lerp từ đỏ → vàng.
+                float t = ratio / 0.5f; // ratio 0...0.5 → t 0...1
+                fillImage.color = Color.Lerp(redColor, yellowColor, t);
             }
         }
 
@@ -142,12 +136,47 @@ public class CustomerSlotUI : MonoBehaviour
         SetupCustomer(data, data.requiredFood);
     }
 
-    /// <summary>
+/// <summary>
     /// XUẤT HIỆN KHÁCH HÀNG: Bật toàn bộ UI của Slot lên và gán dữ liệu.
+    /// Sau khi hiện, bắt đầu đếm ngược kiên nhẫn ngay lập tức (không có animation).
     /// </summary>
     /// <param name="data">Dữ liệu khách hàng (avatar, thời gian kiên nhẫn...).</param>
     /// <param name="orderedFood">Món ăn khách đang order (hiển thị lên bong bóng).</param>
     public void SetupCustomer(CustomerData data, FoodData orderedFood)
+    {
+        ShowCustomer(data, orderedFood, true);
+    }
+
+    /// <summary>
+    /// SINH KHÁCH MỚI KÈM HIỆU ỨNG DI CHUYỂN (SLIDE-IN).
+    /// - Hiện slot nhưng CHƯA bắt đầu đếm ngược kiên nhẫn.
+    /// - Chạy Coroutine AnimateSlideIn(): khách trượt mượt từ rìa màn hình vào đúng vị trí slot.
+    /// - Chỉ sau khi di chuyển hoàn tất mới gọi StartPatienceTimer().
+    /// - Đây là API công khai để GameManager / CustomerSpawner gọi mỗi khi sinh khách mới.
+    /// </summary>
+    /// <param name="data">Dữ liệu khách hàng cần sinh (không được null).</param>
+    public void SpawnCustomerWithAnimation(CustomerData data)
+    {
+        if (data == null)
+        {
+            ClearSlot();
+            return;
+        }
+
+        // Hiện slot nhưng chưa đếm ngược (startPatience = false).
+        ShowCustomer(data, data.requiredFood, false);
+
+        // Chạy hiệu ứng trượt vào.
+        StartCoroutine(AnimateSlideIn());
+    }
+
+    /// <summary>
+    /// Helper dùng chung: bật toàn bộ UI của Slot và gán dữ liệu khách.
+    /// </summary>
+    /// <param name="data">Dữ liệu khách hàng.</param>
+    /// <param name="orderedFood">Món ăn khách đang order.</param>
+    /// <param name="startPatience">true nếu bắt đầu đếm ngược ngay; false nếu chờ animation xong.</param>
+    private void ShowCustomer(CustomerData data, FoodData orderedFood, bool startPatience)
     {
         if (data == null)
         {
@@ -163,11 +192,7 @@ public class CustomerSlotUI : MonoBehaviour
         this.orderedFood = orderedFood;
         hasCustomer = true;
 
-        // 3. Lấy thời gian chờ đếm ngược từ CustomerData.
-        maxPatience = Mathf.Max(1f, data.maxPatienceTime);
-        currentPatience = maxPatience;
-
-        // 4. Hiển thị Avatar khách.
+        // 3. Hiển thị Avatar khách.
         if (avatarImage != null)
         {
             avatarImage.gameObject.SetActive(true);
@@ -177,7 +202,7 @@ public class CustomerSlotUI : MonoBehaviour
             }
         }
 
-        // 5. Hiển thị Order Bubble & Icon món ăn.
+        // 4. Hiển thị Order Bubble & Icon món ăn.
         if (orderedFood != null)
         {
             if (orderBubble != null) orderBubble.SetActive(true);
@@ -193,13 +218,109 @@ public class CustomerSlotUI : MonoBehaviour
             if (orderBubble != null) orderBubble.SetActive(false);
         }
 
-        // 6. Reset thanh kiên nhẫn: đầy 100%, màu xanh, bật enabled.
-        if (patienceBar != null)
+        // 5. Bắt đầu thanh kiên nhẫn (chỉ khi không dùng animation / animation đã hoàn tất).
+        if (startPatience)
         {
-            patienceBar.gameObject.SetActive(true);
-            patienceBar.enabled = true;
-            patienceBar.color = greenColor;
-            patienceBar.fillAmount = 1f;
+            StartPatienceTimer(data.maxPatienceTime);
+        }
+    }
+
+    /// <summary>
+    /// COROUTINE DI CHUYỂN KHÁCH VÀO SLOT.
+    /// - Điểm bắt đầu: nằm ngoài rìa màn hình (lệch theo hướng slideFromLeft).
+    /// - Điểm đích: vị trí anchoredPosition hiện tại của slot (giữ nguyên layout).
+    /// - Dùng Vector2.Lerp + Mathf.SmoothStep để chuyển động mượt (không cần plugin ngoài).
+    /// - Sau khi hoàn tất: bắt đầu thanh kiên nhẫn.
+    /// </summary>
+    private IEnumerator AnimateSlideIn()
+    {
+        if (rectTransform == null)
+        {
+            rectTransform = GetComponent<RectTransform>();
+        }
+
+        // Nếu không có RectTransform → không thể trượt, cứ bắt đầu đếm ngược ngay.
+        if (rectTransform == null)
+        {
+            if (currentCustomerData != null)
+            {
+                StartPatienceTimer(currentCustomerData.maxPatienceTime);
+            }
+            yield break;
+        }
+
+        isAnimating = true;
+
+        // Vị trí đích = vị trí hiện tại của slot trên Canvas.
+        Vector2 target = rectTransform.anchoredPosition;
+
+        // Khoảng lệch để đưa slot ra ngoài rìa Canvas (rộng + lề an toàn).
+        float canvasWidth = rectTransform.rect.width > 0
+            ? rectTransform.rect.width * 2f + 200f
+            : 1000f;
+
+        // Điểm bắt đầu: nằm lệch ra ngoài rìa trái hoặc phải.
+        Vector2 start = target;
+        start.x += slideFromLeft ? -canvasWidth : canvasWidth;
+
+        // Đặt slot ở điểm bắt đầu (ngoài màn hình).
+        rectTransform.anchoredPosition = start;
+
+        // Chạy hiệu ứng trượt trong moveDuration giây.
+        float elapsed = 0f;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+
+            // t trong [0,1]; SmoothStep làm chuyển động nhanh dần rồi chậm dần (mượt).
+            float t = Mathf.Clamp01(elapsed / moveDuration);
+            float smooth = Mathf.SmoothStep(0f, 1f, t);
+
+            rectTransform.anchoredPosition = Vector2.Lerp(start, target, smooth);
+
+            yield return null;
+        }
+
+        // Gắn chính xác về vị trí đích (tránh lệch vài px cuối).
+        rectTransform.anchoredPosition = target;
+
+        isAnimating = false;
+
+        // Sau khi khách đã vào đúng vị trí slot → mới bắt đầu đếm ngược kiên nhẫn.
+        if (currentCustomerData != null)
+        {
+            StartPatienceTimer(currentCustomerData.maxPatienceTime);
+        }
+    }
+
+    /// <summary>
+    /// BẮT ĐẦU THANH KIÊN NHẪN: Reset thời gian & cấu hình Slider về 100% đầy, màu xanh lá.
+    /// </summary>
+    /// <param name="duration">Tổng thời gian chờ (giây).</param>
+    public void StartPatienceTimer(float duration)
+    {
+        // Null-check: không có Slider thì bỏ qua phần UI (vẫn chạy logic timeout).
+        if (patienceSlider == null)
+        {
+            Debug.LogWarning("CustomerSlotUI.StartPatienceTimer: patienceSlider chưa được gán trong Inspector.", this);
+        }
+
+        // Cấu hình thời gian.
+        patienceDuration = Mathf.Max(0.01f, duration);
+        currentPatience = patienceDuration;
+
+        // Cấu hình Slider: min 0, max 1, giá trị ban đầu = 1 (100% đầy).
+        if (patienceSlider != null)
+        {
+            patienceSlider.minValue = 0f;
+            patienceSlider.maxValue = 1f;
+            patienceSlider.value = 1f;
+        }
+
+        // Đặt màu ban đầu cho Fill là xanh lá (kiên nhẫn 100%).
+        if (fillImage != null)
+        {
+            fillImage.color = greenColor;
         }
     }
 
@@ -319,20 +440,31 @@ public class CustomerSlotUI : MonoBehaviour
     /// DỌN SLOT KHI KHÁCH RỜI ĐI / DỰNG TRẢ MÓN.
     /// - Reset trạng thái.
     /// - Dừng đếm ngược kiên nhẫn (Update sẽ bỏ qua vì hasCustomer = false).
+    /// - Reset Slider về 100% đầy + màu xanh (chống đếm ngược/chớp nháy bị treo).
     /// - Ẩn TOÀN BỘ GameObject cha để không còn khung nền trắng rác trên màn hình.
     /// </summary>
-    public void ClearSlot()
+public void ClearSlot()
     {
+        // Dừng mọi coroutine (đặc biệt là AnimateSlideIn) và reset cờ đang trượt
+        // để tránh lỗi khi slot bị ẩn giữa chừng animation.
+        StopAllCoroutines();
+        isAnimating = false;
+
         // Reset trạng thái.
         hasCustomer = false;
         currentCustomerData = null;
         orderedFood = null;
 
-        // Reset thanh kiên nhẫn về trạng thái nghỉ (chống đếm ngược/chớp nháy bị treo).
-        if (patienceBar != null)
+        // Reset Slider về 100% đầy.
+        if (patienceSlider != null)
         {
-            patienceBar.fillAmount = 1f;
-            patienceBar.enabled = false;
+            patienceSlider.value = 1f;
+        }
+
+        // Reset màu Fill về xanh lá.
+        if (fillImage != null)
+        {
+            fillImage.color = greenColor;
         }
 
         // Ẩn toàn bộ slot (cả khung nền trắng) để không còn rác trên màn hình.
