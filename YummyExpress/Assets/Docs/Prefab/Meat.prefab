@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &8762374678076656794
+--- !u!1 &4401504796145802785
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,12 +8,13 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5390056516494922593}
-  - component: {fileID: 4102028096977848457}
-  - component: {fileID: 4321920324731431206}
-  - component: {fileID: 6138941569655218682}
-  - component: {fileID: -6991545820399069581}
-  - component: {fileID: -3099676889975901353}
+  - component: {fileID: 2781478425991843646}
+  - component: {fileID: 3233670397460094579}
+  - component: {fileID: 7629154209237700776}
+  - component: {fileID: -1736807113689912249}
+  - component: {fileID: 399945042057717458}
+  - component: {fileID: -1868932819066204093}
+  - component: {fileID: 7990284827728031264}
   m_Layer: 5
   m_Name: Meat
   m_TagString: Untagged
@@ -21,13 +22,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &5390056516494922593
+--- !u!224 &2781478425991843646
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8762374678076656794}
+  m_GameObject: {fileID: 4401504796145802785}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -37,24 +38,24 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -909, y: -602}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &4102028096977848457
+--- !u!222 &3233670397460094579
 CanvasRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8762374678076656794}
+  m_GameObject: {fileID: 4401504796145802785}
   m_CullTransparentMesh: 1
---- !u!114 &4321920324731431206
+--- !u!114 &7629154209237700776
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8762374678076656794}
+  m_GameObject: {fileID: 4401504796145802785}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
@@ -78,13 +79,43 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &6138941569655218682
+--- !u!114 &-1736807113689912249
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8762374678076656794}
+  m_GameObject: {fileID: 4401504796145802785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb25030fbf3bc504295ec8eaba03a57b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentState: 0
+  rawSprite: {fileID: 21300000, guid: a106a8239640c9d4cae176e6f7fc9ede, type: 3}
+  cookedSprite: {fileID: 21300000, guid: 47d09eb8e9fb99c4b8fa9d95b03897ae, type: 3}
+  burntSprite: {fileID: 21300000, guid: 59297d8c40a4e594fa146832c3442513, type: 3}
+--- !u!114 &399945042057717458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4401504796145802785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4d4cf8f9a1ff354494b1983f6819908, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cookTime: 4
+  burnTime: 4
+--- !u!114 &-1868932819066204093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4401504796145802785}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
@@ -118,11 +149,11 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 4321920324731431206}
+  m_TargetGraphic: {fileID: 7629154209237700776}
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: -3099676889975901353}
+      - m_Target: {fileID: 7990284827728031264}
         m_TargetAssemblyTypeName: MeatController, Assembly-CSharp
         m_MethodName: OnClick
         m_Mode: 1
@@ -134,33 +165,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &-6991545820399069581
+--- !u!114 &7990284827728031264
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8762374678076656794}
+  m_GameObject: {fileID: 4401504796145802785}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9fb00325e7320c49b1e7e83856ee26a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  currentState: 0
-  cookTime: 3
-  burnTime: 2
-  rawSprite: {fileID: 21300000, guid: a106a8239640c9d4cae176e6f7fc9ede, type: 3}
-  cookedSprite: {fileID: 21300000, guid: 47d09eb8e9fb99c4b8fa9d95b03897ae, type: 3}
-  burntSprite: {fileID: 21300000, guid: 59297d8c40a4e594fa146832c3442513, type: 3}
---- !u!114 &-3099676889975901353
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8762374678076656794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 842626e3d8e9ef94f94edb73aabdea29, type: 3}
+  m_Script: {fileID: 11500000, guid: 520a8ad90f3239f4596802c50fdeda25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

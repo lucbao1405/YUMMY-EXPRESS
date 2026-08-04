@@ -5,21 +5,27 @@ public class BreadSpawner : MonoBehaviour
     public GameObject bottomBreadPrefab;
     public GameObject topBreadPrefab;
 
-    public void SpawnBread()
+    public void OnBreadButtonClick()
     {
-        // Chưa có ổ dưới → tạo ổ dưới
+        // Lần 1: tạo ổ dưới
         if (!PlateManager.Instance.HasBottomBread())
         {
-            GameObject bread = Instantiate(bottomBreadPrefab);
-            PlateManager.Instance.PlaceBottomBread(bread);
+            GameObject bottom = Instantiate(bottomBreadPrefab);
+            PlateManager.Instance.PlaceBottomBread(bottom);
             return;
         }
 
-        // Đã có ổ dưới và đủ điều kiện → tạo ổ trên
-        if (PlateManager.Instance.CanPlaceTopBread())
+        // Lần 2: tạo ổ trên
+        if (!PlateManager.Instance.HasTopBread())
         {
-            GameObject topBread = Instantiate(topBreadPrefab);
-            PlateManager.Instance.PlaceTopBread(topBread);
+            if (!PlateManager.Instance.CanPlaceTopBread())
+            {
+                Debug.Log("Need meat and vegetable before placing top bread");
+                return;
+            }
+
+            GameObject top = Instantiate(topBreadPrefab);
+            PlateManager.Instance.PlaceTopBread(top);
         }
     }
 }
