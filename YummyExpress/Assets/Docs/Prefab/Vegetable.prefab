@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5822185708701717409}
   - component: {fileID: 6439137901717130941}
   - component: {fileID: 1124424635583647990}
+  - component: {fileID: 2115739360963516351}
   m_Layer: 5
   m_Name: Vegetable
   m_TagString: Untagged
@@ -75,3 +76,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2115739360963516351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2155093240282662928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fc9774671e19940980ee6fd5791753, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
