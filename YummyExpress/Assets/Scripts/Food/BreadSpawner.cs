@@ -7,7 +7,11 @@ public class BreadSpawner : MonoBehaviour
 
     public void OnBreadButtonClick()
     {
-        // Lần 1: tạo ổ dưới
+        // Đã có món hoàn chỉnh trên đĩa thì không cho đặt thêm bánh
+        if (PlateManager.Instance.HasCompletedFood())
+            return;
+
+        // Lần 1: đặt ổ dưới
         if (!PlateManager.Instance.HasBottomBread())
         {
             GameObject bottom = Instantiate(bottomBreadPrefab);
@@ -15,7 +19,7 @@ public class BreadSpawner : MonoBehaviour
             return;
         }
 
-        // Lần 2: tạo ổ trên
+        // Lần 2: đặt ổ trên (chỉ khi đã có thịt và rau)
         if (!PlateManager.Instance.HasTopBread())
         {
             if (!PlateManager.Instance.CanPlaceTopBread())

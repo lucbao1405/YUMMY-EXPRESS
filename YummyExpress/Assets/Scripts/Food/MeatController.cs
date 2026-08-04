@@ -11,30 +11,36 @@ public class MeatController : MonoBehaviour
 
     public void OnClick()
     {
-        // Chỉ lấy khi đã chín
+        // Chỉ cho lấy khi thịt đã chín
         if (food.currentState != FoodState.Cooked)
             return;
 
-        // Phải có ổ dưới trước
+        // Phải có ổ bánh dưới
         if (!PlateManager.Instance.HasBottomBread())
-        {
-            Debug.Log("Place bottom bread first");
             return;
-        }
 
         // Đĩa đã có thịt
         if (PlateManager.Instance.HasMeat())
             return;
 
-        // Giải phóng Grill
-        GrillStation.Instance.ClearGrill();
+        // Đĩa đã có bánh mì hoàn chỉnh
+        if (PlateManager.Instance.HasCompletedFood())
+            return;
+
+        // Báo cho Spawner biết thịt đã được lấy
+        GetComponent<SpawnedIngredient>()?.NotifyTaken();
+
+        // Giải phóng vỉ nướng
+        if (GrillStation.Instance != null)
+            GrillStation.Instance.ClearGrill();
 
         // Dừng quá trình nấu
         CookingProcess cooking = GetComponent<CookingProcess>();
         if (cooking != null)
             cooking.StopCooking();
 
-        // Chuyển thịt lên đĩa
+        // Đặt thịt lên đĩa
         PlateManager.Instance.PlaceMeat(gameObject);
     }
+
 }

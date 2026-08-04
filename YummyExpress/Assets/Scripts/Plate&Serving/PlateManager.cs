@@ -23,7 +23,8 @@ public class PlateManager : MonoBehaviour
     private GameObject vegetable;
     private GameObject topBread;
 
-    private bool completed = false;
+    // Món hoàn chỉnh đang nằm trên đĩa
+    private FoodData currentFood;
 
     private void Awake()
     {
@@ -39,7 +40,7 @@ public class PlateManager : MonoBehaviour
 
     public void PlaceBottomBread(GameObject bread)
     {
-        if (bottomBread != null)
+        if (bottomBread != null || currentFood != null)
             return;
 
         bottomBread = bread;
@@ -55,7 +56,7 @@ public class PlateManager : MonoBehaviour
 
     public void PlaceMeat(GameObject meatObj)
     {
-        if (meat != null)
+        if (bottomBread == null || meat != null || currentFood != null)
             return;
 
         meat = meatObj;
@@ -71,7 +72,7 @@ public class PlateManager : MonoBehaviour
 
     public void PlaceVegetable(GameObject vegObj)
     {
-        if (vegetable != null)
+        if (bottomBread == null || vegetable != null || currentFood != null)
             return;
 
         vegetable = vegObj;
@@ -88,9 +89,10 @@ public class PlateManager : MonoBehaviour
     public bool CanPlaceTopBread()
     {
         return bottomBread != null &&
-               meat != null &&
-               vegetable != null &&
-               topBread == null;
+            meat != null &&
+            vegetable != null &&
+            topBread == null &&
+            currentFood == null;
     }
 
     public void PlaceTopBread(GameObject bread)
@@ -108,11 +110,7 @@ public class PlateManager : MonoBehaviour
 
     private void CompleteBanhMi()
     {
-        if (completed)
-            return;
-
-        completed = true;
-
+        // Xóa các nguyên liệu
         if (bottomBread != null) Destroy(bottomBread);
         if (meat != null) Destroy(meat);
         if (vegetable != null) Destroy(vegetable);
@@ -123,10 +121,29 @@ public class PlateManager : MonoBehaviour
         vegetable = null;
         topBread = null;
 
+        // Hiện ảnh bánh mì hoàn chỉnh
         if (completedBanhMiImage != null && banhMiFoodData != null)
         {
             completedBanhMiImage.sprite = banhMiFoodData.foodIcon;
             completedBanhMiImage.gameObject.SetActive(true);
+        }
+
+        // Lưu món hoàn chỉnh
+        currentFood = banhMiFoodData;
+    }
+
+    // ================= Giao món =================
+
+    public void OnPlateClick()
+    {
+        if (currentFood == null)
+            return;
+
+        bool success = GameManager.Instance.ServeFoodToCustomer(currentFood, this);
+
+        if (!success)
+        {
+            Debug.Log("No customer needs this food");
         }
     }
 
@@ -144,7 +161,7 @@ public class PlateManager : MonoBehaviour
         vegetable = null;
         topBread = null;
 
-        completed = false;
+        currentFood = null;
 
         if (completedBanhMiImage != null)
         {
@@ -163,4 +180,10 @@ public class PlateManager : MonoBehaviour
         rt.anchoredPosition = Vector2.zero;
         rt.localScale = Vector3.one;
     }
+
+    public bool HasCompletedFood()
+    {
+        return currentFood != null;
+    }
+
 }
