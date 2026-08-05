@@ -8,8 +8,6 @@ public RectTransform bottomBreadPoint;
 public RectTransform meatPoint;
 public RectTransform vegetablePoint;
 public RectTransform topBreadPoint;
-public RectTransform completeBanhMiPoint;
-
 
 [Header("Food Data")]
 public FoodData banhMiFoodData;
@@ -23,13 +21,13 @@ private GameObject vegetable;
 private GameObject topBread;
 
 private FoodData currentFood;
+private bool isServing = false;
 
-// ================= Bottom Bread =================
-
-public bool HasBottomBread()
-{
-    return bottomBread != null;
-}
+public bool HasBottomBread() => bottomBread != null;
+public bool HasMeat() => meat != null;
+public bool HasVegetable() => vegetable != null;
+public bool HasTopBread() => topBread != null;
+public bool HasCompletedFood() => currentFood != null;
 
 public bool PlaceBottomBread(GameObject bread)
 {
@@ -39,13 +37,6 @@ public bool PlaceBottomBread(GameObject bread)
     bottomBread = bread;
     Attach(bread, bottomBreadPoint);
     return true;
-}
-
-// ================= Meat =================
-
-public bool HasMeat()
-{
-    return meat != null;
 }
 
 public bool PlaceMeat(GameObject meatObj)
@@ -58,13 +49,6 @@ public bool PlaceMeat(GameObject meatObj)
     return true;
 }
 
-// ================= Vegetable =================
-
-public bool HasVegetable()
-{
-    return vegetable != null;
-}
-
 public bool PlaceVegetable(GameObject vegObj)
 {
     if (bottomBread == null || vegetable != null || currentFood != null)
@@ -73,13 +57,6 @@ public bool PlaceVegetable(GameObject vegObj)
     vegetable = vegObj;
     Attach(vegObj, vegetablePoint);
     return true;
-}
-
-// ================= Top Bread =================
-
-public bool HasTopBread()
-{
-    return topBread != null;
 }
 
 public bool CanPlaceTopBread()
@@ -103,8 +80,6 @@ public bool PlaceTopBread(GameObject bread)
     return true;
 }
 
-// ================= Complete =================
-
 private void CompleteBanhMi()
 {
     if (bottomBread != null) Destroy(bottomBread);
@@ -117,7 +92,7 @@ private void CompleteBanhMi()
     vegetable = null;
     topBread = null;
 
-    if (completedBanhMiImage != null && banhMiFoodData != null)
+    if (completedBanhMiImage != null)
     {
         completedBanhMiImage.sprite = banhMiFoodData.foodIcon;
         completedBanhMiImage.gameObject.SetActive(true);
@@ -126,22 +101,20 @@ private void CompleteBanhMi()
     currentFood = banhMiFoodData;
 }
 
-// ================= Giao món =================
-
 public void OnPlateClick()
 {
-    if (currentFood == null)
+    if (isServing || currentFood == null)
         return;
+
+    isServing = true;
 
     bool success = GameManager.Instance.ServeFoodToCustomer(currentFood, this);
 
     if (success)
-    {
         ClearPlate();
-    }
-}
 
-// ================= Clear =================
+    isServing = false;
+}
 
 public void ClearPlate()
 {
@@ -164,20 +137,27 @@ public void ClearPlate()
     }
 }
 
-// ================= Helper =================
-
 private void Attach(GameObject obj, RectTransform point)
 {
+    if (point == null)
+    {
+        Debug.LogError($"Missing plate point on {name}");
+        return;
+    }
+
     obj.transform.SetParent(point, false);
 
     RectTransform rt = obj.GetComponent<RectTransform>();
-    rt.anchoredPosition = Vector2.zero;
-    rt.localScale = Vector3.one;
-}
-
-public bool HasCompletedFood()
-{
-    return currentFood != null;
+    if (rt != null)
+    {
+        rt.anchoredPosition = Vector2.zero;
+        rt.localScale = Vector3.one;
+    }
+    else
+    {
+        obj.transform.localPosition = Vector3.zero;
+        obj.transform.localScale = Vector3.one;
+    }
 }
 
 }
