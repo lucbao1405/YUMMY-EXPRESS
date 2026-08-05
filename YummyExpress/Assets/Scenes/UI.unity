@@ -657,7 +657,6 @@ MonoBehaviour:
   meatPoint: {fileID: 1194918263}
   vegetablePoint: {fileID: 2049245965}
   topBreadPoint: {fileID: 1282622415}
-  completeBanhMiPoint: {fileID: 713616445}
   banhMiFoodData: {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
   completedBanhMiImage: {fileID: 340081812}
 --- !u!1 &139993223
@@ -2242,8 +2241,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 11.9302, y: -3.7}
-  m_SizeDelta: {x: 32.789, y: 124.8441}
+  m_AnchoredPosition: {x: 6.4, y: -3.5}
+  m_SizeDelta: {x: 17.4526, y: 124.8441}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &475802441
 MonoBehaviour:
@@ -3032,7 +3031,6 @@ MonoBehaviour:
   meatPoint: {fileID: 867499261}
   vegetablePoint: {fileID: 492859335}
   topBreadPoint: {fileID: 1893502738}
-  completeBanhMiPoint: {fileID: 470400479}
   banhMiFoodData: {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
   completedBanhMiImage: {fileID: 382589330}
 --- !u!1 &598933046
@@ -3646,10 +3644,10 @@ RectTransform:
   - {fileID: 484495684}
   m_Father: {fileID: 1344992289}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 276.308, y: 0}
+  m_SizeDelta: {x: 276.308, y: 856.649}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &689630474
 MonoBehaviour:
@@ -6251,10 +6249,10 @@ RectTransform:
   - {fileID: 1504077477}
   m_Father: {fileID: 1344992289}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 138.154, y: -428.3245}
+  m_SizeDelta: {x: 276.308, y: 856.649}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1188053175
 MonoBehaviour:
@@ -7026,7 +7024,6 @@ MonoBehaviour:
   meatPoint: {fileID: 1283524714}
   vegetablePoint: {fileID: 767464957}
   topBreadPoint: {fileID: 1682557074}
-  completeBanhMiPoint: {fileID: 559177967}
   banhMiFoodData: {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
   completedBanhMiImage: {fileID: 778692326}
 --- !u!1 &1282622414
@@ -7495,7 +7492,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1344992288}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
   m_Name: 
@@ -8167,10 +8164,10 @@ RectTransform:
   - {fileID: 194324689}
   m_Father: {fileID: 1344992289}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 690.77, y: -428.3245}
+  m_SizeDelta: {x: 276.308, y: 856.649}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1434089497
 MonoBehaviour:
@@ -8730,8 +8727,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 11.6546, y: -3.8125}
-  m_SizeDelta: {x: 31.0836, y: 134.1649}
+  m_AnchoredPosition: {x: 4.9655, y: -3.8125}
+  m_SizeDelta: {x: 17.7055, y: 134.1649}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1497781328
 MonoBehaviour:
@@ -9706,8 +9703,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 11.9302, y: -3.7}
-  m_SizeDelta: {x: 32.789, y: 124.8441}
+  m_AnchoredPosition: {x: 5.5, y: -3.6999998}
+  m_SizeDelta: {x: 15.2916, y: 124.8441}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1620769226
 MonoBehaviour:
