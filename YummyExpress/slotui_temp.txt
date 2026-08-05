@@ -1,0 +1,15 @@
+=== CustomerSlotUI at L2815 ===
+  L2818: avatarImage: {fileID: 791052861}
+  L2819: orderBubble: {fileID: 1446298517}
+  L2820: orderItemImage: {fileID: 1226784250}
+  L2821: patienceBar: {fileID: 1620769226}
+=== CustomerSlotUI at L4841 ===
+  L4844: avatarImage: {fileID: 945592349}
+  L4845: orderBubble: {fileID: 602988804}
+  L4846: orderItemImage: {fileID: 1328046404}
+  L4847: patienceBar: {fileID: 721629104}
+=== CustomerSlotUI at L6369 ===
+  L6372: avatarImage: {fileID: 921301082}
+  L6373: orderBubble: {fileID: 1201703755}
+  L6374: orderItemImage: {fileID: 1041177803}
+  L6375: patienceBar: {fileID: 1497781328}
