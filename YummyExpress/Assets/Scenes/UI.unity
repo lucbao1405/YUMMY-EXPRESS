@@ -1191,6 +1191,7 @@ RectTransform:
   - {fileID: 1929251950}
   - {fileID: 595804646}
   - {fileID: 1720488026}
+  - {fileID: 1652273513}
   - {fileID: 1811950485}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -9893,7 +9894,7 @@ GameObject:
   - component: {fileID: 1652273514}
   m_Layer: 5
   m_Name: Rac
-  m_TagString: Untagged
+  m_TagString: Trash
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9905,16 +9906,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1652273512}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1720488026}
+  m_Father: {fileID: 160153503}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -425, y: -305}
+  m_AnchoredPosition: {x: -425, y: -1163}
   m_SizeDelta: {x: 400, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1652273514
@@ -10298,7 +10299,6 @@ RectTransform:
   - {fileID: 1705648771}
   - {fileID: 2011550830}
   - {fileID: 906405100}
-  - {fileID: 1652273513}
   m_Father: {fileID: 160153503}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
