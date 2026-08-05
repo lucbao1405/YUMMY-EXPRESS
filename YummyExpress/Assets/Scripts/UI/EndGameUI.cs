@@ -43,10 +43,12 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     [SerializeField] private TextMeshProUGUI lyDoThuaText;
     [Tooltip("Text_Meo_Tip (TextMeshProUGUI) — gợi ý (tùy chọn)")]
     [SerializeField] private TextMeshProUGUI meoTipText;
-    [Tooltip("Btn_ChoiLai (Button) — chơi lại màn hiện tại")]
+[Tooltip("Btn_ChoiLai (Button) — chơi lại màn hiện tại")]
     [SerializeField] private Button btnReplay;
     [Tooltip("Btn_CuuTro (Button) — quay về MainMenu (tùy chọn)")]
     [SerializeField] private Button btnMainMenu;
+    [Tooltip("Btn_Home (Button) trong Lose_Popup — quay về MainMenu")]
+    [SerializeField] private Button btnHomeLose;
 
     [Header("=== Sự kiện ngoài ===")]
     [Tooltip("Gán callback xử lý khi người chơi xem QC (VD: AdsManager). Nếu null, nút XemVideo chỉ log cảnh báo.")]
@@ -90,8 +92,11 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
         // Bật Popup_Overlay (cha) để đảm bảo UI hiển thị
         gameObject.SetActive(true);
 
-        SetPanelActive(losePopup, false);
+SetPanelActive(losePopup, false);
         SetPanelActive(winPopup, true);
+
+        // Căn giữa popup trên màn hình (bỏ qua giá trị y lệch trong scene).
+        CenterPopup(winPopup);
 
         SetStars(stars);
         UpdateThongKe(totalGold, null, null);
@@ -115,8 +120,11 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
         // Bật Popup_Overlay (cha) để đảm bảo UI hiển thị
         gameObject.SetActive(true);
 
-        SetPanelActive(winPopup, false);
+SetPanelActive(winPopup, false);
         SetPanelActive(losePopup, true);
+
+        // Căn giữa popup trên màn hình (bỏ qua giá trị y lệch trong scene).
+        CenterPopup(losePopup);
 
         // Null-check an toàn cho text lý do thua
         if (lyDoThuaText != null)
@@ -194,7 +202,7 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
         else
         {
             Debug.LogWarning("EndGameUI: Không còn Scene tiếp theo! Quay về MainMenu.");
-            SceneManager.LoadScene("MainMenu");
+            TryLoadScene("Mainmenu");
         }
     }
 
@@ -216,7 +224,30 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     public void OnMainMenuClicked()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenu");
+        TryLoadScene("Mainmenu");
+    }
+
+    private bool TryLoadScene(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+        {
+            Debug.LogWarning("EndGameUI.TryLoadScene: sceneName trống.");
+            return false;
+        }
+
+        for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+        {
+            string path = SceneUtility.GetScenePathByBuildIndex(i);
+            string name = System.IO.Path.GetFileNameWithoutExtension(path);
+            if (string.Equals(name, sceneName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                SceneManager.LoadScene(name);
+                return true;
+            }
+        }
+
+        Debug.LogWarning($"EndGameUI: Scene '{sceneName}' chưa được thêm vào Build Settings hoặc sai chính tả. Hãy kiểm tra File > Build Settings.", this);
+        return false;
     }
 
     // =====================================================================
@@ -242,8 +273,13 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
         else
             Debug.LogWarning("EndGameUI: btnXemVideo (Btn_XemVideo) chưa được gán.", this);
 
-        if (btnMainMenu != null)
+if (btnMainMenu != null)
             btnMainMenu.onClick.AddListener(OnMainMenuClicked);
+
+        if (btnHomeLose != null)
+            btnHomeLose.onClick.AddListener(OnMainMenuClicked);
+        else
+            Debug.LogWarning("EndGameUI: btnHomeLose (Btn_Home trong Lose_Popup) chưa được gán.", this);
 
         listenersReady = true;
     }
@@ -337,22 +373,48 @@ if (bangThongKe == null && win != null) bangThongKe = FindChild(win, "Bang_Thong
         if (meoTipText == null && khuVucLyDoThua != null)
             meoTipText = GetComponentInChild<TextMeshProUGUI>(khuVucLyDoThua.transform, "Text_Meo_Tip");
 
-        if (btnReplay == null && lose != null)
+if (btnReplay == null && lose != null)
             btnReplay = GetComponentInChild<Button>(lose, "Btn/Btn_ChoiLai");
         if (btnMainMenu == null && lose != null)
             btnMainMenu = GetComponentInChild<Button>(lose, "Btn/Btn_CuuTro");
+
+        // Nút HOME trong Lose_Popup (Btn_Home) — quay về MainMenu.
+        // Fallback tìm theo tên "Btn_Home" nếu chưa được kéo thả.
+        if (btnHomeLose == null && lose != null)
+            btnHomeLose = GetComponentInChild<Button>(lose, "Btn_Home");
+        if (btnHomeLose == null && win != null)
+            btnHomeLose = GetComponentInChild<Button>(win, "Btn_Home");
     }
 
     // =====================================================================
     //  UTILITY
     // =====================================================================
 
-    private static void SetPanelActive(GameObject panel, bool active)
+private static void SetPanelActive(GameObject panel, bool active)
     {
         if (panel != null)
         {
             panel.SetActive(active);
         }
+    }
+
+    /// <summary>
+    /// Căn giữa popup trên màn hình.
+    /// Popup có AnchorMin/Max = (0.5, 0.5) nên chỉ cần đặt anchoredPosition về (0,0)
+    /// để tâm popup trùng tâm Canvas (bỏ qua giá trị y lệch dương trong scene).
+    /// Không đổi pivot/scale/anchor của popup.
+    /// </summary>
+    private static void CenterPopup(GameObject panel)
+    {
+        if (panel == null) return;
+
+        RectTransform rt = panel.GetComponent<RectTransform>();
+        if (rt == null) return;
+
+        Vector2 pos = rt.anchoredPosition;
+        pos.x = 0f;
+        pos.y = 0f;
+        rt.anchoredPosition = pos;
     }
 
     /// <summary>Tìm GameObject con theo đường dẫn (path) từ parent.</summary>

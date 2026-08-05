@@ -1,0 +1,6 @@
+GO=194324688 Patience_Bar (line 1234)
+GO=484495683 Patience_Bar (line 1747)
+GO=979381963 Fill Area (line 4202)
+GO=1291358989 Fill Area (line 5376)
+GO=1538757990 Fill Area (line 7123)
+GO=1707457906 Patience_Bar (line 7796)
