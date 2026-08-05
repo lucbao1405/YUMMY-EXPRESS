@@ -6,10 +6,22 @@ public class MeatSpawner : MonoBehaviour
 
     public void SpawnMeat()
     {
-        if (GrillStation.Instance.IsOccupied())
-            return;
-
         GameObject meat = Instantiate(meatPrefab);
-        GrillStation.Instance.PlaceMeat(meat);
+
+        if (GrillManager.Instance.PlaceMeat(meat))
+        {
+            // Bắt đầu nấu ngay khi đặt lên vỉ
+            CookingProcess cooking = meat.GetComponent<CookingProcess>();
+            if (cooking != null)
+            {
+                cooking.StartCooking();
+            }
+        }
+        else
+        {
+            Destroy(meat);
+            Debug.Log("All grills are occupied");
+        }
     }
+
 }

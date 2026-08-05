@@ -3,44 +3,46 @@ using UnityEngine;
 public class MeatController : MonoBehaviour
 {
     private CookableFood food;
+    private GrillStation currentGrill;
 
     private void Awake()
     {
         food = GetComponent<CookableFood>();
     }
 
+    public void SetGrill(GrillStation grill)
+    {
+        currentGrill = grill;
+    }
+
     public void OnClick()
     {
-        // Chỉ cho lấy khi thịt đã chín
+        if (food == null)
+            return;
+
         if (food.currentState != FoodState.Cooked)
             return;
 
-        // Phải có ổ bánh dưới
-        if (!PlateManager.Instance.HasBottomBread())
-            return;
+        PlateManager plate = PlateManagerSystem.Instance.GetPlateForMeat();
 
-        // Đĩa đã có thịt
-        if (PlateManager.Instance.HasMeat())
+        if (plate == null)
+        {
+            Debug.Log("No plate available for meat");
             return;
+        }
 
-        // Đĩa đã có bánh mì hoàn chỉnh
-        if (PlateManager.Instance.HasCompletedFood())
-            return;
-
-        // Báo cho Spawner biết thịt đã được lấy
         GetComponent<SpawnedIngredient>()?.NotifyTaken();
 
-        // Giải phóng vỉ nướng
-        if (GrillStation.Instance != null)
-            GrillStation.Instance.ClearGrill();
+        if (currentGrill != null)
+        {
+            currentGrill.ClearGrill();
+            currentGrill = null;
+        }
 
-        // Dừng quá trình nấu
         CookingProcess cooking = GetComponent<CookingProcess>();
         if (cooking != null)
             cooking.StopCooking();
 
-        // Đặt thịt lên đĩa
-        PlateManager.Instance.PlaceMeat(gameObject);
+        plate.PlaceMeat(gameObject);
     }
-
 }
