@@ -2,26 +2,42 @@ using UnityEngine;
 
 public class MeatSpawner : MonoBehaviour
 {
-    public GameObject meatPrefab;
+public GameObject meatPrefab;
 
-    public void SpawnMeat()
+private bool isSpawning = false;
+
+public void SpawnMeat()
+{
+    if (isSpawning)
+        return;
+
+    isSpawning = true;
+
+    GrillStation grill = GrillManager.Instance.GetAvailableGrill();
+
+    if (grill == null)
     {
-        GameObject meat = Instantiate(meatPrefab);
+        isSpawning = false;
+        Debug.Log("All grills are occupied");
+        return;
+    }
 
-        if (GrillManager.Instance.PlaceMeat(meat))
+    GameObject meat = Instantiate(meatPrefab);
+
+    if (grill.PlaceMeat(meat))
+    {
+        CookingProcess cooking = meat.GetComponent<CookingProcess>();
+        if (cooking != null)
         {
-            // Bắt đầu nấu ngay khi đặt lên vỉ
-            CookingProcess cooking = meat.GetComponent<CookingProcess>();
-            if (cooking != null)
-            {
-                cooking.StartCooking();
-            }
-        }
-        else
-        {
-            Destroy(meat);
-            Debug.Log("All grills are occupied");
+            cooking.StartCooking();
         }
     }
+    else
+    {
+        Destroy(meat);
+    }
+
+    isSpawning = false;
+}
 
 }
