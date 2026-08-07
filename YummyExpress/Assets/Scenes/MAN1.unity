@@ -2550,19 +2550,19 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 490180561}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 8.08588}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 832247501}
   - {fileID: 1148390379}
   - {fileID: 451114423}
-  m_Father: {fileID: 1546555105}
+  m_Father: {fileID: 1922866994}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -99, y: 36}
+  m_AnchoredPosition: {x: 47.246094, y: -175.58044}
   m_SizeDelta: {x: 700, y: 245}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &490180563
@@ -3226,6 +3226,7 @@ GameObject:
   - component: {fileID: 608045592}
   - component: {fileID: 608045591}
   - component: {fileID: 608045594}
+  - component: {fileID: 608045595}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -3263,9 +3264,10 @@ MonoBehaviour:
   timerText: {fileID: 1886536804}
   goldProgressText: {fileID: 609304598}
   levelConfigs:
-  - targetGold: 100
+  - targetGold: 200
     levelTimeLimit: 90
     maxLostCustomers: 3
+    totalCustomers: 8
   customerManager: {fileID: 608045593}
 --- !u!114 &608045591
 MonoBehaviour:
@@ -3321,6 +3323,21 @@ MonoBehaviour:
   - recipeName: 
     resultFood: {fileID: 0}
     requiredIngredients: []
+--- !u!114 &608045595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 608045587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 128320b0aedb80c44a36a24c0993d84e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  totalCustomersInLevel: 8
+  comboTimeout: 3.5
+  starDisplay: {fileID: 0}
 --- !u!1 &609304596
 GameObject:
   m_ObjectHideFlags: 0
@@ -4799,19 +4816,19 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 900330369}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 8.08588}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 22609551}
   - {fileID: 1364994130}
   - {fileID: 1770003906}
-  m_Father: {fileID: 1546555105}
+  m_Father: {fileID: 1922866994}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -99, y: 36}
+  m_AnchoredPosition: {x: 47.246094, y: -175.58044}
   m_SizeDelta: {x: 700, y: 245}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &900330371
@@ -9412,9 +9429,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1922866994}
   - {fileID: 666498492}
-  - {fileID: 490180562}
-  - {fileID: 900330370}
   - {fileID: 25606269}
   - {fileID: 731507368}
   - {fileID: 1117111432}
@@ -10672,18 +10688,14 @@ MonoBehaviour:
   winPopup: {fileID: 1546555104}
   losePopup: {fileID: 479131353}
   iconWin: {fileID: 666498491}
-  khung3Sao: {fileID: 900330369}
-  starImages:
-  - {fileID: 22609553}
-  - {fileID: 1364994132}
-  - {fileID: 1770003908}
+  starDisplay: {fileID: 0}
   bangThongKe: {fileID: 25606268}
   thongKeGoldText: {fileID: 1509051663}
   thongKeCustomerText: {fileID: 1970867046}
   thongKeComboText: {fileID: 473949563}
   btnTiepTuc: {fileID: 731507369}
   btnXemVideo: {fileID: 764497911}
-  iconLose: {fileID: 0}
+  iconLose: {fileID: 1382999179}
   khuVucLyDoThua: {fileID: 926334313}
   lyDoThuaText: {fileID: 1973936943}
   meoTipText: {fileID: 1359215231}
@@ -11193,6 +11205,55 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1922866992
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1922866994}
+  - component: {fileID: 1922866993}
+  m_Layer: 0
+  m_Name: Hien thi sao
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1922866993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1922866992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f3a91c04b2d4d6a9e5c8f21b3a4d5e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  starImages: []
+  yellowStarSprite: {fileID: 21300000, guid: 7c532f4d59291614f929e205233d01d7, type: 3}
+  grayStarSprite: {fileID: 21300000, guid: f18ec8a5b535bd74eb0323f097da3294, type: 3}
+--- !u!4 &1922866994
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1922866992}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -146.2461, y: 211.58044, z: -8.08588}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 900330370}
+  - {fileID: 490180562}
+  m_Father: {fileID: 1546555105}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1929251949
 GameObject:
   m_ObjectHideFlags: 0

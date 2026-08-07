@@ -32,10 +32,25 @@ foreach (var slot in slots)
                 continue;
             }
 
+// Lấy % kiên nhẫn còn lại của khách TRƯỚC khi dọn slot (để tính điểm sao).
+            float remainingPatience = slot.RemainingPatiencePercent;
+
             int earnedGold = slot.OnReceiveFood();
             if (earnedGold <= 0)
             {
                 earnedGold = food.price;
+            }
+
+            // ⚠️ GHI NHẬN ĐIỂM TRƯỚC KHI CỘNG VÀNG.
+            // EconomyManager.AddGold() có thể kích hoạt sự kiện OnGoldChanged → EndGame() ngay trong frame này.
+            // Nếu gọi ScoreManager.OnCustomerServed SAU AddGold, EndGame sẽ đọc được count thiếu khách vừa phục vụ.
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Instance.OnCustomerServed(remainingPatience);
+            }
+            else
+            {
+                Debug.LogWarning("ServingManager: ScoreManager.Instance chưa được tạo → không tính điểm sao.");
             }
 
             if (EconomyManager.Instance != null)

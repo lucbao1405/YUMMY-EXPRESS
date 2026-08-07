@@ -26,9 +26,17 @@ public class CustomerSlotUI : MonoBehaviour
     private CustomerData currentCustomerData;
     private FoodData orderedFood;
 
-    public bool IsOccupied => hasCustomer;
+public bool IsOccupied => hasCustomer;
     public CustomerData CurrentData => currentCustomerData;
     public FoodData RequiredFood => currentCustomerData != null ? currentCustomerData.requiredFood : null;
+
+    /// <summary>
+    /// Tỷ lệ kiên nhẫn còn lại của khách hiện tại (0.0f - 1.0f).
+    /// Dùng để truyền vào ScoreManager.OnCustomerServed() để tính điểm sao.
+    /// </summary>
+    public float RemainingPatiencePercent => hasCustomer && patienceDuration > 0f
+        ? Mathf.Clamp01(currentPatience / patienceDuration)
+        : 0f;
 
     private float currentPatience;
     private float patienceDuration = 1f;
