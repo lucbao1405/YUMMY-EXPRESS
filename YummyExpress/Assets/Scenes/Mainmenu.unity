@@ -239,7 +239,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a99be0a682f5fc43bcea964cb51ad53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameplaySceneName: UI
+  gameplaySceneName: MAN1
   playButton: {fileID: 945046704}
   quitButton: {fileID: 894664407}
 --- !u!1 &519420028

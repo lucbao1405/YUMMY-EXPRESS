@@ -51,9 +51,15 @@ public class CustomerManager : SingletonBehaviour<CustomerManager>
         }
     }
 
-    public void NotifyCustomerLeft()
+public void NotifyCustomerLeft()
     {
         lostCustomerCount++;
+
+        // Thông báo cho ScoreManager ghi nhận khách giận bỏ về (-3 điểm, tăng angryCustomersCount, reset combo).
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.OnCustomerLeftAngry();
+        }
 
         if (GameManager.Instance != null)
         {

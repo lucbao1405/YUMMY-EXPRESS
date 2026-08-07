@@ -15,6 +15,10 @@ public class LevelConfig
     public int targetGold = 100;
     public float levelTimeLimit = 60f;
     public int maxLostCustomers = 3;
+
+    [Header("Khách hàng")]
+    [Tooltip("Tổng số khách dự kiến trong level (dùng để tính Tỷ lệ hài lòng / số sao).")]
+    public int totalCustomers = 8;
 }
 
 public class GameManager : SingletonBehaviour<GameManager>
@@ -54,7 +58,7 @@ private int currentLevelIndex = 0;
 
     #region Unity Lifecycle
 
-    private void Start()
+private void Start()
     {
         if (customerManager == null)
         {
@@ -66,7 +70,9 @@ private int currentLevelIndex = 0;
             EconomyManager.Instance.OnGoldChanged += OnGoldChanged;
         }
 
-        StartLevel(0);
+        // YUM-242: Khi vào game lần sau, load level đã mở khóa gần nhất từ SaveSystem.
+        int savedLevel = SaveSystem.GetCurrentLevel(); // 1-based
+        StartLevel(savedLevel - 1); // Đổi về 0-based cho StartLevel
     }
 
     protected override void OnDestroy()
@@ -108,7 +114,7 @@ private int currentLevelIndex = 0;
 
     #region Level Flow
 
-    public void StartLevel(int levelIndex)
+public void StartLevel(int levelIndex)
     {
         if (levelConfigs == null || levelConfigs.Length == 0)
         {
@@ -123,6 +129,13 @@ Time.timeScale = 1f;
         currentState = GameState.Playing;
         timeRemaining = currentLevel.levelTimeLimit;
         servedCustomerCount = 0;
+
+// Khởi tạo lại dữ liệu chấm điểm cho ScoreManager.
+        // totalCustomersInLevel = Số khách dự kiến trong level (từ LevelConfig).
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.InitializeLevel(currentLevel.totalCustomers);
+        }
 
         if (customerManager != null)
         {
@@ -182,23 +195,48 @@ Time.timeScale = 1f;
 
         Time.timeScale = 0f;
 
-        EndGameUI endGameUIRef = GetEndGameUI();
+EndGameUI endGameUIRef = GetEndGameUI();
         if (endGameUIRef != null)
         {
-            if (isWin)
+if (isWin)
             {
                 int totalGold = EconomyManager.Instance != null ? EconomyManager.Instance.CurrentGold : 0;
-                int stars = CalculateStars();
-                endGameUIRef.ShowWinPopup(stars, totalGold);
+
+                // Tính sao dựa trên ĐỘ HÀI LÒNG (ScoreManager) thay vì thời gian.
+                int stars = ScoreManager.Instance != null
+                    ? ScoreManager.Instance.CalculateAndDisplayStars()
+                    : 1;
+
+                // Lấy số khách đã phục vụ / tổng khách để hiển thị bảng thống kê.
+                int served = ScoreManager.Instance != null ? ScoreManager.Instance.GetServedCustomers() : servedCustomerCount;
+                int totalC = ScoreManager.Instance != null ? ScoreManager.Instance.TotalCustomersInLevel : (currentLevel != null ? currentLevel.totalCustomers : 0);
+                int maxCombo = ScoreManager.Instance != null ? ScoreManager.Instance.GetMaxCombo() : 0;
+
+                // Lưu số sao vào SaveSystem (0-based levelIndex).
+                // SaveLevelStars tự giữ số sao cao nhất: bestStars = Max(savedStars, currentStars).
+                SaveSystem.SaveLevelStars(currentLevelIndex, stars);
+
+                // YUM-242: Tự động mở khóa level kế tiếp (nếu chưa mở).
+                // Chỉ khi THẮNG mới mở khóa level sau → người chơi vào qua Btn_TiepTuc trong EndGame UI.
+                SaveSystem.UnlockNextLevel(currentLevelIndex + 1);
+
+                // Hiển thị Win_Popup với đầy đủ: sao, vàng, khách, combo.
+                endGameUIRef.ShowWinPopup(stars, totalGold, served, totalC, maxCombo);
             }
-            else
+else
             {
+                // Thua màn → hiển thị 0 sao rõ ràng trên Lose popup (tránh để lại sao cũ).
+                if (ScoreManager.Instance != null)
+                {
+                    ScoreManager.Instance.DisplayNoStars();
+                }
+
                 endGameUIRef.ShowLosePopup(GetLoseReason());
             }
         }
     }
 
-    private EndGameUI GetEndGameUI()
+private EndGameUI GetEndGameUI()
     {
         if (EndGameUI.Instance != null)
         {
@@ -206,19 +244,6 @@ Time.timeScale = 1f;
         }
 
         return FindObjectOfType<EndGameUI>(true);
-    }
-
-    private int CalculateStars()
-    {
-        if (currentLevel == null || currentLevel.levelTimeLimit <= 0f)
-        {
-            return 1;
-        }
-
-        float ratio = timeRemaining / currentLevel.levelTimeLimit;
-        if (ratio >= 0.8f) return 3;
-        if (ratio >= 0.5f) return 2;
-        return 1;
     }
 
     private string GetLoseReason()
@@ -325,14 +350,39 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
                 continue;
             }
 
-            // 1. Cho khách nhận món và hoàn tất order → trả về tiền thưởng.
+// 0. Lấy % kiên nhẫn còn lại của khách TRƯỚC khi dọn slot (để tính điểm sao).
+            //    LƯU Ý: phải đọc TRƯỚC vì OnReceiveFood() gọi ClearSlot() → hasCustomer = false.
+            float remainingPatience = slot.RemainingPatiencePercent;
+
+// 1. Cho khách nhận món và hoàn tất order → trả về tiền thưởng.
             int earnedGold = slot.OnReceiveFood();
             if (earnedGold <= 0)
             {
                 earnedGold = servedFood.price;
             }
 
-            // 2. Cộng tiền thưởng vào EconomyManager.
+            // 2. ⚠️ CẬP NHẬT ĐIỂM TRƯỚC KHI CỘNG VÀNG.
+            //    Quan trọng: AddGold() bên dưới kích hoạt OnGoldChanged → CheckWinCondition(),
+            //    có thể gọi EndGame(true) NGAY trong cùng frame này.
+            //    Nếu increment servedCustomerCount / ScoreManager.OnCustomerServed SAU AddGold,
+            //    EndGame sẽ đọc được giá trị cũ (thiếu khách vừa phục vụ) → sai số sao & sai "x/y".
+            //    → Do đó phải tăng count + ghi nhận điểm TRƯỚC khi AddGold.
+
+            // 2.1 Tăng số khách đã phục vụ thành công.
+            servedCustomerCount++;
+
+            // 2.2 Thông báo cho ScoreManager tính điểm sao nhỏ dựa trên % kiên nhẫn còn lại.
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Instance.OnCustomerServed(remainingPatience);
+            }
+            else
+            {
+                Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: ScoreManager.Instance chưa được tạo → không tính điểm sao.", this);
+            }
+
+            // 3. Cộng tiền thưởng vào EconomyManager.
+            //    (Có thể kích hoạt CheckWinCondition → EndGame(true) ở đây, nhưng count đã đồng bộ rồi).
             if (EconomyManager.Instance != null)
             {
                 EconomyManager.Instance.AddGold(earnedGold);
@@ -341,9 +391,6 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             {
                 Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: EconomyManager.Instance chưa được khởi tạo → không cộng được vàng.", this);
             }
-
-            // 3. Tăng số khách đã phục vụ thành công.
-            servedCustomerCount++;
 
             // 4. Dọn đĩa nguồn về trạng thái trống (chỉ khi thành công).
             if (sourcePlate != null)
