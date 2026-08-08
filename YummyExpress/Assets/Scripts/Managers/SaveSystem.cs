@@ -54,11 +54,14 @@ public static class SaveSystem
     /// Tên file lưu trữ dữ liệu.
     /// </summary>
     private const string FileName = "player_data.json";
+    private const string BackupFileName = "player_data.json.bak";
 
     /// <summary>
     /// Đường dẫn đầy đủ tới file lưu dữ liệu JSON.
     /// </summary>
     private static string SavePath => Path.Combine(Application.persistentDataPath, FileName);
+    private static string BackupPath => Path.Combine(Application.persistentDataPath, BackupFileName);
+    private static string TempPath => SavePath + ".tmp";
 
     #endregion
 
@@ -72,23 +75,40 @@ public static class SaveSystem
     {
         try
         {
-            // Null-check: nếu data null, tạo dữ liệu mặc định để tránh lỗi.
-            if (data == null)
-            {
-                data = CreateDefaultData();
-            }
-
-            // Serialize đối tượng PlayerData thành chuỗi JSON.
+            data = NormalizeData(data);
             string json = JsonUtility.ToJson(data, true);
-
-            // Ghi chuỗi JSON xuống file (tự tạo thư mục nếu chưa có).
             string directory = Path.GetDirectoryName(SavePath);
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
 
-            File.WriteAllText(SavePath, json);
+            // Ghi file tạm trước, sau đó thay thế file chính và giữ một bản sao lưu.
+            // Nhờ vậy việc tắt app giữa lúc lưu không làm mất toàn bộ tiến trình.
+            File.WriteAllText(TempPath, json);
+            if (File.Exists(SavePath))
+            {
+                try
+                {
+                    File.Replace(TempPath, SavePath, BackupPath);
+                }
+                catch (PlatformNotSupportedException)
+                {
+                    File.Copy(SavePath, BackupPath, true);
+                    File.Copy(TempPath, SavePath, true);
+                    File.Delete(TempPath);
+                }
+                catch (IOException)
+                {
+                    File.Copy(SavePath, BackupPath, true);
+                    File.Copy(TempPath, SavePath, true);
+                    File.Delete(TempPath);
+                }
+            }
+            else
+            {
+                File.Move(TempPath, SavePath);
+            }
 
             Debug.Log($"<color=green>[SAVE SYSTEM] Lưu dữ liệu thành công → {SavePath}</color>");
         }
@@ -105,42 +125,25 @@ public static class SaveSystem
     /// <returns>Dữ liệu người chơi đã load (không bao giờ trả về null).</returns>
     public static PlayerData LoadData()
     {
-        try
+        if (TryLoadData(SavePath, out PlayerData data))
         {
-            // Nếu file chưa tồn tại → tạo dữ liệu mặc định và lưu lại.
-            if (!File.Exists(SavePath))
-            {
-                Debug.LogWarning($"[SAVE SYSTEM] File '{SavePath}' chưa tồn tại → Tạo dữ liệu mặc định.");
-                PlayerData defaultData = CreateDefaultData();
-                SaveData(defaultData);
-                return defaultData;
-            }
-
-            // Đọc toàn bộ nội dung file JSON.
-            string json = File.ReadAllText(SavePath);
-
-            // Deserialize chuỗi JSON thành đối tượng PlayerData.
-            PlayerData data = JsonUtility.FromJson<PlayerData>(json);
-
-            // Nếu deserialize thất bại (chuỗi rỗng/không hợp lệ) → trả về dữ liệu mặc định.
-            if (data == null)
-            {
-                Debug.LogError("[SAVE SYSTEM] Dữ liệu JSON không hợp lệ → Tạo dữ liệu mặc định.");
-                data = CreateDefaultData();
-                SaveData(data);
-                return data;
-            }
-
+            data = NormalizeData(data);
             Debug.Log($"<color=cyan>[SAVE SYSTEM] Đọc dữ liệu thành công: Level {data.currentLevel}, {data.totalGold} vàng, {data.unlockedLevels.Count} level mở khóa.</color>");
             return data;
         }
-        catch (Exception e)
-        {
-            Debug.LogError($"[SAVE SYSTEM] Lỗi khi đọc dữ liệu: {e.Message}\n{e.StackTrace}");
 
-            // Nếu có lỗi, trả về dữ liệu mặc định để game không bị treo.
-            return CreateDefaultData();
+        if (TryLoadData(BackupPath, out data))
+        {
+            Debug.LogWarning("[SAVE SYSTEM] File lưu chính không hợp lệ. Đã khôi phục từ bản sao lưu.");
+            data = NormalizeData(data);
+            SaveData(data);
+            return data;
         }
+
+        Debug.LogWarning("[SAVE SYSTEM] Chưa có dữ liệu hợp lệ. Tạo tiến trình mới.");
+        data = CreateDefaultData();
+        SaveData(data);
+        return data;
     }
 
     /// <summary>
@@ -188,6 +191,17 @@ public static class SaveSystem
     /// <param name="currentLevel">Level hiện tại người chơi vừa hoàn thành (1-based).</param>
     public static void UnlockNextLevel(int currentLevel)
     {
+        UnlockNextLevel(currentLevel, int.MaxValue);
+    }
+
+    /// <summary>Mở khóa level tiếp theo, nhưng không tạo progress cho level không tồn tại.</summary>
+    public static void UnlockNextLevel(int currentLevel, int totalLevelCount)
+    {
+        if (currentLevel < 1 || currentLevel >= totalLevelCount)
+        {
+            return;
+        }
+
         PlayerData data = LoadData();
 
         int nextLevel = currentLevel + 1;
@@ -295,7 +309,75 @@ public static class SaveSystem
             Debug.LogWarning("[SAVE SYSTEM] Đã xóa file dữ liệu cũ.");
         }
 
+        if (File.Exists(BackupPath))
+        {
+            File.Delete(BackupPath);
+        }
+
         SaveData(CreateDefaultData());
+    }
+
+    private static bool TryLoadData(string path, out PlayerData data)
+    {
+        data = null;
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            string json = File.ReadAllText(path);
+            data = JsonUtility.FromJson<PlayerData>(json);
+            return data != null;
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[SAVE SYSTEM] Không thể đọc '{path}': {e.Message}");
+            return false;
+        }
+    }
+
+    private static PlayerData NormalizeData(PlayerData data)
+    {
+        if (data == null)
+        {
+            return CreateDefaultData();
+        }
+
+        data.currentLevel = Mathf.Max(1, data.currentLevel);
+        data.totalGold = Mathf.Max(0, data.totalGold);
+
+        if (data.unlockedLevels == null)
+        {
+            data.unlockedLevels = new List<int>();
+        }
+
+        data.unlockedLevels.RemoveAll(level => level < 1);
+        if (!data.unlockedLevels.Contains(1))
+        {
+            data.unlockedLevels.Add(1);
+        }
+        data.unlockedLevels.Sort();
+
+        if (data.levelStars == null)
+        {
+            data.levelStars = new List<LevelProgress>();
+        }
+
+        for (int i = data.levelStars.Count - 1; i >= 0; i--)
+        {
+            LevelProgress progress = data.levelStars[i];
+            if (progress == null || progress.levelIndex < 0)
+            {
+                data.levelStars.RemoveAt(i);
+                continue;
+            }
+
+            progress.stars = Mathf.Clamp(progress.stars, 0, 3);
+        }
+
+        return data;
     }
 
     #endregion

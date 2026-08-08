@@ -44,9 +44,10 @@ foreach (var slot in slots)
             // ⚠️ GHI NHẬN ĐIỂM TRƯỚC KHI CỘNG VÀNG.
             // EconomyManager.AddGold() có thể kích hoạt sự kiện OnGoldChanged → EndGame() ngay trong frame này.
             // Nếu gọi ScoreManager.OnCustomerServed SAU AddGold, EndGame sẽ đọc được count thiếu khách vừa phục vụ.
+            int comboGold = 0;
             if (ScoreManager.Instance != null)
             {
-                ScoreManager.Instance.OnCustomerServed(remainingPatience);
+                comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
             }
             else
             {
@@ -55,7 +56,7 @@ foreach (var slot in slots)
 
             if (EconomyManager.Instance != null)
             {
-                EconomyManager.Instance.AddGold(earnedGold);
+                EconomyManager.Instance.AddGold(earnedGold + comboGold);
             }
             else
             {

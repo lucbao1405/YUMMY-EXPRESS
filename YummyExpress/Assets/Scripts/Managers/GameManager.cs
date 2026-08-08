@@ -218,7 +218,7 @@ if (isWin)
 
                 // YUM-242: Tự động mở khóa level kế tiếp (nếu chưa mở).
                 // Chỉ khi THẮNG mới mở khóa level sau → người chơi vào qua Btn_TiepTuc trong EndGame UI.
-                SaveSystem.UnlockNextLevel(currentLevelIndex + 1);
+                SaveSystem.UnlockNextLevel(currentLevelIndex + 1, levelConfigs.Length);
 
                 // Hiển thị Win_Popup với đầy đủ: sao, vàng, khách, combo.
                 endGameUIRef.ShowWinPopup(stars, totalGold, served, totalC, maxCombo);
@@ -372,9 +372,10 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             servedCustomerCount++;
 
             // 2.2 Thông báo cho ScoreManager tính điểm sao nhỏ dựa trên % kiên nhẫn còn lại.
+            int comboGold = 0;
             if (ScoreManager.Instance != null)
             {
-                ScoreManager.Instance.OnCustomerServed(remainingPatience);
+                comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
             }
             else
             {
@@ -385,7 +386,7 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             //    (Có thể kích hoạt CheckWinCondition → EndGame(true) ở đây, nhưng count đã đồng bộ rồi).
             if (EconomyManager.Instance != null)
             {
-                EconomyManager.Instance.AddGold(earnedGold);
+                EconomyManager.Instance.AddGold(earnedGold + comboGold);
             }
             else
             {
