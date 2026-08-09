@@ -26,6 +26,8 @@ public class ScoreManager : MonoBehaviour
 
     [Header("Combo Config")]
     [SerializeField] private float comboTimeout = 3.5f;
+    [SerializeField, Min(2)] private int comboSatisfactionStartsAt = 2;
+    [SerializeField, Range(0, 2)] private int comboSatisfactionBonus = 1;
     private float lastServeTime = -999f;
     private int currentCombo = 0;
     private int maxCombo = 0;
@@ -102,7 +104,7 @@ public class ScoreManager : MonoBehaviour
     /// Tính điểm nền theo % kiên nhẫn + điểm thưởng theo Combo.
     /// </summary>
     /// <param name="patiencePercent">% kiên nhẫn còn lại của khách (0.0 - 1.0).</param>
-    public void OnCustomerServed(float patiencePercent)
+    public int OnCustomerServed(float patiencePercent)
     {
         servedCustomersCount++;
 
@@ -126,21 +128,24 @@ public class ScoreManager : MonoBehaviour
         lastServeTime = Time.time;
         if (currentCombo > maxCombo) maxCombo = currentCombo;
 
-        // 3. Cộng điểm kiên nhẫn thuần cho khách vừa phục vụ (chỉ tính ĐỘ HÀI LÒNG).
-        //    KHÔNG cộng điểm thưởng combo vào totalEarnedPoints/totalCustomers*3 nữa,
-        //    để "độ hài lòng trung bình" phản ánh ĐÚNG chất lượng phục vụ (kiên nhẫn).
-        totalEarnedPoints += basePoints;
+        // 3. Combo liên tục là tín hiệu tích cực, nhưng điểm hài lòng của một khách
+        //    luôn nằm trong [0, 3] để mẫu số totalCustomers * 3 vẫn chính xác.
+        int comboPoints = currentCombo >= comboSatisfactionStartsAt
+            ? comboSatisfactionBonus
+            : 0;
+        int customerSatisfaction = Mathf.Clamp(basePoints + comboPoints, 0, 3);
+        totalEarnedPoints += customerSatisfaction;
 
-        // 4. Combo → thưởng VÀNG +5/10/15/20 (kinh tế), không thêm điểm sao.
+        // 4. Combo → thưởng VÀNG +5/10/15/20. GameManager cộng khoản này cùng
+        //    tiền món ăn để sự kiện OnGoldChanged không thể kết thúc màn giữa chừng.
         //    x1 → +5, x2 → +10, x3 → +15, x4+ → +20.
         int comboGold = 5 * Mathf.Min(currentCombo, 4);
-        if (comboGold > 0 && EconomyManager.Instance != null)
-        {
-            EconomyManager.Instance.AddGold(comboGold);
-        }
 
-        Debug.Log($"<color=green>[SCORE] Served! Patience: {patiencePercent * 100:F0}% (+{basePoints}pts) | " +
+        Debug.Log($"<color=green>[SCORE] Served! Patience: {patiencePercent * 100:F0}% " +
+                  $"(+{basePoints} patience, +{comboPoints} combo = {customerSatisfaction} satisfaction) | " +
                   $"Combo: x{currentCombo} (+{comboGold} vàng) | Total Points: {totalEarnedPoints}</color>");
+
+        return comboGold;
     }
 
     /// <summary>
@@ -170,7 +175,7 @@ public class ScoreManager : MonoBehaviour
     public int CalculateAndDisplayStars()
     {
         // Tính sao dựa trên Tỷ lệ phục vụ khách (KHÔNG BAO GIỜ trả về 0 khi Win).
-        int finalStars = CalculateStars(TotalEarnedPoints, servedCustomersCount, totalCustomersInLevel);
+        int finalStars = CalculateStars();
 
         Debug.Log($"<color=green>[SCORE FINAL] Earned: {totalEarnedPoints}/{totalCustomersInLevel * 3} | " +
                   $"Khách: {servedCustomersCount}/{totalCustomersInLevel} | Angry: {angryCustomersCount} | Stars: {finalStars}</color>");
@@ -210,12 +215,12 @@ public class ScoreManager : MonoBehaviour
     /// <param name="servedCustomers">Số khách đã phục vụ thành công.</param>
     /// <param name="totalCustomers">Tổng số khách dự kiến trong level.</param>
     /// <returns>Số sao (1, 2 hoặc 3).</returns>
-    public int CalculateStars(int totalGoldEarned, int servedCustomers, int totalCustomers)
+    public int CalculateStars()
     {
-        if (totalCustomers <= 0) return 1;
+        if (totalCustomersInLevel <= 0) return 1;
 
         // Độ hài lòng trung bình = điểm kiên nhẫn thuần / tối đa có thể (mỗi khách tối đa 3 điểm).
-        float satisfaction = Mathf.Clamp01((float)totalEarnedPoints / (totalCustomers * 3));
+        float satisfaction = Mathf.Clamp01((float)totalEarnedPoints / (totalCustomersInLevel * 3));
 
         // ≥ 70% → 3 Sao.
         if (satisfaction >= 0.70f)
@@ -229,6 +234,12 @@ public class ScoreManager : MonoBehaviour
         }
         // < 40% → 1 Sao.
         return 1;
+    }
+
+    // Giữ API cũ cho các UnityEvent hoặc script đã gọi hàm trước đây.
+    public int CalculateStars(int totalGoldEarned, int servedCustomers, int totalCustomers)
+    {
+        return CalculateStars();
     }
 
     /// <summary>Trả về Combo cao nhất đạt được trong màn (hiển thị trên Popup Win).</summary>

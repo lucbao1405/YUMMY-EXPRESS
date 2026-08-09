@@ -192,8 +192,8 @@ public class StarDisplayController : MonoBehaviour
             return;
         }
 
-        // Đảm bảo khi Level Cleared thì số sao luôn từ 1 đến 3
-        starCount = Mathf.Clamp(starCount, 1, 3);
+        // 0 sao dùng cho trạng thái thua; 1-3 sao dùng cho trạng thái thắng.
+        starCount = Mathf.Clamp(starCount, 0, 3);
 
         // Đổi Sprite từ trái sang phải theo số sao
         for (int i = 0; i < 3; i++)

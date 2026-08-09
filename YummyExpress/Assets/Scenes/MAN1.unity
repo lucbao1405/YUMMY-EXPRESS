@@ -2316,7 +2316,6 @@ RectTransform:
   - {fileID: 926334314}
   - {fileID: 904403269}
   - {fileID: 1330515005}
-  - {fileID: 1081245305}
   m_Father: {fileID: 1811950485}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -3225,7 +3224,6 @@ GameObject:
   - component: {fileID: 608045593}
   - component: {fileID: 608045592}
   - component: {fileID: 608045591}
-  - component: {fileID: 608045594}
   - component: {fileID: 608045595}
   m_Layer: 0
   m_Name: GameManager
@@ -3268,6 +3266,14 @@ MonoBehaviour:
     levelTimeLimit: 90
     maxLostCustomers: 3
     totalCustomers: 8
+  - targetGold: 220
+    levelTimeLimit: 90
+    maxLostCustomers: 3
+    totalCustomers: 8
+  - targetGold: 260
+    levelTimeLimit: 100
+    maxLostCustomers: 3
+    totalCustomers: 8
   customerManager: {fileID: 608045593}
 --- !u!114 &608045591
 MonoBehaviour:
@@ -3307,22 +3313,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   customerSpawner: {fileID: 1344992291}
---- !u!114 &608045594
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 608045587}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c4d5e6f708192a3b4c5d6e7f8091a2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  recipes:
-  - recipeName: 
-    resultFood: {fileID: 0}
-    requiredIngredients: []
 --- !u!114 &608045595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3337,7 +3327,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   totalCustomersInLevel: 8
   comboTimeout: 3.5
-  starDisplay: {fileID: 0}
+  comboSatisfactionStartsAt: 2
+  comboSatisfactionBonus: 1
+  starDisplay: {fileID: 1922866993}
 --- !u!1 &609304596
 GameObject:
   m_ObjectHideFlags: 0
@@ -3719,6 +3711,8 @@ MonoBehaviour:
   avatarImage: {fileID: 791052861}
   orderBubble: {fileID: 1446298517}
   orderItemImage: {fileID: 1226784250}
+  orderItemImages:
+  - {fileID: 1226784250}
   patienceSlider: {fileID: 484495685}
   fillImage: {fileID: 1620769226}
   moveDuration: 0.6
@@ -4888,6 +4882,7 @@ RectTransform:
   m_Children:
   - {fileID: 764497910}
   - {fileID: 73140863}
+  - {fileID: 1081245305}
   m_Father: {fileID: 479131354}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -5593,17 +5588,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1081245304}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1778900743}
-  m_Father: {fileID: 479131354}
+  m_Father: {fileID: 904403269}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -291, y: -672}
+  m_AnchoredPosition: {x: -291, y: -112}
   m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1081245306
@@ -6324,6 +6319,8 @@ MonoBehaviour:
   avatarImage: {fileID: 945592349}
   orderBubble: {fileID: 602988804}
   orderItemImage: {fileID: 1328046404}
+  orderItemImages:
+  - {fileID: 1328046404}
   patienceSlider: {fileID: 1504077478}
   fillImage: {fileID: 475802441}
   moveDuration: 0.6
@@ -7548,6 +7545,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a79e40ee435ccd54199a97a315a3a3df, type: 2}
   - {fileID: 11400000, guid: 7c8f123adb081b14e8d34a0fc3c0e278, type: 2}
   - {fileID: 11400000, guid: 94ac00199642b3f4d805f13d273af740, type: 2}
+  levelSpawnProfiles:
+  - level: 2
+    customers:
+    - {fileID: 11400000, guid: 1f20f6b0bdcf40bda99f4f43ce2d73d7, type: 2}
+  - level: 3
+    customers:
+    - {fileID: 11400000, guid: 3ef97f4bfe514b9d8ae930795e915a34, type: 2}
   minSpawnDelay: 3
   maxSpawnDelay: 6
 --- !u!1 &1359215229
@@ -8239,6 +8243,8 @@ MonoBehaviour:
   avatarImage: {fileID: 921301082}
   orderBubble: {fileID: 1201703755}
   orderItemImage: {fileID: 1041177803}
+  orderItemImages:
+  - {fileID: 1041177803}
   patienceSlider: {fileID: 194324690}
   fillImage: {fileID: 1497781328}
   moveDuration: 0.6
@@ -10688,7 +10694,7 @@ MonoBehaviour:
   winPopup: {fileID: 1546555104}
   losePopup: {fileID: 479131353}
   iconWin: {fileID: 666498491}
-  starDisplay: {fileID: 0}
+  starDisplay: {fileID: 1922866993}
   bangThongKe: {fileID: 25606268}
   thongKeGoldText: {fileID: 1509051663}
   thongKeCustomerText: {fileID: 1970867046}

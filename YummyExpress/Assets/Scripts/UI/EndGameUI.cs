@@ -58,6 +58,16 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     // Tránh gán listener trùng lặp khi ShowWinPopup/ShowLosePopup gọi lại.
     private bool listenersReady = false;
 
+    private void OnEnable()
+    {
+        GameManager.GameOver += OnGameOver;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.GameOver -= OnGameOver;
+    }
+
     protected override void Awake()
     {
         // BẮT BUỘC: gọi base.Awake() để SingletonBehaviour set EndGameUI.Instance.
@@ -73,6 +83,18 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     private void Start()
     {
         SetupButtons();
+    }
+
+    private void OnGameOver(GameOverData result)
+    {
+        if (result.IsWin)
+        {
+            ShowWinPopup(result.Stars, result.TotalGold, result.ServedCustomers, result.TotalCustomers, result.MaxCombo);
+        }
+        else
+        {
+            ShowLosePopup(result.LoseReason);
+        }
     }
 
     // =====================================================================

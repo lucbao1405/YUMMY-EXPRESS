@@ -8,6 +8,25 @@ public enum GameState
     Lose
 }
 
+/// <summary>Dữ liệu bất biến được phát khi một màn chơi kết thúc.</summary>
+public readonly struct GameOverData
+{
+    public readonly bool IsWin;
+    public readonly int LevelIndex;
+    public readonly int Stars;
+    public readonly int TotalGold;
+    public readonly int ServedCustomers;
+    public readonly int TotalCustomers;
+    public readonly int MaxCombo;
+    public readonly string LoseReason;
+
+    public GameOverData(bool isWin, int levelIndex, int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo, string loseReason)
+    {
+        IsWin = isWin; LevelIndex = levelIndex; Stars = stars; TotalGold = totalGold;
+        ServedCustomers = servedCustomers; TotalCustomers = totalCustomers; MaxCombo = maxCombo; LoseReason = loseReason;
+    }
+}
+
 [System.Serializable]
 public class LevelConfig
 {
@@ -23,6 +42,8 @@ public class LevelConfig
 
 public class GameManager : SingletonBehaviour<GameManager>
 {
+    /// <summary>UI và các hệ thống khác lắng nghe event này thay vì phụ thuộc trực tiếp vào GameManager.</summary>
+    public static event System.Action<GameOverData> GameOver;
     #region Fields
 
     [Header("UI References")]
@@ -125,6 +146,11 @@ public void StartLevel(int levelIndex)
         currentLevelIndex = Mathf.Clamp(levelIndex, 0, levelConfigs.Length - 1);
         currentLevel = levelConfigs[currentLevelIndex];
 
+        if (CustomerSpawner.Instance != null)
+        {
+            CustomerSpawner.Instance.ConfigureForLevel(currentLevelIndex);
+        }
+
 Time.timeScale = 1f;
         currentState = GameState.Playing;
         timeRemaining = currentLevel.levelTimeLimit;
@@ -195,10 +221,7 @@ Time.timeScale = 1f;
 
         Time.timeScale = 0f;
 
-EndGameUI endGameUIRef = GetEndGameUI();
-        if (endGameUIRef != null)
-        {
-if (isWin)
+        if (isWin)
             {
                 int totalGold = EconomyManager.Instance != null ? EconomyManager.Instance.CurrentGold : 0;
 
@@ -218,10 +241,9 @@ if (isWin)
 
                 // YUM-242: Tự động mở khóa level kế tiếp (nếu chưa mở).
                 // Chỉ khi THẮNG mới mở khóa level sau → người chơi vào qua Btn_TiepTuc trong EndGame UI.
-                SaveSystem.UnlockNextLevel(currentLevelIndex + 1);
+                SaveSystem.UnlockNextLevel(currentLevelIndex + 1, levelConfigs.Length);
 
-                // Hiển thị Win_Popup với đầy đủ: sao, vàng, khách, combo.
-                endGameUIRef.ShowWinPopup(stars, totalGold, served, totalC, maxCombo);
+                GameOver?.Invoke(new GameOverData(true, currentLevelIndex, stars, totalGold, served, totalC, maxCombo, string.Empty));
             }
 else
             {
@@ -231,9 +253,9 @@ else
                     ScoreManager.Instance.DisplayNoStars();
                 }
 
-                endGameUIRef.ShowLosePopup(GetLoseReason());
+                GameOver?.Invoke(new GameOverData(false, currentLevelIndex, 0, 0, 0,
+                    currentLevel != null ? currentLevel.totalCustomers : 0, 0, GetLoseReason()));
             }
-        }
     }
 
 private EndGameUI GetEndGameUI()
@@ -355,7 +377,8 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             float remainingPatience = slot.RemainingPatiencePercent;
 
 // 1. Cho khách nhận món và hoàn tất order → trả về tiền thưởng.
-            int earnedGold = slot.OnReceiveFood();
+            bool completesCustomerOrder = slot.RemainingOrderFoods.Count == 1;
+            int earnedGold = slot.OnReceiveFood(servedFood);
             if (earnedGold <= 0)
             {
                 earnedGold = servedFood.price;
@@ -369,14 +392,18 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             //    → Do đó phải tăng count + ghi nhận điểm TRƯỚC khi AddGold.
 
             // 2.1 Tăng số khách đã phục vụ thành công.
-            servedCustomerCount++;
+            if (completesCustomerOrder)
+            {
+                servedCustomerCount++;
+            }
 
             // 2.2 Thông báo cho ScoreManager tính điểm sao nhỏ dựa trên % kiên nhẫn còn lại.
-            if (ScoreManager.Instance != null)
+            int comboGold = 0;
+            if (completesCustomerOrder && ScoreManager.Instance != null)
             {
-                ScoreManager.Instance.OnCustomerServed(remainingPatience);
+                comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
             }
-            else
+            else if (completesCustomerOrder)
             {
                 Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: ScoreManager.Instance chưa được tạo → không tính điểm sao.", this);
             }
@@ -385,7 +412,7 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             //    (Có thể kích hoạt CheckWinCondition → EndGame(true) ở đây, nhưng count đã đồng bộ rồi).
             if (EconomyManager.Instance != null)
             {
-                EconomyManager.Instance.AddGold(earnedGold);
+                EconomyManager.Instance.AddGold(earnedGold + comboGold);
             }
             else
             {
