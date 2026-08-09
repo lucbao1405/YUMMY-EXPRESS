@@ -154,6 +154,12 @@ public static class SaveSystem
     /// <param name="stars">Số sao đạt được (từ 0 đến 3).</param>
     public static void SaveLevelStars(int levelIndex, int stars)
     {
+        if (levelIndex < 0)
+        {
+            Debug.LogWarning($"[SAVE SYSTEM] Bỏ qua levelIndex không hợp lệ: {levelIndex}.");
+            return;
+        }
+
         // Clamp số sao về phạm vi hợp lệ 0-3.
         stars = Mathf.Clamp(stars, 0, 3);
 
@@ -360,11 +366,22 @@ public static class SaveSystem
         }
         data.unlockedLevels.Sort();
 
+        // Json có thể bị sửa tay hoặc ghi dở dang; loại level trùng để dữ liệu luôn xác định.
+        for (int i = data.unlockedLevels.Count - 1; i > 0; i--)
+        {
+            if (data.unlockedLevels[i] == data.unlockedLevels[i - 1])
+            {
+                data.unlockedLevels.RemoveAt(i);
+            }
+        }
+
         if (data.levelStars == null)
         {
             data.levelStars = new List<LevelProgress>();
         }
 
+        // Gộp các bản ghi sao trùng level và giữ thành tích cao nhất.
+        Dictionary<int, int> bestStarsByLevel = new Dictionary<int, int>();
         for (int i = data.levelStars.Count - 1; i >= 0; i--)
         {
             LevelProgress progress = data.levelStars[i];
@@ -375,7 +392,24 @@ public static class SaveSystem
             }
 
             progress.stars = Mathf.Clamp(progress.stars, 0, 3);
+            if (bestStarsByLevel.TryGetValue(progress.levelIndex, out int bestStars))
+            {
+                bestStarsByLevel[progress.levelIndex] = Mathf.Max(bestStars, progress.stars);
+                data.levelStars.RemoveAt(i);
+            }
+            else
+            {
+                bestStarsByLevel.Add(progress.levelIndex, progress.stars);
+            }
         }
+
+        foreach (LevelProgress progress in data.levelStars)
+        {
+            progress.stars = bestStarsByLevel[progress.levelIndex];
+        }
+
+        // currentLevel được dùng làm level xa nhất sẽ mở lại khi vào game.
+        data.currentLevel = Mathf.Max(1, data.unlockedLevels[data.unlockedLevels.Count - 1]);
 
         return data;
     }

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,8 @@ public class CustomerSlotUI : MonoBehaviour
     [SerializeField] private Image avatarImage;
     [SerializeField] private GameObject orderBubble;
     [SerializeField] private Image orderItemImage;
+    [Tooltip("Các Image phụ để hiện đơn nhiều món. Phần tử đầu tiên là orderItemImage.")]
+    [SerializeField] private List<Image> orderItemImages = new List<Image>();
 
     [SerializeField] private Slider patienceSlider;
     [SerializeField] private Image fillImage;
@@ -25,10 +28,12 @@ public class CustomerSlotUI : MonoBehaviour
     private bool hasCustomer = false;
     private CustomerData currentCustomerData;
     private FoodData orderedFood;
+    private readonly List<FoodData> remainingOrderFoods = new List<FoodData>();
 
 public bool IsOccupied => hasCustomer;
     public CustomerData CurrentData => currentCustomerData;
-    public FoodData RequiredFood => currentCustomerData != null ? currentCustomerData.requiredFood : null;
+    public FoodData RequiredFood => remainingOrderFoods.Count > 0 ? remainingOrderFoods[0] : null;
+    public IReadOnlyList<FoodData> RemainingOrderFoods => remainingOrderFoods;
 
     /// <summary>
     /// Tỷ lệ kiên nhẫn còn lại của khách hiện tại (0.0f - 1.0f).
@@ -96,12 +101,17 @@ public bool IsOccupied => hasCustomer;
             ClearSlot();
             return;
         }
-        SetupCustomer(data, data.requiredFood);
+        SetupCustomer(data, data.GetRequiredFoods());
     }
 
     public void SetupCustomer(CustomerData data, FoodData orderedFood)
     {
-        ShowCustomer(data, orderedFood);
+        SetupCustomer(data, orderedFood != null ? new[] { orderedFood } : System.Array.Empty<FoodData>());
+    }
+
+    public void SetupCustomer(CustomerData data, IReadOnlyList<FoodData> orderedFoods)
+    {
+        ShowCustomer(data, orderedFoods);
     }
 
     public void SpawnCustomerWithAnimation(CustomerData data)
@@ -112,16 +122,24 @@ public bool IsOccupied => hasCustomer;
             return;
         }
 
-        ShowCustomer(data, data.requiredFood);
+        ShowCustomer(data, data.GetRequiredFoods());
 
         if (slideCoroutine != null) StopCoroutine(slideCoroutine);
         slideCoroutine = StartCoroutine(AnimateSlideIn());
     }
 
-    private void ShowCustomer(CustomerData data, FoodData food)
+    private void ShowCustomer(CustomerData data, IReadOnlyList<FoodData> foods)
     {
         currentCustomerData = data;
-        orderedFood = food;
+        remainingOrderFoods.Clear();
+        if (foods != null)
+        {
+            foreach (FoodData food in foods)
+            {
+                if (food != null) remainingOrderFoods.Add(food);
+            }
+        }
+        orderedFood = RequiredFood;
         hasCustomer = true;
         gameObject.SetActive(true);
 
@@ -132,23 +150,31 @@ public bool IsOccupied => hasCustomer;
             if (data.avatarSprite != null) avatarImage.sprite = data.avatarSprite;
         }
 
-        // 2. Set Order Bubble
-        if (food != null)
+        // 2. Set Order Bubble. Đơn nhiều món hiện lần lượt trên các Image đã gán.
+        if (remainingOrderFoods.Count > 0)
         {
             if (orderBubble != null) orderBubble.SetActive(true);
-            if (orderItemImage != null)
+            EnsurePrimaryOrderImage();
+            for (int i = 0; i < orderItemImages.Count; i++)
             {
-                orderItemImage.gameObject.SetActive(true);
-                orderItemImage.preserveAspect = true;
-                orderItemImage.type = Image.Type.Simple;
-                orderItemImage.sprite = food.foodIcon;
-                ConfigureOrderItemRect(orderItemImage.rectTransform);
+                Image image = orderItemImages[i];
+                if (image == null) continue;
+
+                bool hasFood = i < remainingOrderFoods.Count;
+                image.gameObject.SetActive(hasFood);
+                if (hasFood)
+                {
+                    image.preserveAspect = true;
+                    image.type = Image.Type.Simple;
+                    image.sprite = remainingOrderFoods[i].foodIcon;
+                    ConfigureOrderItemRect(image.rectTransform, i);
+                }
             }
         }
         else
         {
             if (orderBubble != null) orderBubble.SetActive(false);
-            if (orderItemImage != null) orderItemImage.gameObject.SetActive(false);
+            HideOrderImages();
         }
 
         StartPatienceTimer(data.maxPatienceTime);
@@ -190,33 +216,79 @@ public bool IsOccupied => hasCustomer;
         if (fillImage != null) fillImage.color = greenColor;
     }
 
-    private void ConfigureOrderItemRect(RectTransform rt)
+    private void EnsurePrimaryOrderImage()
+    {
+        if (orderItemImage != null && !orderItemImages.Contains(orderItemImage))
+        {
+            orderItemImages.Insert(0, orderItemImage);
+        }
+    }
+
+    private void HideOrderImages()
+    {
+        EnsurePrimaryOrderImage();
+        foreach (Image image in orderItemImages)
+        {
+            if (image != null) image.gameObject.SetActive(false);
+        }
+    }
+
+    private void ConfigureOrderItemRect(RectTransform rt, int orderIndex)
     {
         if (rt == null) return;
 
         rt.anchorMin = new Vector2(0.5f, 0.5f);
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = Vector2.zero;
+        rt.anchoredPosition = new Vector2(orderIndex * 65f, 0f);
         rt.sizeDelta = new Vector2(60f, 60f);
         rt.localScale = Vector3.one;
     }
 
     public bool IsOrdering(FoodData food)
     {
-        return hasCustomer && currentCustomerData != null && currentCustomerData.requiredFood == food;
+        return hasCustomer && food != null && remainingOrderFoods.Contains(food);
     }
 
     public bool IsWaitingFor(FoodData food) => IsOrdering(food);
 
-    public int OnReceiveFood()
+    public int OnReceiveFood(FoodData food)
     {
-        int price = (currentCustomerData != null && currentCustomerData.requiredFood != null) 
-            ? currentCustomerData.requiredFood.price 
-            : 0;
+        if (!IsOrdering(food)) return 0;
 
-        ClearSlot();
+        int price = food.price;
+        remainingOrderFoods.Remove(food);
+        orderedFood = RequiredFood;
+
+        if (remainingOrderFoods.Count == 0)
+        {
+            ClearSlot();
+        }
+        else
+        {
+            RefreshOrderImages();
+        }
         return price;
+    }
+
+    // Giữ API cũ cho các Button/UnityEvent đã được gán trước đó.
+    public int OnReceiveFood() => RequiredFood != null ? OnReceiveFood(RequiredFood) : 0;
+
+    private void RefreshOrderImages()
+    {
+        EnsurePrimaryOrderImage();
+        for (int i = 0; i < orderItemImages.Count; i++)
+        {
+            Image image = orderItemImages[i];
+            if (image == null) continue;
+            bool hasFood = i < remainingOrderFoods.Count;
+            image.gameObject.SetActive(hasFood);
+            if (hasFood)
+            {
+                image.sprite = remainingOrderFoods[i].foodIcon;
+                ConfigureOrderItemRect(image.rectTransform, i);
+            }
+        }
     }
 
     public void OnTimeout()
@@ -237,6 +309,8 @@ public bool IsOccupied => hasCustomer;
         hasCustomer = false;
         currentCustomerData = null;
         orderedFood = null;
+        remainingOrderFoods.Clear();
+        HideOrderImages();
 
         if (rectTransform != null)
         {
