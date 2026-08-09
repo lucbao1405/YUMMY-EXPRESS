@@ -56,28 +56,32 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     public System.Action onWatchAdClicked;
 
     // Tránh gán listener trùng lặp khi ShowWinPopup/ShowLosePopup gọi lại.
-    private bool listenersReady = false;
-
-    private void OnEnable()
-    {
-        GameManager.GameOver += OnGameOver;
-    }
-
-    private void OnDisable()
-    {
-        GameManager.GameOver -= OnGameOver;
-    }
+private bool listenersReady = false;
 
     protected override void Awake()
     {
         // BẮT BUỘC: gọi base.Awake() để SingletonBehaviour set EndGameUI.Instance.
         base.Awake();
 
+        // Đăng ký lắng nghe sự kiện GameOver NGAY trong Awake (thay vì OnEnable).
+        // LÝ DO: Popup_Overlay (GameObject chứa EndGameUI) bị tắt lúc bắt đầu scene,
+        // nên OnEnable/OnDisable/Start không bao giờ chạy → EndGameUI không đăng ký
+        // được sự kiện → popup không hiện khi thắng/thua. Đăng ký trong Awake đảm bảo
+        // luôn lắng nghe dù GameObject cha bị tắt.
+        GameManager.GameOver += OnGameOver;
+
         // Tự động tìm các reference theo tên (nếu chưa kéo thả) để giảm rủi ro thiếu ref.
         ResolveReferences();
 
         // Tự động ẩn cả 2 Popup khi bắt đầu Game.
         HideAllPanels();
+    }
+
+    protected override void OnDestroy()
+    {
+        // Hủy đăng ký sự kiện để tránh rò rỉ listener khi scene bị hủy.
+        GameManager.GameOver -= OnGameOver;
+        base.OnDestroy();
     }
 
     private void Start()

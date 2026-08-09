@@ -182,9 +182,16 @@ Time.timeScale = 1f;
             customerManager.ResumeSpawning();
         }
 
-        EndGameUI endGameUIRef = GetEndGameUI();
+EndGameUI endGameUIRef = GetEndGameUI();
         if (endGameUIRef != null)
         {
+            // Kích hoạt GameObject chứa EndGameUI ngay khi bắt đầu màn.
+            // LÝ DO: Popup_Overlay (GameObject chứa EndGameUI) bị tắt lúc bắt đầu scene,
+            // nên Awake()/OnEnable()/Start() không bao giờ chạy → EndGameUI không đăng ký
+            // sự kiện GameOver → popup không hiện khi thắng/thua.
+            // SetActive(true) sẽ kích hoạt Awake() → EndGameUI đăng ký GameOver và ẩn các panel.
+            // (Overlay vẫn không hiện gì vì Win_Popup/Lose_Popup bị ẩn trong HideAllPanels).
+            endGameUIRef.gameObject.SetActive(true);
             endGameUIRef.HideAllPanels();
         }
 
