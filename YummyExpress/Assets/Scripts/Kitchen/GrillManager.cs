@@ -15,7 +15,7 @@ public GrillStation GetAvailableGrill()
 {
     foreach (var grill in grills)
     {
-        if (grill != null && grill.TryReserve())
+        if (grill != null && !grill.IsOccupied())
             return grill;
     }
 
@@ -31,5 +31,6 @@ public bool PlaceMeat(GameObject meat)
 
     return grill.PlaceMeat(meat);
 }
+
 
 }
