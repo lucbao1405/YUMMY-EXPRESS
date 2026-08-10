@@ -219,21 +219,32 @@ public class ScoreManager : MonoBehaviour
     {
         if (totalCustomersInLevel <= 0) return 1;
 
-        // Độ hài lòng trung bình = điểm kiên nhẫn thuần / tối đa có thể (mỗi khách tối đa 3 điểm).
-        float satisfaction = Mathf.Clamp01((float)totalEarnedPoints / (totalCustomersInLevel * 3));
+        // Max điểm dựa trên tổng số khách của level
+        int maxPossiblePoints = totalCustomersInLevel * 3;
+        float satisfactionRate = Mathf.Clamp01((float)totalEarnedPoints / maxPossiblePoints);
 
-        // ≥ 70% → 3 Sao.
-        if (satisfaction >= 0.70f)
+        int finalStars = 1;
+
+        // Quy tắc chặt chẽ:
+        // - 3 sao: satisfactionRate >= 0.85f AND angryCustomersCount == 0
+        // - 2 sao: satisfactionRate >= 0.60f OR (satisfactionRate >= 0.85f AND angryCustomersCount > 0)
+        // - 1 sao: otherwise (màn chơi được hoàn thành)
+        if (satisfactionRate >= 0.85f && angryCustomersCount == 0)
         {
-            return 3;
+            finalStars = 3;
         }
-        // 40% → 69% → 2 Sao.
-        else if (satisfaction >= 0.40f)
+        else if (satisfactionRate >= 0.60f || (satisfactionRate >= 0.85f && angryCustomersCount > 0))
         {
-            return 2;
+            finalStars = 2;
         }
-        // < 40% → 1 Sao.
-        return 1;
+        else
+        {
+            finalStars = 1;
+        }
+
+        Debug.Log($"[SCORE FINAL] Earned: {totalEarnedPoints}/{maxPossiblePoints} | Rate: {satisfactionRate * 100:F1}% | Angry: {angryCustomersCount} | Calculated Stars: {finalStars}");
+
+        return finalStars;
     }
 
     // Giữ API cũ cho các UnityEvent hoặc script đã gọi hàm trước đây.
