@@ -48,6 +48,16 @@ public class PlayerData
 /// </summary>
 public static class SaveSystem
 {
+    static SaveSystem()
+    {
+        ScoreManager.OnStarsCalculated += HandleStarsCalculated;
+    }
+
+    private static void HandleStarsCalculated(int levelIndex, int stars)
+    {
+        SaveLevelStars(levelIndex, stars);
+    }
+
     #region Fields
 
     /// <summary>

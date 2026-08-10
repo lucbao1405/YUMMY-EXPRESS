@@ -7545,13 +7545,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a79e40ee435ccd54199a97a315a3a3df, type: 2}
   - {fileID: 11400000, guid: 7c8f123adb081b14e8d34a0fc3c0e278, type: 2}
   - {fileID: 11400000, guid: 94ac00199642b3f4d805f13d273af740, type: 2}
-  levelSpawnProfiles:
-  - level: 2
-    customers:
-    - {fileID: 11400000, guid: 1f20f6b0bdcf40bda99f4f43ce2d73d7, type: 2}
-  - level: 3
-    customers:
-    - {fileID: 11400000, guid: 3ef97f4bfe514b9d8ae930795e915a34, type: 2}
+  levelSpawnProfiles: []
   minSpawnDelay: 3
   maxSpawnDelay: 6
 --- !u!1 &1359215229
@@ -10648,7 +10642,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1811950484}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -11240,7 +11234,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f3a91c04b2d4d6a9e5c8f21b3a4d5e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  starImages: []
+  starImages:
+  - {fileID: 22609553}
+  - {fileID: 1364994132}
+  - {fileID: 1770003908}
   yellowStarSprite: {fileID: 21300000, guid: 7c532f4d59291614f929e205233d01d7, type: 3}
   grayStarSprite: {fileID: 21300000, guid: f18ec8a5b535bd74eb0323f097da3294, type: 3}
 --- !u!4 &1922866994
