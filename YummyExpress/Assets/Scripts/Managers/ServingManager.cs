@@ -25,48 +25,64 @@ public class ServingManager : SingletonBehaviour<ServingManager>
             return false;
         }
 
-foreach (var slot in slots)
+        CustomerSlotUI targetSlot = null;
+        float earliestArrival = float.PositiveInfinity;
+        foreach (var slot in slots)
         {
             if (slot == null || !slot.IsOrdering(food))
             {
                 continue;
             }
 
-// Lấy % kiên nhẫn còn lại của khách TRƯỚC khi dọn slot (để tính điểm sao).
-            float remainingPatience = slot.RemainingPatiencePercent;
-
-            bool completesCustomerOrder = slot.RemainingOrderFoods.Count == 1;
-            int earnedGold = slot.OnReceiveFood(food);
-            if (earnedGold <= 0)
+            if (slot.CustomerArrivalTime < earliestArrival)
             {
-                earnedGold = food.price;
+                earliestArrival = slot.CustomerArrivalTime;
+                targetSlot = slot;
             }
-
-            // ⚠️ GHI NHẬN ĐIỂM TRƯỚC KHI CỘNG VÀNG.
-            // EconomyManager.AddGold() có thể kích hoạt sự kiện OnGoldChanged → EndGame() ngay trong frame này.
-            // Nếu gọi ScoreManager.OnCustomerServed SAU AddGold, EndGame sẽ đọc được count thiếu khách vừa phục vụ.
-            int comboGold = 0;
-            if (completesCustomerOrder && ScoreManager.Instance != null)
-            {
-                comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
-            }
-            else if (completesCustomerOrder)
-            {
-                Debug.LogWarning("ServingManager: ScoreManager.Instance chưa được tạo → không tính điểm sao.");
-            }
-
-            if (EconomyManager.Instance != null)
-            {
-                EconomyManager.Instance.AddGold(earnedGold + comboGold);
-            }
-            else
-            {
-                Debug.LogWarning("ServingManager: EconomyManager chưa được khởi tạo.");
-            }
-
-            Debug.Log($"Phục vụ {food.foodName} cho khách thành công! +{earnedGold} vàng.");
-            return true;
         }
+
+        if (targetSlot == null)
+        {
+            Debug.Log("ServingManager: Không có khách nào đang chờ món này.");
+            return false;
+        }
+
+        var customerSlot = targetSlot;
+
+// Lấy % kiên nhẫn còn lại của khách TRƯỚC khi dọn slot (để tính điểm sao).
+        float remainingPatience = customerSlot.RemainingPatiencePercent;
+
+        bool completesCustomerOrder = customerSlot.RemainingOrderFoods.Count == 1;
+        int earnedGold = customerSlot.OnReceiveFood(food);
+        if (earnedGold <= 0)
+        {
+            earnedGold = food.price;
+        }
+
+        // ⚠️ GHI NHẬN ĐIỂM TRƯỚC KHI CỘNG VÀNG.
+        // EconomyManager.AddGold() có thể kích hoạt sự kiện OnGoldChanged → EndGame() ngay trong frame này.
+        // Nếu gọi ScoreManager.OnCustomerServed SAU AddGold, EndGame sẽ đọc được count thiếu khách vừa phục vụ.
+        int comboGold = 0;
+        if (completesCustomerOrder && ScoreManager.Instance != null)
+        {
+            comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
+        }
+        else if (completesCustomerOrder)
+        {
+            Debug.LogWarning("ServingManager: ScoreManager.Instance chưa được tạo → không tính điểm sao.");
+        }
+
+        if (EconomyManager.Instance != null)
+        {
+            EconomyManager.Instance.AddGold(earnedGold + comboGold);
+        }
+        else
+        {
+            Debug.LogWarning("ServingManager: EconomyManager chưa được khởi tạo.");
+        }
+
+        Debug.Log($"Phục vụ {food.foodName} cho khách thành công! +{earnedGold} vàng.");
+        return true;
 
         Debug.Log("ServingManager: Không có khách nào đang chờ món này.");
         return false;
