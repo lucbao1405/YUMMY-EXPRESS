@@ -227,15 +227,16 @@ public class ScoreManager : MonoBehaviour
 
         int finalStars = 1;
 
-        // Quy tắc chặt chẽ:
-        // - 3 sao: satisfactionRate >= 0.85f AND angryCustomersCount == 0
-        // - 2 sao: satisfactionRate >= 0.60f OR (satisfactionRate >= 0.85f AND angryCustomersCount > 0)
-        // - 1 sao: otherwise (màn chơi được hoàn thành)
-        if (satisfactionRate >= 0.85f && angryCustomersCount == 0)
+        // Use documented thresholds for star calculation:
+        // - 3 stars: satisfactionRate >= 0.70
+        // - 2 stars: satisfactionRate >= 0.40
+        // - 1 star : otherwise
+        // This is simpler and matches the comments used elsewhere in the codebase.
+        if (satisfactionRate >= 0.70f)
         {
             finalStars = 3;
         }
-        else if (satisfactionRate >= 0.60f || (satisfactionRate >= 0.85f && angryCustomersCount > 0))
+        else if (satisfactionRate >= 0.40f)
         {
             finalStars = 2;
         }
