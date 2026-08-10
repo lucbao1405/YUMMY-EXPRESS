@@ -22,15 +22,14 @@ public GrillStation GetAvailableGrill()
     return null;
 }
 
-public bool PlaceMeat(GameObject meat)
+public bool PlaceIngredient(CookableIngredient ingredient)
 {
     GrillStation grill = GetAvailableGrill();
 
     if (grill == null)
         return false;
 
-    return grill.PlaceMeat(meat);
+    return grill.PlaceIngredient(ingredient);
 }
-
 
 }
