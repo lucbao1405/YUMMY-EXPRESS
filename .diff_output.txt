@@ -1,0 +1,1427 @@
+﻿diff --git a/YummyExpress/Assets/Docs/FIX_MISSING_SCRIPT_VA_TAP_SERVE.md b/YummyExpress/Assets/Docs/FIX_MISSING_SCRIPT_VA_TAP_SERVE.md
+deleted file mode 100644
+index 1db7f03..0000000
+--- a/YummyExpress/Assets/Docs/FIX_MISSING_SCRIPT_VA_TAP_SERVE.md
++++ /dev/null
+@@ -1,144 +0,0 @@
+-# ≡ƒ¢á H╞»ß╗ÜNG Dß║¬N FIX MISSING SCRIPT & HO├ÇN THIß╗åN TAP PHß╗ñC Vß╗ñ KH├üCH (UI.unity)
+-
+-> **├üp dß╗Ñng cho:** `Assets/UI.unity` (Unity 2022.3 LTS, TextMeshPro ─æ├ú c├ái)
+-> **Trß║íng th├íi code:** ─É├ú sß╗¡a xong 6 file C# b├¬n d╞░ß╗¢i. Bß║ín chß╗ë cß║ºn l├ám theo c├íc b╞░ß╗¢c Unity Editor b├¬n d╞░ß╗¢i.
+-
+----
+-
+-## Γ£à T├ôM Tß║«T ─É├â Sß╗¼A
+-
+-| File | Nß╗Öi dung |
+-|---|---|
+-| `Plate&Serving/Plate.cs` **(Mß╗ÜI)** | `OnPlateClicked()` ΓåÆ `GameManager.ServeFoodToCustomer(CurrentFood)` ΓåÆ nß║┐u th├ánh c├┤ng `ClearPlate()`. Tß╗▒ t├¼m Image/Button + tß╗▒ AddListener. |
+-| `Plate&Serving/Plate.cs.meta` **(Mß╗ÜI)** | GUID `9bf3335a...` **khß╗¢p GUID scene** ΓåÆ Unity auto re-associate 2 component Plate missing. |
+-| `Kitchen/GrillSlot.cs` **(Mß╗ÜI)** | `OnGrillClicked()` ΓåÆ nß║┐u thß╗ït `Cooked` ΓåÆ `PlateManager.PlaceMeat()` + `StoveManager.RemoveMeat()`. Tß╗▒ t├¼m Image/Button + AddListener. |
+-| `Kitchen/GrillSlot.cs.meta` **(Mß╗ÜI)** | GUID `e70b75ce...` **khß╗¢p GUID scene** ΓåÆ Unity auto re-associate component GrillSlot missing. |
+-| `UI/EndGameUI.cs` | Tß╗▒ t├¼m TMP trong `Dong_Vang/Dong_Khach/Dong_Combo`; nß║┐u **ch╞░a c├│ TMP ΓåÆ Tß╗░ Tß║áO** child text (kh├┤ng c├▓n Warning spam). |
+-| `Customer/CustomerSlotUI.cs` | `OnReceiveFood()` nay **trß║ú vß╗ü `int` (tiß╗ün th╞░ß╗ƒng)** rß╗ôi mß╗¢i `ClearSlot()`. |
+-| `Managers/GameManager.cs` | `ServeFoodToCustomer()` d├╣ng gi├í trß╗ï trß║ú vß╗ü tß╗½ `OnReceiveFood()` ─æß╗â cß╗Öng v├áng (k├¿m fallback `food.price`). |
+-
+----
+-
+-## 1∩╕ÅΓâú B╞»ß╗ÜC 1 ΓÇö Mß╗₧ UNITY & CHß╗£ IMPORT
+-
+-1. Mß╗ƒ Unity Hub ΓåÆ Project **YummyExpress** ΓåÆ mß╗ƒ scene `Assets/UI.unity`.
+-2. ─Éß╗úi Unity import xong (thanh progress d╞░ß╗¢i g├│c phß║úi). Quan s├ít **Console**:
+-   - **3 lß╗ùi "Missing Script" sß║╜ Tß╗░ BIß║╛N Mß║ñT** v├¼ `Plate.cs` v├á `GrillSlot.cs` giß╗¥ c├│ `.meta` tr├╣ng GUID vß╗¢i scene.
+-   - Nß║┐u Console c├▓n lß╗ùi **compile** ΓåÆ bß║Ñm **Clear** rß╗ôi **bß║Ñm Play** 1 lß║ºn ─æß╗â Unity compile lß║íi.
+-
+-> ΓÜá∩╕Å **Nß║┐u vß║½n c├▓n Missing Script** (th╞░ß╗¥ng do Unity ch╞░a tß║úi meta mß╗¢i):
+-> 1. Bß║Ñm chuß╗Öt phß║úi th╞░ mß╗Ñc `Assets/Scripts` ΓåÆ **Reimport**.
+-> 2. Hoß║╖c `Assets ΓåÆ Reimport All`.
+-
+----
+-
+-## 2∩╕ÅΓâú B╞»ß╗ÜC 2 ΓÇö ADD COMPONENT `Plate` CHO DIA1 (nß║┐u ch╞░a c├│)
+-
+-Scene hiß╗çn c├│ 3 ─æ─⌐a `Dia1`, `Dia 2`, `Dia 3`.
+-- `Dia 2` v├á `Dia 3` sau khi fix sß║╜ **tß╗▒ c├│** component `Plate` (v├¼ scene ─æ├ú serialize).
+-- **`Dia1` c├│ thß╗â CH╞»A c├│** component Plate (do conflict scene). Kiß╗âm tra:
+-
+-1. Chß╗ìn `Dia1` (trong `Middle_Zone ΓåÆ 3Dia`).
+-2. Nh├¼n **Inspector**:
+-   - Nß║┐u **KH├öNG c├│** component `Plate` ΓåÆ bß║Ñm **Add Component** ΓåÆ t├¼m `Plate` ΓåÆ th├¬m.
+-   - Nß║┐u **c├│** `Plate` nh╞░ng b├ío **Missing Script** ΓåÆ bß║Ñm chuß╗Öt phß║úi component ΓåÆ **Remove** ΓåÆ Add lß║íi.
+-3. K├⌐o thß║ú (t├╣y chß╗ìn ΓÇö nß║┐u ─æß╗â trß╗æng script tß╗▒ t├¼m):
+-   - **Food Image** ΓåÆ Image cß╗ºa `Dia1` (ch├¡nh Image tr├¬n ─æ─⌐a).
+-   - **Plate Button** ΓåÆ Button cß╗ºa `Dia1`.
+-4. Kiß╗âm tra **Button** cß╗ºa `Dia1`:
+-   - Chß╗ìn `Dia1` ΓåÆ component `Button` ΓåÆ **OnClick ()** ΓåÆ nß║┐u **ch╞░a c├│** entry `Plate.OnPlateClicked` th├¼ bß║Ñm **+**:
+-     - K├⌐o `Dia1` (c├│ Plate) v├áo ├┤ trß╗æng.
+-     - Dropdown chß╗ìn `Plate` ΓåÆ `OnPlateClicked`.
+-
+-> ≡ƒÆí L╞░u ├╜: script `Plate.Start()` **tß╗▒ AddListener** nß║┐u `plateButton` ─æ╞░ß╗úc t├¼m thß║Ñy ΓåÆ nß║┐u ─æ─⌐a c├│ Button l├á ─æß╗º, OnClick wire thß╗º c├┤ng chß╗ë l├á lß╗¢p dß╗▒ ph├▓ng. Tuy nhi├¬n n├¬n wire cß║ú 2 c├ích ─æß╗â chß║»c chß║»n (AddListener sß║╜ kh├┤ng ghi ─æ├¿ OnClick thß╗º c├┤ng).
+-
+----
+-
+-## 3∩╕ÅΓâú B╞»ß╗ÜC 3 ΓÇö ADD COMPONENT `GrillSlot` CHO VI1 (nß║┐u ch╞░a c├│)
+-
+-T╞░╞íng tß╗▒, `Vi1` v├á `Vi2` (trong `Bottom_Zone ΓåÆ Cot_Vi_Nuong`):
+-- `Vi2` sß║╜ tß╗▒ c├│ `GrillSlot` sau khi fix.
+-- Kiß╗âm tra `Vi1`: nß║┐u ch╞░a c├│ component n├áo t├¬n `GrillSlot` ΓåÆ **Add Component** ΓåÆ `GrillSlot` (hoß║╖c Remove + Add lß║íi nß║┐u bß╗ï Missing).
+-
+-K├⌐o thß║ú:
+-- **Food Image** ΓåÆ tß║ío 1 child Image t├¬n `Food_Image` d╞░ß╗¢i `Vi1/Vi2` (hiß╗ân thß╗ï thß╗ït ─æang n╞░ß╗¢ng), k├⌐o v├áo ─æ├óy. *(Nß║┐u ─æß╗â trß╗æng, `Awake` tß╗▒ t├¼m child Image ─æß║ºu ti├¬n c├│ thß╗â nhß║ºm vß╗¢i `DongHo_Timer` ΓÇö khuyß║┐n nghß╗ï tß║ío child ri├¬ng.)*
+-- **Slot Button** ΓåÆ Button ch├¡nh cß╗ºa `Vi1` / `Vi2`.
+-
+-Wire OnClick (nß║┐u muß╗æn thß╗º c├┤ng):
+-- Chß╗ìn `Vi1` ΓåÆ Button ΓåÆ OnClick ΓåÆ **+** ΓåÆ k├⌐o `Vi1` ΓåÆ chß╗ìn `GrillSlot.OnGrillClicked`.
+-- L├ám t╞░╞íng tß╗▒ `Vi2`.
+-
+----
+-
+-## 4∩╕ÅΓâú B╞»ß╗ÜC 4 ΓÇö Tß║áO TEXT (TMP) TRONG BANG_THONG_KE (hiß╗ân thß╗ï sß╗æ th╞░ß╗ƒng khi THß║«NG)
+-
+-> Γ£à **Tin tß╗æt:** code `EndGameUI.cs` mß╗¢i **Tß╗░ Tß║áO** text nß║┐u ch╞░a c├│ ΓÇö bß║ín **kh├┤ng bß║»t buß╗Öc** phß║úi l├ám tay. Nh╞░ng nß║┐u muß╗æn **─æß║╣p & chß╗º ─æß╗Öng chß╗ënh font/size** th├¼ l├ám nh╞░ sau:
+-
+-### C├ích 1: Auto (kh├┤ng cß║ºn l├ám g├¼)
+-- Bß║Ñm Play ΓåÆ thß║»ng 1 m├án ΓåÆ `UpdateThongKe` sß║╜ tß╗▒ tß║ío child `Text_V├áng`, `Text_Kh├ích`, `Text_Combo` b├¬n trong tß╗½ng d├▓ng v├á hiß╗ân thß╗ï sß╗æ.
+-- Sau khi tß║ío, bß║ín c├│ thß╗â chß╗ënh font/size/m├áu ngay trong Inspector rß╗ôi **Save Scene** (c├íc text n├áy sß║╜ l╞░u v├áo scene).
+-
+-### C├ích 2: Tß║ío tay (─æß║╣p h╞ín)
+-Vß╗¢i **mß╗ùi d├▓ng** `Dong_Vang`, `Dong_Khach`, `Dong_Combo` (nß║▒m trong `Win_Popup ΓåÆ Bang_Thong_Ke`):
+-
+-1. **Chuß╗Öt phß║úi** v├áo `Dong_Vang` ΓåÆ **UI ΓåÆ Text - TextMeshPro** (nß║┐u ch╞░a import TMP ΓåÆ bß║Ñm **Import TMP Essentials** khi ─æ╞░ß╗úc hß╗Åi).
+-2. Unity tß║ío 1 child `Text (TMP)` mß╗¢i. ─Éß║╖t t├¬n gameObject l├á `Text_Vang`.
+-3. Chß╗ënh tr├¬n **Inspector** (RectTransform):
+-   - **Anchor Presets:** chß╗ìn **stretch** (giß╗» chuß╗Öt giß╗»a-alt ─æß╗â stretch) hoß║╖c ─æß╗â c─ân nhanh:
+-     - Chß╗ìn anchor **middle-center**, set **Pos X = 30** (─æß║⌐y sang phß║úi icon V├áng), **Width = 150**, **Height = 60**.
+-4. Chß╗ënh **TextMeshProUGUI**:
+-   - **Text Input:** nhß║¡p sß║╡n `0` (sß╗æ v├áng sß║╜ ─æ╞░ß╗úc script ghi ─æ├¿ khi thß║»ng).
+-   - **Font Size:** 40ΓÇô48.
+-   - **Alignment:** Center.
+-   - **Color:** v├áng gold `#FFD700` cho `Text_Vang`; trß║»ng cho `Text_Khach`; cam cho `Text_Combo`.
+-5. Lß║╖p lß║íi cho `Dong_Khach` (tß║ío `Text_Khach`, nhß║¡p `0` kh├ích) v├á `Dong_Combo` (tß║ío `Text_Combo`, nhß║¡p `0` combo).
+-6. **G├ín thß╗º c├┤ng (t├╣y chß╗ìn):** Chß╗ìn `Popup_Overlay` ΓåÆ component `EndGameUI` ΓåÆ k├⌐o:
+-   - `Thong Ke Gold Text` ΓåÆ `Bang_Thong_Ke/Dong_Vang/Text_Vang`
+-   - `Thong Ke Customer Text` ΓåÆ `Bang_Thong_Ke/Dong_Khach/Text_Khach`
+-   - `Thong Ke Combo Text` ΓåÆ `Bang_Thong_Ke/Dong_Combo/Text_Combo`
+-
+-> ≡ƒÆí Code tß╗▒ t├¼m bß║▒ng `GetComponentInChildren<TextMeshProUGUI>()` n├¬n **kh├┤ng cß║ºn k├⌐o tay** c┼⌐ng hoß║ít ─æß╗Öng. K├⌐o tay chß╗ë ─æß╗â ╞░u ti├¬n ─æ├║ng text bß║ín muß╗æn.
+-
+----
+-
+-## 5∩╕ÅΓâú B╞»ß╗ÜC 5 ΓÇö KIß╗éM THß╗¼ TAP PHß╗ñC Vß╗ñ KH├üCH
+-
+-1. **Window ΓåÆ General ΓåÆ Console** mß╗ƒ sß║╡n.
+-2. Bß║Ñm **Play**.
+-3. ─Éß╗úi v├ái gi├óy ΓåÆ kh├ích tß╗▒ spawn v├áo `Slot_1/2/3` (c├│ avatar + bubble m├│n + thanh ki├¬n nhß║½n).
+-4. Luß╗ông nß║Ñu (nß║┐u c├│ thß╗ït):
+-   - Bß║Ñm nguy├¬n liß╗çu ΓåÆ thß╗ït l├¬n vß╗ë ΓåÆ chß╗¥ `Cooked` (log "Meat Cooked") ΓåÆ bß║Ñm vß╗ë ΓåÆ thß╗ït l├¬n ─æ─⌐a (hoß║╖c bß║Ñm ─æ─⌐a trß╗æng ─æß╗â nhß║¡n).
+-5. **Test Tap ─æ├║ng kh├ích:**
+-   - ─É─⌐a c├│ m├│n ─æ├║ng m├│n kh├ích ─æang chß╗¥ ΓåÆ bß║Ñm ─æ─⌐a ΓåÆ Console log `Kh├ích ... ─æ├ú nhß║¡n m├│n ... +25 v├áng.` ΓåÆ v├áng t─âng, kh├ích biß║┐n mß║Ñt, ─æ─⌐a dß╗ìn sß║ích.
+-   - Bß║Ñm ─æ─⌐a c├│ m├│n **kh├┤ng** khß╗¢p ΓåÆ log `Kh├┤ng c├│ kh├ích n├áo ─æang chß╗¥ m├│n n├áy.` ΓåÆ ─æ─⌐a **giß╗» nguy├¬n m├│n** (kh├┤ng bß╗ï mß║Ñt).
+-6. **Test EndGameUI:**
+-   - ─Éß║ít ─æß╗º `targetGold` ΓåÆ popup THß║«NG hiß╗çn, Bang_Thong_Ke hiß╗ân thß╗ï sß╗æ v├áng/kh├ích/combo hoß║╖c text auto tß║ío.
+-   - Hß║┐t giß╗¥ hoß║╖c qu├í sß╗æ kh├ích bß╗Å ─æi ΓåÆ popup THUA hiß╗çn.
+-
+----
+-
+-## 6∩╕ÅΓâú B╞»ß╗ÜC 6 ΓÇö L╞»U SCENE & COMMIT (GIß╗« REFERENCE)
+-
+-1. **File ΓåÆ Save Scene** (Ctrl+S) ΓÇö bß║»t buß╗Öc ─æß╗â l╞░u mß╗ìi thay ─æß╗òi scene (text mß╗¢i, component Plate/GrillSlot ─æ├ú g├ín).
+-2. **File ΓåÆ Save Project**.
+-3. Kiß╗âm tra `Assets/UI.unity` **v├á** `.meta` cß╗ºa **mß╗ìi script mß╗¢i** tß╗ôn tß║íi:
+-   - `Assets/Scripts/Plate&Serving/Plate.cs.meta`
+-   - `Assets/Scripts/Kitchen/GrillSlot.cs.meta`
+-4. Khi commit Git: **commit cß║ú file `.cs` lß║½n `.meta`** (`.meta` chß╗⌐a GUID ΓÇö gß╗æc cß╗ºa mß╗ìi reference).
+-
+----
+-
+-## Γ¥ô FAQ
+-
+-**Q: V├¼ sao 3 d├▓ng "Missing Script" biß║┐n mß║Ñt?**
+-A: Scene tham chiß║┐u script bß║▒ng **GUID**. Hai GUID `9bf3335aΓÇª` (Plate) v├á `e70b75ceΓÇª` (GrillSlot) tr╞░ß╗¢c ─æ├óy kh├┤ng c├│ file `.cs` t╞░╞íng ß╗⌐ng ΓåÆ Unity hiß╗ân thß╗ï "Missing Script". Giß╗¥ ta tß║ío ─æ├║ng 2 file + `.meta` tr├╣ng GUID ΓåÆ Unity tß╗▒ li├¬n kß║┐t lß║íi.
+-
+-**Q: EndGameUI c├▓n bß║»n Warning "Kh├┤ng t├¼m thß║Ñy TextMeshProUGUI"?**
+-A: Kh├┤ng. Code mß╗¢i d├╣ng `EnsureThongKeText()` ΓÇö t├¼m TMP trong con/ch├íu, nß║┐u kh├┤ng c├│ th├¼ **tß╗▒ tß║ío** child text, chß╗ë log 1 d├▓ng th├┤ng tin (kh├┤ng phß║úi Warning) v├á kh├┤ng spam.
+-
+-**Q: N├║t XemVideo vß║½n log Warning khi bß║Ñm?**
+-A: ─É├│ l├á cß║únh b├ío c├│ chß╗º ─æ├¡ch (ch╞░a nß╗æi AdsManager). Nß║┐u ch╞░a d├╣ng QC, bß║ín c├│ thß╗â bß╗Å qua hoß║╖c ─æß╗â trß╗æng kh├┤ng phß║úi lß╗ùi.
+-
+-**Q: Dia1 bß║Ñm kh├┤ng phß║ún hß╗ôi?**
+-A: Kiß╗âm tra Dia1 c├│ component **Button** v├á **Plate** kh├┤ng; nß║┐u tß╗▒ AddListener kh├┤ng chß║íy ΓåÆ wire thß╗º c├┤ng `OnClick ΓåÆ Plate.OnPlateClicked`.
+-
+diff --git a/YummyExpress/Assets/Docs/FIX_MISSING_SCRIPT_VA_TAP_SERVE.md.meta b/YummyExpress/Assets/Docs/FIX_MISSING_SCRIPT_VA_TAP_SERVE.md.meta
+deleted file mode 100644
+index d13c0d5..0000000
+--- a/YummyExpress/Assets/Docs/FIX_MISSING_SCRIPT_VA_TAP_SERVE.md.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: dd7f2f1afe4df9749bf5238560fa2576
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/YummyExpress/Assets/Docs/LEVEL1_GAMEPLAY_WIRING.md b/YummyExpress/Assets/Docs/LEVEL1_GAMEPLAY_WIRING.md
+deleted file mode 100644
+index 229e3b6..0000000
+--- a/YummyExpress/Assets/Docs/LEVEL1_GAMEPLAY_WIRING.md
++++ /dev/null
+@@ -1,123 +0,0 @@
+-# ≡ƒÄ» Yummy Express Level 1 ΓÇö Wiring & Setup h╞░ß╗¢ng dß║½n
+-
+-> Kiß║┐n tr├║c d├╣ng **─æ├║ng 5 script**: `FoodState`, `FoodItem`, `CookingProcess`, `GrillStation`, `Plate`.
+-> Kh├┤ng d├╣ng `Update` ─æß╗â ─æiß╗üu khiß╗ân gameplay ΓÇö chß╗ë Coroutine + method call.
+-
+----
+-
+-## 1. Hierarchy bß║»t buß╗Öc
+-
+-```
+-Canvas
+-Γö£ΓöÇΓöÇ Middle_Zone
+-Γöé   ΓööΓöÇΓöÇ Dia1
+-Γöé       ΓööΓöÇΓöÇ BanhMi
+-Γöé           Γö£ΓöÇΓöÇ BottomBreadPoint
+-Γöé           Γö£ΓöÇΓöÇ MeatPoint
+-Γöé           Γö£ΓöÇΓöÇ VegetablePoint
+-Γöé           Γö£ΓöÇΓöÇ TopBreadPoint
+-Γöé           ΓööΓöÇΓöÇ CompleteBanhMiPoint
+-Γö£ΓöÇΓöÇ Cot_Vi_Nuong
+-Γöé   ΓööΓöÇΓöÇ Vi1
+-Γöé       ΓööΓöÇΓöÇ CookPoint
+-ΓööΓöÇΓöÇ Bottom_Zone
+-    ΓööΓöÇΓöÇ Nguyen_Lieu
+-        Γö£ΓöÇΓöÇ Banh   (Button)
+-        Γö£ΓöÇΓöÇ Thit   (Button)
+-        ΓööΓöÇΓöÇ Rau    (Button)
+-```
+-
+-> ΓÜá∩╕Å ─Éß║úm bß║úo c├íc point (`BottomBreadPoint`, `MeatPoint`, `VegetablePoint`, `TopBreadPoint`, `CompleteBanhMiPoint`, `CookPoint`) tß╗ôn tß║íi trong scene v├á ─æ├║ng vß╗ï tr├¡.
+-
+----
+-
+-## 2. Gß║»n script v├áo GameObject
+-
+-| Script | Gß║»n v├áo GameObject | Vß╗ï tr├¡ |
+-|---|---|---|
+-| `Plate` | `Dia1` | `Canvas ΓåÆ Middle_Zone ΓåÆ Dia1` |
+-| `GrillStation` | `Vi1` | `Canvas ΓåÆ Cot_Vi_Nuong ΓåÆ Vi1` |
+-
+-### Prefab (k├⌐o v├áo Inspector)
+-- `BottomBread.prefab`, `TopBread.prefab`, `Vegetable.prefab`, `CompleteBanhMi.prefab` ΓåÆ `Plate`
+-- `Meat.prefab` ΓåÆ `GrillStation`
+-
+----
+-
+-## 3. K├⌐o thß║ú serialized fields
+-
+-### Plate (tr├¬n `Dia1`)
+-| Field | K├⌐o v├áo |
+-|---|---|
+-| `Bottom Bread Point` | `BanhMi/BottomBreadPoint` |
+-| `Top Bread Point` | `BanhMi/TopBreadPoint` |
+-| `Meat Point` | `BanhMi/MeatPoint` |
+-| `Vegetable Point` | `BanhMi/VegetablePoint` |
+-| `Complete Banh Mi Point` | `BanhMi/CompleteBanhMiPoint` |
+-| `Bottom Bread Prefab` | `BottomBread.prefab` |
+-| `Top Bread Prefab` | `TopBread.prefab` |
+-| `Vegetable Prefab` | `Vegetable.prefab` |
+-| `Complete Banh Mi Prefab` | `CompleteBanhMi.prefab` |
+-
+-### GrillStation (tr├¬n `Vi1`)
+-| Field | K├⌐o v├áo |
+-|---|---|
+-| `Cook Point` | `Vi1/CookPoint` |
+-| `Meat Prefab` | `Meat.prefab` |
+-
+----
+-
+-## 4. Meat prefab (thiß║┐t lß║¡p)
+-
+-`Meat.prefab` phß║úi chß╗⌐a:
+-- `FoodItem` ΓåÆ g├ín `Raw Sprite`, `Cooked Sprite`, `Burnt Sprite`.
+-- `CookingProcess` ΓåÆ (`Cook Time` = 4, `Burn Time` = 4).
+-- `Button` (─æß╗â tap) ΓåÆ trong `Button.onClick`:
+-  - K├⌐o ch├¡nh `Meat.prefab` v├áo ├┤.
+-  - Dropdown chß╗ìn `CookingProcess` ΓåÆ `TryServeToPlate`.
+-
+----
+-
+-## 5. Wiring Button.onClick (n├║t nguy├¬n liß╗çu)
+-
+-| N├║t | Object k├⌐o v├áo | H├ám chß╗ìn |
+-|---|---|---|
+-| `Banh` | `Dia1` (c├│ `Plate`) | `Plate.PlaceBread` |
+-| `Thit` | `Vi1` (c├│ `GrillStation`) | `GrillStation.PlaceMeatOnGrill` |
+-| `Rau` | `Dia1` (c├│ `Plate`) | `Plate.PlaceVegetable` |
+-
+----
+-
+-## 6. Luß╗ông gameplay
+-
+-1. **Banh** ΓåÆ `Plate.PlaceBread()` ΓåÆ spawn `BottomBread` + `TopBread` (chß╗ë 1 lß║ºn).
+-2. **Thit** ΓåÆ `GrillStation.PlaceMeatOnGrill()` ΓåÆ `PlaceFood()` ΓåÆ Instantiate `Meat` v├áo `CookPoint` ΓåÆ `StartCooking()`.
+-3. **Meat** tß╗▒ nß║Ñu: `Raw ΓåÆ Cooked (4s) ΓåÆ Burnt (4s)` (Coroutine).
+-4. Khi **Cooked**, tap miß║┐ng thß╗ït ΓåÆ `CookingProcess.TryServeToPlate()` ΓåÆ `Plate.PlaceMeat()` ΓåÆ chuyß╗ân thß╗ït l├¬n ─æ─⌐a, `StopCooking()`, `ClearStation()`.
+-5. **Rau** ΓåÆ `Plate.PlaceVegetable()` (chß╗ë khi ─æ├ú c├│ b├ính).
+-6. Khi ─æß╗º `BottomBread + TopBread + Meat + Vegetable` ΓåÆ `CheckCompleteBanhMi()` ΓåÆ ß║⌐n 4 th├ánh phß║ºn, spawn `CompleteBanhMi` (chß╗ë 1 lß║ºn).
+-
+----
+-
+-## 7. Chß╗æng lß╗ùi (─æ├ú xß╗¡ l├╜ trong code)
+-
+-- Γ£à NullReferenceException (null-check mß╗ìi n╞íi).
+-- Γ£à Double spawn b├ính (flag `hasBread`).
+-- Γ£à Spawn khi thiß║┐u point/prefab (log lß╗ùi, return).
+-- Γ£à Meat l├¬n Plate khi ch╞░a ch├¡n (chß╗ë chß║Ñp nhß║¡n khi `IsCooked()`).
+-- Γ£à Rau l├¬n Plate khi ch╞░a c├│ b├ính (chß╗ë khi `hasBread`).
+-- Γ£à CompleteBanhMi spawn nhiß╗üu lß║ºn (chß╗ë khi `completeBanhMi == null`).
+-- Γ£à Bß║┐p spawn thß╗ït 2 lß║ºn (chß╗ë khi `IsOccupied()` trß║ú vß╗ü false).
+-
+-## 8. L╞░u ├╜ Singleton (KH├öNG mß║Ñt object)
+-
+-> ΓÜá∩╕Å **Quan trß╗ìng:** `Plate` v├á `GrillStation` d├╣ng Singleton **kh├┤ng-destructive**.
+-> Khi scene c├│ **nhiß╗üu ─æ─⌐a** (Dia1, Dia2, Dia3) v├á **nhiß╗üu vß╗ë** (Vi1, Vi2), c├íc object
+-> **KH├öNG bß╗ï Destroy** khi chß║íy game. `Instance` chß╗ë trß╗Å ─æß║┐n **─æß╗æi t╞░ß╗úng ─æß║ºu ti├¬n** khß╗ƒi tß║ío.
+-
+-**Hß╗ç quß║ú khi wire:**
+-- N├║t **Banh** n├¬n wire v├áo `Plate` cß╗ºa **Dia1** (v├¼ `Plate.Instance` = Dia1) ΓåÆ `PlaceBread`.
+-- N├║t **Thit** n├¬n wire v├áo `GrillStation` cß╗ºa **Vi1** (v├¼ `GrillStation.Instance` = Vi1) ΓåÆ `PlaceMeatOnGrill`.
+-- Miß║┐ng thß╗ït (Meat prefab) khi tap ΓåÆ `CookingProcess.TryServeToPlate()` tß╗▒ gß╗ìi `Plate.Instance.PlaceMeat()` v├á `GrillStation.Instance.ClearStation()` ΓÇö n├¬n ─æ├║ng Dia1/Vi1.
+-
+-> Nß║┐u bß║ín muß╗æn ─æ╞░ß╗¥ng b├ính d├╣ng ─æ─⌐a/vß╗ë kh├íc, h├úy wire trß╗▒c tiß║┐p c├íc n├║t v├áo ─æ├║ng component ─æ├│ (kh├┤ng qua `Instance`), nh╞░ng luß╗ông MeatΓåÆPlate vß║½n d├╣ng `Instance` (Dia1).
+diff --git a/YummyExpress/Assets/Docs/LEVEL1_GAMEPLAY_WIRING.md.meta b/YummyExpress/Assets/Docs/LEVEL1_GAMEPLAY_WIRING.md.meta
+deleted file mode 100644
+index 332e74a..0000000
+--- a/YummyExpress/Assets/Docs/LEVEL1_GAMEPLAY_WIRING.md.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 76d1628b52fa13b4bb9fb68265ab57ca
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/YummyExpress/Assets/Docs/UI_SCENE_WIRING_CHECKLIST.md b/YummyExpress/Assets/Docs/UI_SCENE_WIRING_CHECKLIST.md
+deleted file mode 100644
+index 3c328a7..0000000
+--- a/YummyExpress/Assets/Docs/UI_SCENE_WIRING_CHECKLIST.md
++++ /dev/null
+@@ -1,369 +0,0 @@
+-# ≡ƒôï CHECKLIST KH├öI PHß╗ñC REFERENCES TRONG UI.unity (YummyExpress)
+-
+-> **Mß╗Ñc ─æ├¡ch:** Kh├┤i phß╗Ñc to├án bß╗Ö li├¬n kß║┐t Inspector bß╗ï mß║Ñt sau merge, h╞░ß╗¢ng dß║½n thß╗⌐ tß╗▒ k├⌐o thß║ú an to├án, v├á quy tr├¼nh Save/Git ─æß╗â kh├┤ng bß╗ï mß║Ñt lß║íi.
+->
+-> **├üp dß╗Ñng cho scene:** `Assets/UI.unity`
+-> **Trß║íng th├íi chß║⌐n ─æo├ín:** Chß╗ë c├▓n `GameManager` script ─æ╞░ß╗úc attach. `GameManager` ─æang chß╗⌐a field serialized C┼¿ (`textThoiGian`, `textVang`, `danhSachManChoi`, `manChoiHienTai`) ΓÇö kh├┤ng khß╗¢p vß╗¢i code mß╗¢i ΓåÆ to├án bß╗Ö Inspector trß╗æng.
+-
+----
+-
+-## ≡ƒº¡ Mß╗ñC Lß╗ñC
+-
+-- [0. Chuß║⌐n bß╗ï tr╞░ß╗¢c khi l├ám](#0-chuß║⌐n-bß╗ï)
+-- [1. Bß║ún ─æß╗ô Hierarchy thß╗▒c tß║┐](#1-bß║ún-─æß╗ô-hierarchy-thß╗▒c-tß║┐)
+-- [2. Bß║úng k├⌐o thß║ú tß╗½ng Script](#2-bß║úng-k├⌐o-thß║ú-tß╗½ng-script)
+-  - [2.1 EconomyManager](#21-economymanager)
+-  - [2.2 CustomerSpawner](#22-customerspawner)
+-  - [2.3 CustomerSlotUI](#23-customerslotui)
+-  - [2.4 Plate](#24-plate)
+-  - [2.5 GrillSlot](#25-grillslot)
+-  - [2.6 PlateManager](#26-platemanager)
+-  - [2.7 EndGameUI](#27-endgameui)
+-  - [2.8 GameManager](#28-gamemanager)
+-- [3. Bß║úng wiring Button.onClick](#3-bß║úng-wiring-buttononclick)
+-- [4. Thß╗⌐ tß╗▒ k├⌐o thß║ú an to├án (tr├ính NullReference)](#4-thß╗⌐-tß╗▒-k├⌐o-thß║ú-an-to├án)
+-- [5. Quy tr├¼nh kiß╗âm thß╗¡ Play](#5-quy-tr├¼nh-kiß╗âm-thß╗¡-play)
+-- [6. Save Scene / Save Project / Create Prefab](#6-save--git-giß╗»-reference)
+-- [7. Phß╗Ñ lß╗Ñc: Database ScriptableObject](#7-phß╗Ñ-lß╗Ñc-database)
+-
+----
+-
+-## 0. CHUß║¿N Bß╗è
+-
+-1. **Mß╗ƒ Unity Hub ΓåÆ Project** YummyExpress, ─æß╗úi import xong (kiß╗âm tra Console **kh├┤ng c├▓n lß╗ùi compile**).
+-2. **Backup scene:** Copy `Assets/UI.unity` ra ngo├ái project (VD desktop) ─æß╗â ph├▓ng hß╗¥.
+-3. **Bß║¡t chß║┐ ─æß╗Ö text + meta file** (quan trß╗ìng cho Git):
+-   - `Edit ΓåÆ Project Settings ΓåÆ Editor`
+-   - **Asset Serialization ΓåÆ Mode: `Force Text`**
+-   - **Version Control ΓåÆ Mode: `Visible Meta Files`**
+-4. X├íc nhß║¡n menu `Window ΓåÆ General ΓåÆ Console` ─æang mß╗ƒ ─æß╗â bß║»t lß╗ùi kß╗ïp thß╗¥i.
+-
+----
+-
+-## 1. Bß║óN ─Éß╗Æ HIERARCHY THß╗░C Tß║╛
+-
+-> ─É├óy l├á cß║Ñu tr├║c **parse trß╗▒c tiß║┐p tß╗½ file scene** ΓÇö d├╣ng l├ám bß║ún ─æß╗ô ─æß╗â k├⌐o thß║ú.
+-
+-```
+-≡ƒôü Canvas (CanvasScaler)
+-Γö£ΓöÇΓöÇ ≡ƒôü Top_Zone
+-Γöé   Γö£ΓöÇΓöÇ ≡ƒôü HUD_Panel (HorizontalLayoutGroup)
+-Γöé   Γöé   Γö£ΓöÇΓöÇ Γ£Å∩╕Å Timer_Text  (TMP)
+-Γöé   Γöé   ΓööΓöÇΓöÇ Γ£Å∩╕Å Gold_Text   (TMP)
+-Γöé   ΓööΓöÇΓöÇ ≡ƒôü Customer_Slots (HorizontalLayoutGroup)
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒôü Slot_1 (Image)
+-Γöé       Γöé   Γö£ΓöÇΓöÇ ≡ƒôü Order_Bubble (Image + VerticalLayoutGroup)
+-Γöé       Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒû╝ Mon_1 (Image)
+-Γöé       Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒû╝ Mon_2 (Image)
+-Γöé       Γöé   Γö£ΓöÇΓöÇ ≡ƒû╝ Avatar_Khach (Image)
+-Γöé       Γöé   ΓööΓöÇΓöÇ ≡ƒôü Patience_Bar (Slider)
+-Γöé       Γöé       Γö£ΓöÇΓöÇ ≡ƒû╝ Background (Image)
+-Γöé       Γöé       ΓööΓöÇΓöÇ ≡ƒôü Fill Area
+-Γöé       Γöé           ΓööΓöÇΓöÇ ≡ƒû╝ Fill (Image)   ΓåÉ thanh ─æß║ºy
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒôü Slot_2 (Image)  [Patience_Bar, Order_Bubble(Mon_2,Mon_1), Avatar_Khach]
+-Γöé       ΓööΓöÇΓöÇ ≡ƒôü Slot_3 (Image)  [Patience_Bar, Avatar_Khach, Order_Bubble(Mon_1,Mon_2)]
+-Γö£ΓöÇΓöÇ ≡ƒôü Middle_Zone
+-Γöé   ΓööΓöÇΓöÇ ≡ƒôü 3Dia (HorizontalLayoutGroup)
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒû╝ Dia1 (Image)        ΓåÉ CH╞»A c├│ Button
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒû╝ Dia 2 (Image)       ΓåÉ CH╞»A c├│ Button
+-Γöé       ΓööΓöÇΓöÇ ≡ƒû╝ Dia 3 (Image)       ΓåÉ CH╞»A c├│ Button
+-Γö£ΓöÇΓöÇ ≡ƒôü Bottom_Zone
+-Γöé   Γö£ΓöÇΓöÇ ≡ƒôü Cot_Vi_Nuong (VerticalLayoutGroup)
+-Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒöÿ Vi1 (Button + Image)  ΓåÉ ─É├â c├│ Button
+-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒû╝ DongHo_Timer (Image)
+-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ Γ£Å∩╕Å Text (TMP)
+-Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒöÿ Vi2 (Button + Image)  ΓåÉ ─É├â c├│ Button
+-Γöé   Γöé       Γö£ΓöÇΓöÇ Γ£Å∩╕Å Text (TMP)
+-Γöé   Γöé       ΓööΓöÇΓöÇ ≡ƒû╝ DongHo_Timer (Image)
+-Γöé   Γö£ΓöÇΓöÇ ≡ƒôü Nguyen_Lieu (GridLayoutGroup)
+-Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒöÿ Rau, ≡ƒöÿ Pate, ≡ƒöÿ Banh, ≡ƒöÿ Thit   (Button + Image)
+-Γöé   ΓööΓöÇΓöÇ ≡ƒôü Sauce (VerticalLayoutGroup)
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒöÿ Hot_Sauce, ≡ƒöÿ Mayone   (Button + Image)
+-Γö£ΓöÇΓöÇ ≡ƒôü Popup_Overlay
+-Γöé   Γö£ΓöÇΓöÇ ≡ƒôü Lose_Popup (Image)
+-Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒôü KhuVuc_LyDoThua (VerticalLayoutGroup) ΓåÆ Text_Meo_Tip, Text_LyDo_Chinh
+-Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒôü Btn (HorizontalLayoutGroup)
+-Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ ≡ƒöÿ Btn_ChoiLai (Button + Image)
+-Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒöÿ Btn_CuuTro  (Button + Image)
+-Γöé   Γöé   ΓööΓöÇΓöÇ ≡ƒû╝ Icon_Lose (Image)
+-Γöé   ΓööΓöÇΓöÇ ≡ƒôü Win_Popup (Image)
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒôü Khung_3_Sao (HorizontalLayoutGroup) ΓåÆ Sao_1, Sao_2, Sao_3
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒöÿ Btn_XemVideo (Button + Image)
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒöÿ Btn_TiepTuc  (Button + Image)
+-Γöé       Γö£ΓöÇΓöÇ ≡ƒû╝ icon_Win (Image)
+-Γöé       ΓööΓöÇΓöÇ ≡ƒôü Bang_Thong_Ke (VerticalLayoutGroup)
+-Γöé           Γö£ΓöÇΓöÇ ≡ƒôü Dong_Combo (HLG) ΓåÆ Icon_Vang
+-Γöé           Γö£ΓöÇΓöÇ ≡ƒôü Dong_Khach (HLG) ΓåÆ Icon_Vang
+-Γöé           ΓööΓöÇΓöÇ ≡ƒôü Dong_Vang  (HLG) ΓåÆ Icon_Vang
+-≡ƒôü GameManager   ΓåÆ (─æ├ú c├│ script GameManager)
+-≡ƒôü EventSystem   ΓåÆ (EventSystem + StandaloneInputModule) Γ£ô OK
+-≡ƒôü Main Camera
+-```
+-
+-**K├╜ hiß╗çu:** ≡ƒû╝ = c├│ Image, ≡ƒöÿ = c├│ Button, Γ£Å∩╕Å = TextMeshPro, ≡ƒôü = container.
+-
+----
+-
+-## 2. Bß║óNG K├ëO THß║ó Tß╗¬NG SCRIPT
+-
+-> ΓÜá∩╕Å Mß╗ùi script chß╗ë **Add Component** khi ch╞░a c├│. D├╣ng n├║t **Add Component** (kh├┤ng k├⌐o file .cs v├áo ─æß╗â tr├ính nhß║ºm).
+-
+-### 2.1 EconomyManager
+-**N╞íi gß║»n:** GameObject `GameManager` (Add Component `EconomyManager`)
+-
+-| Field trong Inspector | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Gold Text` (TextMeshProUGUI) | `Top_Zone/HUD_Panel/Gold_Text` | ΓÜá∩╕Å **Xem l╞░u ├╜ mß╗Ñc 2.8** ΓÇö nß║┐u `GameManager.goldProgressText` c┼⌐ng trß╗Å v├áo ─æ├óy sß║╜ xung ─æß╗Öt nß╗Öi dung text. **Khuyß║┐n nghß╗ï: ─æß╗â TRß╗ÉNG** (script an to├án null) ─æß╗â `Gold_Text` hiß╗ân thß╗ï dß║íng `75/100` do GameManager ─æiß╗üu khiß╗ân. |
+-
+----
+-
+-### 2.2 CustomerSpawner
+-**N╞íi gß║»n:** GameObject `GameManager` (Add Component `CustomerSpawner`)
+-
+-| Field | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Customer Slots` (List, size = 3) | Phß║ºn tß╗¡ 0 ΓåÆ `Slot_1`<br>Phß║ºn tß╗¡ 1 ΓåÆ `Slot_2`<br>Phß║ºn tß╗¡ 2 ΓåÆ `Slot_3` | Phß║úi c├│ **3 phß║ºn tß╗¡, KH├öNG ─æ╞░ß╗úc ─æß╗â trß╗æng ├┤ n├áo** (nß║┐u list size > sß╗æ ├┤ g├ín ΓåÆ null element ΓåÆ NRE khi `GetRandomCustomerData`). |
+-| `Customer Database` (List) | `Khach1`, `Khach2`, `Khach3` (trong `Assets/Sprites/Customers/`) | K├⌐o thß║│ng file `.asset`. |
+-| `Min Spawn Delay` / `Max Spawn Delay` | (mß║╖c ─æß╗ïnh 3 / 6) | Kh├┤ng bß║»t buß╗Öc. |
+-
+----
+-
+-### 2.3 CustomerSlotUI
+-**N╞íi gß║»n:** Add Component `CustomerSlotUI` lß║ºn l╞░ß╗út v├áo `Slot_1`, `Slot_2`, `Slot_3`.
+-
+-| Field | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Avatar Image` (Image) | con `Avatar_Khach` cß╗ºa slot ─æ├│ | |
+-| `Order Bubble` (GameObject) | con `Order_Bubble` cß╗ºa slot ─æ├│ | |
+-| `Order Item Image` (Image) | `Order_Bubble/Mon_1` | `Mon_2` ─æß╗â nguy├¬n (chß╗ë 1 icon hiß╗ân thß╗ï). |
+-| `Patience Bar` (Image) | `Patience_Bar/Fill Area/Fill` | ΓÜá∩╕Å ─É├óy l├á **Image con Fill** ΓÇö KH├öNG k├⌐o cß║ú `Patience_Bar` (Slider) v├¼ field l├á `Image`. |
+-| M├áu + ng╞░ß╗íng ki├¬n nhß║½n | (mß║╖c ─æß╗ïnh) | Kh├┤ng bß║»t buß╗Öc ─æß╗òi. |
+-
+-> ΓÜá∩╕Å **Quan trß╗ìng:** `Fill` phß║úi c├│ `Image Type = Filled` (`FillMethod = Horizontal`, `FillOrigin = 0`) th├¼ `fillAmount` mß╗¢i hiß╗ân thß╗ï ─æ├║ng thanh ki├¬n nhß║½n. Nß║┐u ch╞░a ─æ├║ng, chß╗ìn `Fill` ΓåÆ Inspector ΓåÆ Image ΓåÆ Type: **Filled**.
+-
+----
+-
+-### 2.4 Plate
+-**N╞íi gß║»n:** Add Component `Plate` v├áo `Dia1`, `Dia 2`, `Dia 3`.
+-
+-| Field | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Food Image` (Image) | ch├¡nh Image tr├¬n `Dia1` / `Dia 2` / `Dia 3` | Nß║┐u ─æß╗â trß╗æng, `Awake()` tß╗▒ t├¼m `GetComponentInChildren<Image>`. |
+-| `Plate Button` (Button) | Button vß╗½a th├¬m tr├¬n ─æ─⌐a (xem b├¬n d╞░ß╗¢i) | Nß║┐u ─æß╗â trß╗æng, `Awake()` tß╗▒ t├¼m. |
+-
+-**Bß║»t buß╗Öc ΓÇö Th├¬m Button cho tß╗½ng ─æ─⌐a** (hiß╗çn Dia ch╞░a c├│ Button):
+-1. Chß╗ìn `Dia1` ΓåÆ **Add Component ΓåÆ Button**.
+-2. Nß║┐u bß╗ï cß║únh b├ío "Image is required", chß╗ìn **Add** ─æß╗â tß╗▒ th├¬m (─æ─⌐a ─æ├ú c├│ Image n├¬n sß║╜ OK).
+-3. L├ám t╞░╞íng tß╗▒ cho `Dia 2`, `Dia 3`.
+-4. Wiring OnClick ΓåÆ xem [mß╗Ñc 3](#3-bß║úng-wiring-buttononclick).
+-
+----
+-
+-### 2.5 GrillSlot
+-**N╞íi gß║»n:** Add Component `GrillSlot` v├áo `Vi1`, `Vi2` (─æ├ú c├│ sß║╡n Button).
+-
+-| Field | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Food Image` (Image) | ΓÜá∩╕Å N├¬n **tß║ío th├¬m 1 child Image t├¬n `Food_Image`** d╞░ß╗¢i Vi1/Vi2 ─æß╗â hiß╗ân thß╗ï m├│n ─æ├ú ch├¡n, rß╗ôi k├⌐o v├áo ─æ├óy. Nß║┐u ─æß╗â trß╗æng, `Awake` tß╗▒ t├¼m child Image ─æß║ºu ti├¬n (c├│ thß╗â l├á `DongHo_Timer` ΓÇö kh├┤ng ─æ├║ng ├╜ ─æß╗ô). | |
+-| `Slot Button` (Button) | Button tr├¬n ch├¡nh `Vi1` / `Vi2` | Nß║┐u ─æß╗â trß╗æng tß╗▒ t├¼m ─æ╞░ß╗úc. |
+-| `Current Food` / `Current State` | (runtime) | Kh├┤ng k├⌐o g├¼. |
+-
+-**L╞░u ├╜:** `GrillSlot` kh├┤ng tß╗▒ g├ín sß╗▒ kiß╗çn click ΓÇö phß║úi wiring `Button.onClick ΓåÆ GrillSlot.OnGrillClicked` (mß╗Ñc 3). Ngo├ái ra, scene **ch╞░a c├│ script xß╗¡ l├╜ nguy├¬n liß╗çu** (Rau/Pate/Banh/Thit/Hot_Sauce/Mayone) n├¬n luß╗ông "nß║Ñu ch├¡n ΓåÆ SetFood" ch╞░a hoß║ít ─æß╗Öng ΓÇö chß╗ë `OnGrillClicked` (chuyß╗ân m├│n ch├¡n l├¬n ─æ─⌐a) chß║íy ─æ╞░ß╗úc khi c├│ m├│n `Cooked`.
+-
+----
+-
+-### 2.6 PlateManager
+-**N╞íi gß║»n:** Add Component `PlateManager` v├áo `3Dia` (cha cß╗ºa c├íc ─æ─⌐a ΓÇö v├¼ `RefreshPlateList()` d├╣ng `GetComponentsInChildren<Plate>()`).
+-
+-| Field | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Plates` (List) | **(─Éß╗â trß╗æng)** | `Awake()` tß╗▒ t├¼m 3 ─æ─⌐a con. Nß║┐u muß╗æn chß║»c chß║»n, k├⌐o `Dia1`, `Dia 2`, `Dia 3` v├áo. |
+-
+----
+-
+-### 2.7 EndGameUI
+-**N╞íi gß║»n:** Add Component `EndGameUI` v├áo `Popup_Overlay`.
+-
+-| Field | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Win Panel` (GameObject) | `Popup_Overlay/Win_Popup` | |
+-| `Lose Panel` (GameObject) | `Popup_Overlay/Lose_Popup` | |
+-| `Btn Replay` (Button) | `Lose_Popup/Btn/Btn_ChoiLai` | "Ch╞íi lß║íi" |
+-| `Btn Next Level` (Button) | `Win_Popup/Btn_TiepTuc` | "Tiß║┐p tß╗Ñc" |
+-| `Btn Main Menu` (Button) | `Lose_Popup/Btn/Btn_CuuTro` | ΓÜá∩╕Å Chß╗ë g├ín nß║┐u scene `MainMenu` c├│ trong **Build Settings**. Nß║┐u ch╞░a c├│, **─æß╗â trß╗æng** (script bß╗Å qua null an to├án). |
+-
+-> Γ£à `EndGameUI` tß╗▒ g├ín listener cho 3 Button trong `Start()` ΓåÆ **KH├öNG cß║ºn** wiring OnClick thß╗º c├┤ng cho c├íc n├║t n├áy (tr├ính bß╗ï gß╗ìi 2 lß║ºn).
+-
+----
+-
+-### 2.8 GameManager
+-**N╞íi:** GameObject `GameManager` (script ─æ├ú c├│ ΓÇö chß╗ë cß║ºn g├ín lß║íi field, x├│a dß╗» liß╗çu c┼⌐).
+-
+-| Field | K├⌐o v├áo | Ghi ch├║ |
+-|---|---|---|
+-| `Timer Text` (TMP) | `Top_Zone/HUD_Panel/Timer_Text` | ─Éß║┐m ng╞░ß╗úc thß╗¥i gian. |
+-| `Gold Progress Text` (TMP) | `Top_Zone/HUD_Panel/Gold_Text` | Hiß╗ân thß╗ï `75/100`. |
+-| `End Game UI` | GameObject `Popup_Overlay` (k├⌐o cß║ú GameObject c├│ component EndGameUI) | |
+-| `Level Configs` (array) | Th├¬m **3 element**, set gi├í trß╗ï (xem bß║úng d╞░ß╗¢i) | Kh├┤ng k├⌐o asset. |
+-| `Customer Spawner` | GameObject `GameManager` (k├⌐o cß║ú GameObject c├│ component CustomerSpawner) | Nß║┐u ─æß╗â trß╗æng, `Start()` tß╗▒ `FindObjectOfType` t├¼m ─æ╞░ß╗úc. |
+-
+-**Gi├í trß╗ï gß╗úi ├╜ cho `Level Configs`** (khß╗¢p config c┼⌐ trong scene):
+-
+-| Element | Target Gold | Level Time Limit | Max Lost Customers |
+-|---|---|---|---|
+-| 0 | 100 | 90 | 3 |
+-| 1 | 120 | 90 | 3 |
+-| 2 | 150 | 90 | 3 |
+-
+-> ΓÜá∩╕Å **Xung ─æß╗Öt tiß╗üm ß║⌐n:** Nß║┐u bß║ín g├ín cß║ú `EconomyManager.goldText` V├Ç `GameManager.goldProgressText` v├áo `Gold_Text`, khi v├áng ─æß╗òi, `EconomyManager` ghi `"Gold: 75"` c├▓n `GameManager` ghi `"75/100"` ΓåÆ text nhß║Ñp nh├íy. **Khuyß║┐n nghß╗ï:** chß╗ë GameManager d├╣ng `Gold_Text`; ─æß╗â `EconomyManager.goldText` trß╗æng (hoß║╖c tß║ío 1 Text ri├¬ng nß║┐u muß╗æn hiß╗çn cß║ú 2 dß║íng).
+-
+----
+-
+-## 3. Bß║óNG WIRING BUTTON.ONCLICK
+-
+-> C├ích l├ám: chß╗ìn GameObject ΓåÆ Inspector ΓåÆ component **Button** ΓåÆ cuß╗Ön xuß╗æng **OnClick ()** ΓåÆ bß║Ñm **+** ΓåÆ k├⌐o GameObject c├│ script v├áo ├┤ trß╗æng ΓåÆ chß╗ìn h├ám trong dropdown.
+-
+-| Button (GameObject) | Object k├⌐o v├áo OnClick | H├ám chß╗ìn | Ghi ch├║ |
+-|---|---|---|---|
+-| `Middle_Zone/3Dia/Dia1` | `Dia1` (c├│ Plate) | `Plate.OnPlateClicked` | Bß║Ñm ─æ─⌐a ΓåÆ phß╗Ñc vß╗Ñ kh├ích |
+-| `Middle_Zone/3Dia/Dia 2` | `Dia 2` (c├│ Plate) | `Plate.OnPlateClicked` | |
+-| `Middle_Zone/3Dia/Dia 3` | `Dia 3` (c├│ Plate) | `Plate.OnPlateClicked` | |
+-| `Bottom_Zone/Cot_Vi_Nuong/Vi1` | `Vi1` (c├│ GrillSlot) | `GrillSlot.OnGrillClicked` | Chuyß╗ân m├│n ch├¡n l├¬n ─æ─⌐a |
+-| `Bottom_Zone/Cot_Vi_Nuong/Vi2` | `Vi2` (c├│ GrillSlot) | `GrillSlot.OnGrillClicked` | |
+-| `Popup_Overlay/Lose_Popup/Btn/Btn_ChoiLai` | *(kh├┤ng cß║ºn)* | ΓÇö | EndGameUI tß╗▒ g├ín `OnReplayClicked` |
+-| `Popup_Overlay/Win_Popup/Btn_TiepTuc` | *(kh├┤ng cß║ºn)* | ΓÇö | EndGameUI tß╗▒ g├ín `OnNextLevelClicked` |
+-| `Popup_Overlay/Lose_Popup/Btn/Btn_CuuTro` | *(kh├┤ng cß║ºn)* | ΓÇö | EndGameUI tß╗▒ g├ín `OnMainMenuClicked` |
+-| `Popup_Overlay/Win_Popup/Btn_XemVideo` | *(kh├┤ng d├╣ng)* | ΓÇö | Kh├┤ng c├│ h├ám xß╗¡ l├╜ trong c├íc script ch├¡nh |
+-| Nguy├¬n liß╗çu `Rau/Pate/Banh/Thit/Hot_Sauce/Mayone` | *(kh├┤ng cß║ºn)* | ΓÇö | **`IngredientButton`** tß╗▒ gß║»n listener trong `Awake()` ΓåÆ bß║Ñm sß║╜ ─æß║╖t `FoodData` l├¬n ─æ─⌐a trß╗æng. Chß╗ë cß║ºn g├ín **`Food Data`** (asset) tr├¬n Inspector cho tß╗½ng n├║t. |
+-
+----
+-
+-## 4. THß╗¿ Tß╗░ K├ëO THß║ó AN TO├ÇN
+-
+-> Mß╗Ñc ti├¬u: l├ám theo thß╗⌐ tß╗▒ n├áy ─æß╗â **bß║Ñm Play lß║ºn ─æß║ºu kh├┤ng bß╗ï NullReferenceException**, v├á dß╗à kiß╗âm so├ít lß╗ùi nß║┐u c├│.
+-
+-### Phase 1 ΓÇö Gß║»n Singleton (nß╗ün tß║úng)
+-1. Add `EconomyManager` v├áo `GameManager`.
+-2. Add `CustomerSpawner` v├áo `GameManager`.
+-3. Add `PlateManager` v├áo `3Dia`.
+-
+-> Γ£à V├¼ `SingletonBehaviour` set `Instance` trong `Awake()`, cß║ú 3 sß║╜ sß║╡n s├áng tr╞░ß╗¢c khi bß║Ñt kß╗│ `Start()` n├áo chß║íy.
+-
+-### Phase 2 ΓÇö Gß║»n Script l├¬n c├íc node con
+-4. Add `CustomerSlotUI` ΓåÆ `Slot_1`, `Slot_2`, `Slot_3`.
+-5. Add `Plate` ΓåÆ `Dia1`, `Dia 2`, `Dia 3` **+ th├¬m Button** cho tß╗½ng ─æ─⌐a.
+-6. Add `GrillSlot` ΓåÆ `Vi1`, `Vi2`.
+-7. Add `EndGameUI` ΓåÆ `Popup_Overlay`.
+-
+-### Phase 3 ΓÇö K├⌐o thß║ú reference tß╗½ng script (theo mß╗Ñc 2)
+-8. Wire `CustomerSlotUI` (3 slot) ΓÇö avatar, bubble, item image, patience fill.
+-9. Wire `Plate` (3 ─æ─⌐a) ΓÇö food image, plate button.
+-10. Wire `GrillSlot` (2 vß╗ë) ΓÇö food image, slot button.
+-11. Wire `EndGameUI` ΓÇö win/lose panel, 3 button.
+-12. Wire `CustomerSpawner` ΓÇö list slots (3), list database (3).
+-13. Wire `EconomyManager` ΓÇö ─æß╗â trß╗æng (hoß║╖c Gold_Text nß║┐u chß║Ñp nhß║¡n xung ─æß╗Öt).
+-
+-### Phase 4 ΓÇö Wiring Button OnClick (theo mß╗Ñc 3)
+-14. G├ín `OnPlateClicked` cho 3 ─æ─⌐a.
+-15. G├ín `OnGrillClicked` cho 2 vß╗ë.
+-
+-### Phase 5 ΓÇö Cß║Ñu h├¼nh GameManager CUß╗ÉI C├ÖNG
+-16. G├ín `Timer Text`, `Gold Progress Text`, `End Game UI`, `Customer Spawner`.
+-17. Tß║ío `Level Configs` (3 element) vß╗¢i gi├í trß╗ï nh╞░ mß╗Ñc 2.8.
+-
+-> ≡ƒöæ **V├¼ sao GameManager l├ám cuß╗æi:** `StartLevel()` gß╗ìi ngay `EconomyManager`, `endGameUI`, `customerSpawner`. Khi tß║Ñt cß║ú c├íc script kh├íc ─æ├ú wire xong, bß║Ñm Play sß║╜ chß║íy tr╞ín tru.
+-
+----
+-
+-## 5. QUY TR├îNH KIß╗éM THß╗¼ PLAY
+-
+-1. `Ctrl+S` l╞░u scene ΓåÆ `Ctrl+Shift+B` bß║Ñm **Add Open Scenes** (─æß║úm bß║úo `UI.unity` trong Build Settings).
+-2. Bß║Ñm **Play**:
+-   - Console kh├┤ng c├│ lß╗ùi ─æß╗Å. Nß║┐u c├│ `MissingReferenceException` ΓåÆ t├¼m object bß╗ï thiß║┐u theo t├¬n log.
+-   - HUD hiß╗çn `Timer_Text` ─æß║┐m ng╞░ß╗úc, `Gold_Text` hiß╗çn `0/100`.
+-   - Sau v├ái gi├óy, kh├ích tß╗▒ spawn v├áo Slot (avatar + order bubble + thanh ki├¬n nhß║½n).
+-   - Kh├ích bß╗Å ─æi ΓåÆ `Lose_Popup` hiß╗çn khi qu├í sß╗æ kh├ích hoß║╖c hß║┐t giß╗¥.
+-3. Test tay: bß║Ñm `Vi1` (─æang Cooked) ΓåÆ m├│n l├¬n ─æ─⌐a trß╗æng ΓåÆ bß║Ñm ─æ─⌐a ΓåÆ kh├ích ─æ├║ng m├│n ─æ╞░ß╗úc phß╗Ñc vß╗Ñ, v├áng t─âng.
+-4. Test n├║t: `Btn_ChoiLai` load lß║íi scene; `Btn_TiepTuc` load scene kß║┐ (nß║┐u c├│).
+-
+----
+-
+-## 6. SAVE / GIT (GIß╗« REFERENCE KHI PUSH/PULL)
+-
+-### 6.1 L╞░u ─æ├║ng c├ích trong Unity
+-1. **File ΓåÆ Save Scene** (`Ctrl+S`) ΓÇö l╞░u mß╗ìi thay ─æß╗òi cß╗ºa scene.
+-2. **File ΓåÆ Save Project** ΓÇö l╞░u settings/prefab.
+-3. Kiß╗âm tra `Assets/UI.unity` **v├á** `Assets/UI.unity.meta` ─æß╗üu tß╗ôn tß║íi. **Kh├┤ng bao giß╗¥** x├│a `.meta`.
+-
+-### 6.2 Git ΓÇö 3 nguy├¬n tß║»c v├áng
+-1. **Commit to├án bß╗Ö `.meta`**: `.meta` chß╗⌐a **GUID** ΓÇö nguß╗ôn gß╗æc cß╗ºa mß╗ìi reference. File bß╗ï bß╗Å qu├¬n `.meta` = reference mß║Ñt.
+-2. **Chß╗ë sß╗¡a `.unity` bß║▒ng Unity Editor**, kh├┤ng sß╗¡a tay bß║▒ng text editor (tr├ính hß╗Ång YAML/instanceID).
+-3. **Tr├ính 2 ng╞░ß╗¥i sß╗¡a c├╣ng scene 1 l├║c** ΓÇö ─æ├óy l├á nguy├¬n nh├ón ch├¡nh g├óy conflict.
+-
+-### 6.3 Cß║Ñu h├¼nh UnityYAMLMerge (bß║»t buß╗Öc cho team)
+-1. `Edit ΓåÆ Project Settings ΓåÆ Editor ΓåÆ Version Control`
+-2. Chß╗ìn **Mode: `Visible Meta Files`** (─æ├ú l├ám ß╗ƒ mß╗Ñc 0).
+-3. Trong Git, cß║Ñu h├¼nh **merge driver** cho `*.unity` v├á `*.prefab` d├╣ng `UnityYAMLMerge`:
+-   - File `.gitattributes` (th├¬m nß║┐u ch╞░a c├│):
+-     ```
+-     *.unity merge=unityyamlmerge
+-     *.prefab merge=unityyamlmerge
+-     ```
+-   - Cß║Ñu h├¼nh git driver (chß║íy 1 lß║ºn, mß╗ùi m├íy):
+-     ```
+-     git config --global merge.unityyamlmerge.name "Unity YAML merge tool"
+-     git config --global merge.unityyamlmerge.driver "'C:/Program Files/Unity/Hub/Editor/<VERSION>/Editor/Data/Tools/UnityYAMLMerge.exe' merge -p %O %A %B"
+-     ```
+-
+-### 6.4 Khi bß╗ï conflict ß╗ƒ UI.unity (nh╞░ lß║ºn n├áy)
+-1. `git pull` ΓåÆ b├ío conflict ß╗ƒ `UI.unity`.
+-2. **KH├öNG** bß║Ñm "Accept ours/theirs" mß╗Öt c├ích m├íy m├│c ΓÇö dß╗à sinh ra scene lai nh╞░ bß║ín ─æang gß║╖p (field c┼⌐ `textThoiGian` + script mß╗¢i).
+-3. Chß║íy merge tool (nß║┐u c├│ driver) hoß║╖c tß╗▒ chß╗ìn 1 b├¬n, mß╗ƒ Unity l├¬n v├á **re-wire lß║íi theo checklist n├áy**.
+-4. Sau khi re-wire xong, Unity sß║╜ ghi lß║íi field mß╗¢i ─æ├║ng chuß║⌐n ΓåÆ lß║ºn sau merge dß╗à h╞ín.
+-
+-### 6.5 Prefab (khuyß║┐n nghß╗ï ─æß╗â kh├┤ng lß║╖p lß║íi)
+-- **Slot kh├ích h├áng:** Chuß╗Öt phß║úi `Slot_1` ΓåÆ **Create ΓåÆ Prefab** ΓåÆ l╞░u `Prefabs/CustomerSlot.prefab`. G├ín c├íc child ref 1 lß║ºn. C├íc slot kh├íc d├╣ng **Prefab** (thay v├¼ copy rß╗¥i) ΓåÆ mß╗ìi thay ─æß╗òi chß╗ë l├ám 1 n╞íi.
+-- **─É─⌐a:** T╞░╞íng tß╗▒ tß║ío `Plate.prefab` tß╗½ `Dia1` (─æ├ú c├│ Plate + Button + OnClick).
+-- **Vß╗ë n╞░ß╗¢ng:** Tß║ío `GrillSlot.prefab` tß╗½ `Vi1`.
+-- **Popup:** Tß║ío `EndGamePopup.prefab` tß╗½ `Popup_Overlay`.
+-- Khi tß║ío prefab, chß╗ìn **Apply All** ─æß╗â l╞░u override, v├á nhß╗¢ **Save Project**.
+-
+-> ≡ƒÆí Prefab gi├║p: reference lu├┤n nhß║Ñt qu├ín, khi pull vß╗ü c├íc th├ánh vi├¬n kh├íc chß╗ë cß║ºn ─æß║úm bß║úo prefab c├│ trong Assets (`.meta` ─æ├ú commit) l├á mß╗ìi li├¬n kß║┐t b├¬n trong prefab tß╗▒ kh├┤i phß╗Ñc.
+-
+----
+-
+-## 7. PHß╗ñ Lß╗ñC: DATABASE
+-
+-### CustomerData (`Assets/Sprites/Customers/`)
+-| Asset | customerName | requiredFood | maxPatienceTime |
+-|---|---|---|---|
+-| `Khach1.asset` | Emilia | B├ính m├¼ (BanhMi) | 10 |
+-| `Khach2.asset` | Phong C├ích | B├ính m├¼ sß╗æt (BanhMiSot) | 10 |
+-| `Khach3.asset` | Anime Girl | M├¼ t├┤n (MiTon) | 10 |
+-
+-### FoodData (`Assets/Sprites/Food/`)
+-| Asset | foodID | price |
+-|---|---|---|
+-| `B├ính m├¼.asset` | BanhMi | 25 |
+-| `B├ính m├¼ sß╗æt.asset` | BanhMiSot | 30 |
+-| `M├¼ t├┤n.asset` | MiTon | 20 |
+-
+-### Script GUIDs (tham khß║úo khi debug YAML)
+-| Script | GUID |
+-|---|---|
+-| GameManager | `4c8e59542a22f7c48b9f3c93153658b5` |
+-| EconomyManager | `2fae2c46d7c75834a816e987e7fb4787` |
+-| CustomerSpawner | `7166b762fd6d193428132621b996890a` |
+-| CustomerSlotUI | `c867045f797274a428b89c42706c5408` |
+-| EndGameUI | `9d3cc57cc2d9397468b83d369fa8f68c` |
+-| Plate | `9bf3335a019c63f4ca667d4ab673342f` |
+-| GrillSlot | `e70b75ced6b7ca448861c4303d6a61a6` |
+-| PlateManager | `eed915ffc6d00644a962cc8590192789` |
+-| Customer | `b1247da060d49da47bdbc5897998f628` |
+-| FoodData | `dc0e5a07f1d77e14886b85974ac0cdb0` |
+-| CustomerData | `40c305a2c07a01d4ba3a349538f8cbec` |
+-
+----
+-
+-*Checklist ho├án tß║Ñt. L├ám theo Phase 1 ΓåÆ 5 ß╗ƒ mß╗Ñc 4, rß╗ôi l╞░u scene + project tr╞░ß╗¢c khi commit.*
+-
+diff --git a/YummyExpress/Assets/Docs/UI_SCENE_WIRING_CHECKLIST.md.meta b/YummyExpress/Assets/Docs/UI_SCENE_WIRING_CHECKLIST.md.meta
+deleted file mode 100644
+index f7b78ca..0000000
+--- a/YummyExpress/Assets/Docs/UI_SCENE_WIRING_CHECKLIST.md.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 5b7518221bc91ac4a99a5e083a5c089a
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/YummyExpress/Assets/Scripts/Managers/GameManager.cs b/YummyExpress/Assets/Scripts/Managers/GameManager.cs
+index ff11e44..9fdfb28 100644
+--- a/YummyExpress/Assets/Scripts/Managers/GameManager.cs
++++ b/YummyExpress/Assets/Scripts/Managers/GameManager.cs
+@@ -218,7 +218,7 @@ public void EndGame(bool isWin)
+ 
+                 // YUM-242: Tß╗▒ ─æß╗Öng mß╗ƒ kh├│a level kß║┐ tiß║┐p (nß║┐u ch╞░a mß╗ƒ).
+                 // Chß╗ë khi THß║«NG mß╗¢i mß╗ƒ kh├│a level sau ΓåÆ ng╞░ß╗¥i ch╞íi v├áo qua Btn_TiepTuc trong EndGame UI.
+-                SaveSystem.UnlockNextLevel(currentLevelIndex + 1);
++                SaveSystem.UnlockNextLevel(currentLevelIndex + 1, levelConfigs.Length);
+ 
+                 // Hiß╗ân thß╗ï Win_Popup vß╗¢i ─æß║ºy ─æß╗º: sao, v├áng, kh├ích, combo.
+                 endGameUIRef.ShowWinPopup(stars, totalGold, served, totalC, maxCombo);
+@@ -372,9 +372,10 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
+             servedCustomerCount++;
+ 
+             // 2.2 Th├┤ng b├ío cho ScoreManager t├¡nh ─æiß╗âm sao nhß╗Å dß╗▒a tr├¬n % ki├¬n nhß║½n c├▓n lß║íi.
++            int comboGold = 0;
+             if (ScoreManager.Instance != null)
+             {
+-                ScoreManager.Instance.OnCustomerServed(remainingPatience);
++                comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
+             }
+             else
+             {
+@@ -385,7 +386,7 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
+             //    (C├│ thß╗â k├¡ch hoß║ít CheckWinCondition ΓåÆ EndGame(true) ß╗ƒ ─æ├óy, nh╞░ng count ─æ├ú ─æß╗ông bß╗Ö rß╗ôi).
+             if (EconomyManager.Instance != null)
+             {
+-                EconomyManager.Instance.AddGold(earnedGold);
++                EconomyManager.Instance.AddGold(earnedGold + comboGold);
+             }
+             else
+             {
+diff --git a/YummyExpress/Assets/Scripts/Managers/SaveSystem.cs b/YummyExpress/Assets/Scripts/Managers/SaveSystem.cs
+index a90849c..4370cfe 100644
+--- a/YummyExpress/Assets/Scripts/Managers/SaveSystem.cs
++++ b/YummyExpress/Assets/Scripts/Managers/SaveSystem.cs
+@@ -54,11 +54,14 @@ public static class SaveSystem
+     /// T├¬n file l╞░u trß╗» dß╗» liß╗çu.
+     /// </summary>
+     private const string FileName = "player_data.json";
++    private const string BackupFileName = "player_data.json.bak";
+ 
+     /// <summary>
+     /// ─É╞░ß╗¥ng dß║½n ─æß║ºy ─æß╗º tß╗¢i file l╞░u dß╗» liß╗çu JSON.
+     /// </summary>
+     private static string SavePath => Path.Combine(Application.persistentDataPath, FileName);
++    private static string BackupPath => Path.Combine(Application.persistentDataPath, BackupFileName);
++    private static string TempPath => SavePath + ".tmp";
+ 
+     #endregion
+ 
+@@ -72,23 +75,40 @@ public static void SaveData(PlayerData data)
+     {
+         try
+         {
+-            // Null-check: nß║┐u data null, tß║ío dß╗» liß╗çu mß║╖c ─æß╗ïnh ─æß╗â tr├ính lß╗ùi.
+-            if (data == null)
+-            {
+-                data = CreateDefaultData();
+-            }
+-
+-            // Serialize ─æß╗æi t╞░ß╗úng PlayerData th├ánh chuß╗ùi JSON.
++            data = NormalizeData(data);
+             string json = JsonUtility.ToJson(data, true);
+-
+-            // Ghi chuß╗ùi JSON xuß╗æng file (tß╗▒ tß║ío th╞░ mß╗Ñc nß║┐u ch╞░a c├│).
+             string directory = Path.GetDirectoryName(SavePath);
+             if (!Directory.Exists(directory))
+             {
+                 Directory.CreateDirectory(directory);
+             }
+ 
+-            File.WriteAllText(SavePath, json);
++            // Ghi file tß║ím tr╞░ß╗¢c, sau ─æ├│ thay thß║┐ file ch├¡nh v├á giß╗» mß╗Öt bß║ún sao l╞░u.
++            // Nhß╗¥ vß║¡y viß╗çc tß║»t app giß╗»a l├║c l╞░u kh├┤ng l├ám mß║Ñt to├án bß╗Ö tiß║┐n tr├¼nh.
++            File.WriteAllText(TempPath, json);
++            if (File.Exists(SavePath))
++            {
++                try
++                {
++                    File.Replace(TempPath, SavePath, BackupPath);
++                }
++                catch (PlatformNotSupportedException)
++                {
++                    File.Copy(SavePath, BackupPath, true);
++                    File.Copy(TempPath, SavePath, true);
++                    File.Delete(TempPath);
++                }
++                catch (IOException)
++                {
++                    File.Copy(SavePath, BackupPath, true);
++                    File.Copy(TempPath, SavePath, true);
++                    File.Delete(TempPath);
++                }
++            }
++            else
++            {
++                File.Move(TempPath, SavePath);
++            }
+ 
+             Debug.Log($"<color=green>[SAVE SYSTEM] L╞░u dß╗» liß╗çu th├ánh c├┤ng ΓåÆ {SavePath}</color>");
+         }
+@@ -105,42 +125,25 @@ public static void SaveData(PlayerData data)
+     /// <returns>Dß╗» liß╗çu ng╞░ß╗¥i ch╞íi ─æ├ú load (kh├┤ng bao giß╗¥ trß║ú vß╗ü null).</returns>
+     public static PlayerData LoadData()
+     {
+-        try
++        if (TryLoadData(SavePath, out PlayerData data))
+         {
+-            // Nß║┐u file ch╞░a tß╗ôn tß║íi ΓåÆ tß║ío dß╗» liß╗çu mß║╖c ─æß╗ïnh v├á l╞░u lß║íi.
+-            if (!File.Exists(SavePath))
+-            {
+-                Debug.LogWarning($"[SAVE SYSTEM] File '{SavePath}' ch╞░a tß╗ôn tß║íi ΓåÆ Tß║ío dß╗» liß╗çu mß║╖c ─æß╗ïnh.");
+-                PlayerData defaultData = CreateDefaultData();
+-                SaveData(defaultData);
+-                return defaultData;
+-            }
+-
+-            // ─Éß╗ìc to├án bß╗Ö nß╗Öi dung file JSON.
+-            string json = File.ReadAllText(SavePath);
+-
+-            // Deserialize chuß╗ùi JSON th├ánh ─æß╗æi t╞░ß╗úng PlayerData.
+-            PlayerData data = JsonUtility.FromJson<PlayerData>(json);
+-
+-            // Nß║┐u deserialize thß║Ñt bß║íi (chuß╗ùi rß╗ùng/kh├┤ng hß╗úp lß╗ç) ΓåÆ trß║ú vß╗ü dß╗» liß╗çu mß║╖c ─æß╗ïnh.
+-            if (data == null)
+-            {
+-                Debug.LogError("[SAVE SYSTEM] Dß╗» liß╗çu JSON kh├┤ng hß╗úp lß╗ç ΓåÆ Tß║ío dß╗» liß╗çu mß║╖c ─æß╗ïnh.");
+-                data = CreateDefaultData();
+-                SaveData(data);
+-                return data;
+-            }
+-
++            data = NormalizeData(data);
+             Debug.Log($"<color=cyan>[SAVE SYSTEM] ─Éß╗ìc dß╗» liß╗çu th├ánh c├┤ng: Level {data.currentLevel}, {data.totalGold} v├áng, {data.unlockedLevels.Count} level mß╗ƒ kh├│a.</color>");
+             return data;
+         }
+-        catch (Exception e)
+-        {
+-            Debug.LogError($"[SAVE SYSTEM] Lß╗ùi khi ─æß╗ìc dß╗» liß╗çu: {e.Message}\n{e.StackTrace}");
+ 
+-            // Nß║┐u c├│ lß╗ùi, trß║ú vß╗ü dß╗» liß╗çu mß║╖c ─æß╗ïnh ─æß╗â game kh├┤ng bß╗ï treo.
+-            return CreateDefaultData();
++        if (TryLoadData(BackupPath, out data))
++        {
++            Debug.LogWarning("[SAVE SYSTEM] File l╞░u ch├¡nh kh├┤ng hß╗úp lß╗ç. ─É├ú kh├┤i phß╗Ñc tß╗½ bß║ún sao l╞░u.");
++            data = NormalizeData(data);
++            SaveData(data);
++            return data;
+         }
++
++        Debug.LogWarning("[SAVE SYSTEM] Ch╞░a c├│ dß╗» liß╗çu hß╗úp lß╗ç. Tß║ío tiß║┐n tr├¼nh mß╗¢i.");
++        data = CreateDefaultData();
++        SaveData(data);
++        return data;
+     }
+ 
+     /// <summary>
+@@ -188,6 +191,17 @@ public static void SaveLevelStars(int levelIndex, int stars)
+     /// <param name="currentLevel">Level hiß╗çn tß║íi ng╞░ß╗¥i ch╞íi vß╗½a ho├án th├ánh (1-based).</param>
+     public static void UnlockNextLevel(int currentLevel)
+     {
++        UnlockNextLevel(currentLevel, int.MaxValue);
++    }
++
++    /// <summary>Mß╗ƒ kh├│a level tiß║┐p theo, nh╞░ng kh├┤ng tß║ío progress cho level kh├┤ng tß╗ôn tß║íi.</summary>
++    public static void UnlockNextLevel(int currentLevel, int totalLevelCount)
++    {
++        if (currentLevel < 1 || currentLevel >= totalLevelCount)
++        {
++            return;
++        }
++
+         PlayerData data = LoadData();
+ 
+         int nextLevel = currentLevel + 1;
+@@ -295,8 +309,76 @@ public static void ResetAllData()
+             Debug.LogWarning("[SAVE SYSTEM] ─É├ú x├│a file dß╗» liß╗çu c┼⌐.");
+         }
+ 
++        if (File.Exists(BackupPath))
++        {
++            File.Delete(BackupPath);
++        }
++
+         SaveData(CreateDefaultData());
+     }
+ 
++    private static bool TryLoadData(string path, out PlayerData data)
++    {
++        data = null;
++        if (!File.Exists(path))
++        {
++            return false;
++        }
++
++        try
++        {
++            string json = File.ReadAllText(path);
++            data = JsonUtility.FromJson<PlayerData>(json);
++            return data != null;
++        }
++        catch (Exception e)
++        {
++            Debug.LogWarning($"[SAVE SYSTEM] Kh├┤ng thß╗â ─æß╗ìc '{path}': {e.Message}");
++            return false;
++        }
++    }
++
++    private static PlayerData NormalizeData(PlayerData data)
++    {
++        if (data == null)
++        {
++            return CreateDefaultData();
++        }
++
++        data.currentLevel = Mathf.Max(1, data.currentLevel);
++        data.totalGold = Mathf.Max(0, data.totalGold);
++
++        if (data.unlockedLevels == null)
++        {
++            data.unlockedLevels = new List<int>();
++        }
++
++        data.unlockedLevels.RemoveAll(level => level < 1);
++        if (!data.unlockedLevels.Contains(1))
++        {
++            data.unlockedLevels.Add(1);
++        }
++        data.unlockedLevels.Sort();
++
++        if (data.levelStars == null)
++        {
++            data.levelStars = new List<LevelProgress>();
++        }
++
++        for (int i = data.levelStars.Count - 1; i >= 0; i--)
++        {
++            LevelProgress progress = data.levelStars[i];
++            if (progress == null || progress.levelIndex < 0)
++            {
++                data.levelStars.RemoveAt(i);
++                continue;
++            }
++
++            progress.stars = Mathf.Clamp(progress.stars, 0, 3);
++        }
++
++        return data;
++    }
++
+     #endregion
+ }
+diff --git a/YummyExpress/Assets/Scripts/Managers/ScoreManager.cs b/YummyExpress/Assets/Scripts/Managers/ScoreManager.cs
+index 6472fc3..a0dcd4a 100644
+--- a/YummyExpress/Assets/Scripts/Managers/ScoreManager.cs
++++ b/YummyExpress/Assets/Scripts/Managers/ScoreManager.cs
+@@ -26,6 +26,8 @@ public class ScoreManager : MonoBehaviour
+ 
+     [Header("Combo Config")]
+     [SerializeField] private float comboTimeout = 3.5f;
++    [SerializeField, Min(2)] private int comboSatisfactionStartsAt = 2;
++    [SerializeField, Range(0, 2)] private int comboSatisfactionBonus = 1;
+     private float lastServeTime = -999f;
+     private int currentCombo = 0;
+     private int maxCombo = 0;
+@@ -102,7 +104,7 @@ public void InitializeLevel(int totalCustomers)
+     /// T├¡nh ─æiß╗âm nß╗ün theo % ki├¬n nhß║½n + ─æiß╗âm th╞░ß╗ƒng theo Combo.
+     /// </summary>
+     /// <param name="patiencePercent">% ki├¬n nhß║½n c├▓n lß║íi cß╗ºa kh├ích (0.0 - 1.0).</param>
+-    public void OnCustomerServed(float patiencePercent)
++    public int OnCustomerServed(float patiencePercent)
+     {
+         servedCustomersCount++;
+ 
+@@ -126,21 +128,24 @@ public void OnCustomerServed(float patiencePercent)
+         lastServeTime = Time.time;
+         if (currentCombo > maxCombo) maxCombo = currentCombo;
+ 
+-        // 3. Cß╗Öng ─æiß╗âm ki├¬n nhß║½n thuß║ºn cho kh├ích vß╗½a phß╗Ñc vß╗Ñ (chß╗ë t├¡nh ─Éß╗ÿ H├ÇI L├ÆNG).
+-        //    KH├öNG cß╗Öng ─æiß╗âm th╞░ß╗ƒng combo v├áo totalEarnedPoints/totalCustomers*3 nß╗»a,
+-        //    ─æß╗â "─æß╗Ö h├ái l├▓ng trung b├¼nh" phß║ún ├ính ─É├ÜNG chß║Ñt l╞░ß╗úng phß╗Ñc vß╗Ñ (ki├¬n nhß║½n).
+-        totalEarnedPoints += basePoints;
++        // 3. Combo li├¬n tß╗Ñc l├á t├¡n hiß╗çu t├¡ch cß╗▒c, nh╞░ng ─æiß╗âm h├ái l├▓ng cß╗ºa mß╗Öt kh├ích
++        //    lu├┤n nß║▒m trong [0, 3] ─æß╗â mß║½u sß╗æ totalCustomers * 3 vß║½n ch├¡nh x├íc.
++        int comboPoints = currentCombo >= comboSatisfactionStartsAt
++            ? comboSatisfactionBonus
++            : 0;
++        int customerSatisfaction = Mathf.Clamp(basePoints + comboPoints, 0, 3);
++        totalEarnedPoints += customerSatisfaction;
+ 
+-        // 4. Combo ΓåÆ th╞░ß╗ƒng V├ÇNG +5/10/15/20 (kinh tß║┐), kh├┤ng th├¬m ─æiß╗âm sao.
++        // 4. Combo ΓåÆ th╞░ß╗ƒng V├ÇNG +5/10/15/20. GameManager cß╗Öng khoß║ún n├áy c├╣ng
++        //    tiß╗ün m├│n ─ân ─æß╗â sß╗▒ kiß╗çn OnGoldChanged kh├┤ng thß╗â kß║┐t th├║c m├án giß╗»a chß╗½ng.
+         //    x1 ΓåÆ +5, x2 ΓåÆ +10, x3 ΓåÆ +15, x4+ ΓåÆ +20.
+         int comboGold = 5 * Mathf.Min(currentCombo, 4);
+-        if (comboGold > 0 && EconomyManager.Instance != null)
+-        {
+-            EconomyManager.Instance.AddGold(comboGold);
+-        }
+ 
+-        Debug.Log($"<color=green>[SCORE] Served! Patience: {patiencePercent * 100:F0}% (+{basePoints}pts) | " +
++        Debug.Log($"<color=green>[SCORE] Served! Patience: {patiencePercent * 100:F0}% " +
++                  $"(+{basePoints} patience, +{comboPoints} combo = {customerSatisfaction} satisfaction) | " +
+                   $"Combo: x{currentCombo} (+{comboGold} v├áng) | Total Points: {totalEarnedPoints}</color>");
++
++        return comboGold;
+     }
+ 
+     /// <summary>
+@@ -170,7 +175,7 @@ public void OnCustomerLeftAngry()
+     public int CalculateAndDisplayStars()
+     {
+         // T├¡nh sao dß╗▒a tr├¬n Tß╗╖ lß╗ç phß╗Ñc vß╗Ñ kh├ích (KH├öNG BAO GIß╗£ trß║ú vß╗ü 0 khi Win).
+-        int finalStars = CalculateStars(TotalEarnedPoints, servedCustomersCount, totalCustomersInLevel);
++        int finalStars = CalculateStars();
+ 
+         Debug.Log($"<color=green>[SCORE FINAL] Earned: {totalEarnedPoints}/{totalCustomersInLevel * 3} | " +
+                   $"Kh├ích: {servedCustomersCount}/{totalCustomersInLevel} | Angry: {angryCustomersCount} | Stars: {finalStars}</color>");
+@@ -210,12 +215,12 @@ public int CalculateAndDisplayStars()
+     /// <param name="servedCustomers">Sß╗æ kh├ích ─æ├ú phß╗Ñc vß╗Ñ th├ánh c├┤ng.</param>
+     /// <param name="totalCustomers">Tß╗òng sß╗æ kh├ích dß╗▒ kiß║┐n trong level.</param>
+     /// <returns>Sß╗æ sao (1, 2 hoß║╖c 3).</returns>
+-    public int CalculateStars(int totalGoldEarned, int servedCustomers, int totalCustomers)
++    public int CalculateStars()
+     {
+-        if (totalCustomers <= 0) return 1;
++        if (totalCustomersInLevel <= 0) return 1;
+ 
+         // ─Éß╗Ö h├ái l├▓ng trung b├¼nh = ─æiß╗âm ki├¬n nhß║½n thuß║ºn / tß╗æi ─æa c├│ thß╗â (mß╗ùi kh├ích tß╗æi ─æa 3 ─æiß╗âm).
+-        float satisfaction = Mathf.Clamp01((float)totalEarnedPoints / (totalCustomers * 3));
++        float satisfaction = Mathf.Clamp01((float)totalEarnedPoints / (totalCustomersInLevel * 3));
+ 
+         // ΓëÑ 70% ΓåÆ 3 Sao.
+         if (satisfaction >= 0.70f)
+@@ -231,6 +236,12 @@ public int CalculateStars(int totalGoldEarned, int servedCustomers, int totalCus
+         return 1;
+     }
+ 
++    // Giß╗» API c┼⌐ cho c├íc UnityEvent hoß║╖c script ─æ├ú gß╗ìi h├ám tr╞░ß╗¢c ─æ├óy.
++    public int CalculateStars(int totalGoldEarned, int servedCustomers, int totalCustomers)
++    {
++        return CalculateStars();
++    }
++
+     /// <summary>Trß║ú vß╗ü Combo cao nhß║Ñt ─æß║ít ─æ╞░ß╗úc trong m├án (hiß╗ân thß╗ï tr├¬n Popup Win).</summary>
+     public int GetMaxCombo() => maxCombo;
+ 
+diff --git a/YummyExpress/Assets/Scripts/Managers/ServingManager.cs b/YummyExpress/Assets/Scripts/Managers/ServingManager.cs
+index 78a1e18..9770b4b 100644
+--- a/YummyExpress/Assets/Scripts/Managers/ServingManager.cs
++++ b/YummyExpress/Assets/Scripts/Managers/ServingManager.cs
+@@ -44,9 +44,10 @@ public bool ServeFoodToCustomer(FoodData food)
+             // ΓÜá∩╕Å GHI NHß║¼N ─ÉIß╗éM TR╞»ß╗ÜC KHI Cß╗ÿNG V├ÇNG.
+             // EconomyManager.AddGold() c├│ thß╗â k├¡ch hoß║ít sß╗▒ kiß╗çn OnGoldChanged ΓåÆ EndGame() ngay trong frame n├áy.
+             // Nß║┐u gß╗ìi ScoreManager.OnCustomerServed SAU AddGold, EndGame sß║╜ ─æß╗ìc ─æ╞░ß╗úc count thiß║┐u kh├ích vß╗½a phß╗Ñc vß╗Ñ.
++            int comboGold = 0;
+             if (ScoreManager.Instance != null)
+             {
+-                ScoreManager.Instance.OnCustomerServed(remainingPatience);
++                comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
+             }
+             else
+             {
+@@ -55,7 +56,7 @@ public bool ServeFoodToCustomer(FoodData food)
+ 
+             if (EconomyManager.Instance != null)
+             {
+-                EconomyManager.Instance.AddGold(earnedGold);
++                EconomyManager.Instance.AddGold(earnedGold + comboGold);
+             }
+             else
+             {
+diff --git a/YummyExpress/Assets/Scripts/UI/StarDisplayController.cs b/YummyExpress/Assets/Scripts/UI/StarDisplayController.cs
+index 5c3b300..0c8f016 100644
+--- a/YummyExpress/Assets/Scripts/UI/StarDisplayController.cs
++++ b/YummyExpress/Assets/Scripts/UI/StarDisplayController.cs
+@@ -192,8 +192,8 @@ public void SetStars(int starCount)
+             return;
+         }
+ 
+-        // ─Éß║úm bß║úo khi Level Cleared th├¼ sß╗æ sao lu├┤n tß╗½ 1 ─æß║┐n 3
+-        starCount = Mathf.Clamp(starCount, 1, 3);
++        // 0 sao d├╣ng cho trß║íng th├íi thua; 1-3 sao d├╣ng cho trß║íng th├íi thß║»ng.
++        starCount = Mathf.Clamp(starCount, 0, 3);
+ 
+         // ─Éß╗òi Sprite tß╗½ tr├íi sang phß║úi theo sß╗æ sao
+         for (int i = 0; i < 3; i++)
+diff --git a/YummyExpress/TODO.md b/YummyExpress/TODO.md
+deleted file mode 100644
+index 1f8ed8a..0000000
+--- a/YummyExpress/TODO.md
++++ /dev/null
+@@ -1,42 +0,0 @@
+-# TODO ΓÇö ScoreManager (T├¡nh sao theo ─Éß╗Ö h├ái l├▓ng + Combo V├áng)
+-
+-## Steps
+-- [x] Ph├ón t├¡ch code hiß╗çn c├│ (GameManager, ServingManager, CustomerManager, CustomerSlotUI, SaveSystem, EndGameUI)
+-- [x] Tß║ío/sß╗¡a `Assets/Scripts/Managers/ScoreManager.cs` (logic t├¡nh ─æiß╗âm sao + sß╗▒ kiß╗çn `OnStarsCalculated`)
+-- [x] T├¡ch hß╗úp `OnCustomerServed` tß╗½ `GameManager.ServeFoodToCustomer` (─æß╗ìc `RemainingPatiencePercent` cß╗ºa slot)
+-- [x] T├¡ch hß╗úp `OnCustomerLeftAngry` tß╗½ `CustomerManager.NotifyCustomerLeft`
+-- [x] `GameManager.StartLevel` gß╗ìi `ScoreManager.InitializeLevel(currentLevel.totalCustomers)`
+-- [x] `GameManager.EndGame` gß╗ìi `CalculateAndDisplayStars()` + `SaveSystem.SaveLevelStars(...)` + `ShowWinPopup(...)`
+-- [x] Bß╗ò sung property `RemainingPatiencePercent` trong `CustomerSlotUI`
+-- [x] `StarDisplayController` ΓÇö c╞í chß║┐ ─Éß╗öI SPRITE V├áng/X├ím tr├¬n 3 ├┤ Image cß╗æ ─æß╗ïnh, clamp sao trong [1,3] ─æß╗â kh├┤ng bao giß╗¥ hiß╗çn 0 khi Win
+-- [x] `ScoreManager.CalculateStars()` ΓÇö ─æß║úm bß║úo trß║ú vß╗ü 1-3 sao dß╗▒a tr├¬n Tß╗╖ lß╗ç phß╗Ñc vß╗Ñ kh├ích (ΓëÑ100%ΓåÆ3, ΓëÑ75%ΓåÆ2, c├▓n lß║íiΓåÆ1)
+-- [x] `EndGameUI` ΓÇö d├╣ng `StarDisplayController`, hiß╗ân thß╗ï sß╗æ v├áng/kh├ích/combo tr├¬n 3 d├▓ng ri├¬ng (bß╗Å chß╗» "Combo" thß╗½a ─æß╗â tr├ính ─æ├¿ Icon)
+-- [x] X├│a ho├án to├án c╞í chß║┐ 2 khung (Khung_3_Sao_Toi/activeStars/darkStars) khß╗Åi EndGameUI
+-- [x] `StarDisplayController` ΓÇö ─æß╗òi logic hiß╗ân thß╗ï sao TR├üIΓåÆPHß║óI (Index 0,1,2): 1 Sao=V├áng-X├ím-X├ím, 2 Sao=V├áng-V├áng-X├ím, 3 Sao=V├áng-V├áng-V├áng
+-- [x] `StarDisplayController` ΓÇö chuß║⌐n h├│a `SetStars()` clamp [1,3] + tß╗▒ t├¼m 3 ├┤ Sao (Sao_1/2/3) trong to├án c├óy con ─æß╗â tr├ính lß╗ùi 0 sao khi thß║»ng
+-- [x] `StarDisplayController` ΓÇö Sß╗¼A Lß╗ûI "0 sao": tß╗▒ t├¼m 3 ├┤ Sao CHß╗ê trong `Khung_3_Sao` (kh├┤ng d├▓ `Khung_3_Sao_Toi` v├¼ tr├╣ng t├¬n Sao_1/2/3) + tß╗▒ nß║íp 2 Sprite Sao V├áng/X├ím theo GUID
+-- [x] `StarDisplayController` ΓÇö NGUY├èN NH├éN Gß╗ÉC: `Khung_3_Sao_Toi` (chß╗⌐a 3 sao X├üM) l├á sibling SAU `Khung_3_Sao` n├¬n render ─É├ê L├èN sao v├áng ΓåÆ lu├┤n hiß╗çn 3 sao x├ím. ─É├ú th├¬m `HideDarkOverlay()` ß║⌐n `Khung_3_Sao_Toi` trong Awake + SetStars
+-- [x] **Sß╗¼A Lß╗ûI** "thß║»ng lu├┤n full sao": ─æß╗òi c├ích t├¡nh `CalculateStars()` tß╗½ serveRatio sang **─Éß╗Ö h├ái l├▓ng trung b├¼nh**:
+-  - D├╣ng `averageSatisfaction = TotalEarnedPoints / (TotalCustomers ├ù 3)` ΓÇö dß╗▒a tr├¬n ─æiß╗âm ki├¬n nhß║½n thuß║ºn (mß╗ùi kh├ích max 3 ─æiß╗âm).
+-  - ΓëÑ 70% ΓåÆ 3 sao
+-  - 40% ΓåÆ 69% ΓåÆ 2 sao
+-  - < 40% ΓåÆ 1 sao
+-- [x] **Sß╗¼A Lß╗ûI** "thua kh├┤ng c├│ sao": th├¬m `ScoreManager.DisplayNoStars()` ΓåÆ `starDisplay.SetStars(0)` gß╗ìi trong `GameManager.EndGame(false)`
+-- [x] **TH├èM T├ìNH N─éNG**: Combo th╞░ß╗ƒng V├áng +5/10/15/20 trong `ScoreManager.OnCustomerServed()` ΓÇö gß╗ìi `EconomyManager.Instance.AddGold(comboGold)` (x1ΓåÆ5, x2ΓåÆ10, x3ΓåÆ15, x4+ΓåÆ20), KH├öNG th├¬m v├áo ─æiß╗âm h├ái l├▓ng ─æß╗â giß╗» "─æß╗Ö h├ái l├▓ng trung b├¼nh" phß║ún ├ính ─æ├║ng chß║Ñt l╞░ß╗úng phß╗Ñc vß╗Ñ.
+-
+-# YUM-242: Luß╗ông l╞░u trß║íng th├íi 1-3 sao khi thß║»ng Level
+-
+-## Steps
+-- [x] Khi chiß║┐n thß║»ng Level ΓåÆ `GameManager.EndGame(true)` lß║Ñy `currentStars` tß╗½ `ScoreManager.CalculateAndDisplayStars()`.
+-- [x] `SaveSystem.SaveLevelStars(levelIndex, stars)` ΓÇö ─æ├ú tß╗▒ so s├ính vß╗¢i `savedStars` v├á l╞░u `bestStars = Mathf.Max(savedStars, currentStars)` (giß╗» kß╗╖ lß╗Ñc cao nhß║Ñt).
+-- [x] Dß╗» liß╗çu l╞░u v├áo file JSON (persistentDataPath/player_data.json) qua class `SaveSystem` (YUM-240).
+-- [x] `SaveSystem.GetLevelStars(levelIndex)` ΓÇö tß║úi sß╗æ sao kß╗╖ lß╗Ñc ─æ├ú l╞░u.
+-- [x] Tß╗▒ ─æß╗Öng mß╗ƒ kh├│a Level kß║┐ tiß║┐p: th├¬m `SaveSystem.UnlockNextLevel(currentLevelIndex + 1)` trong nh├ính thß║»ng ΓåÆ level sau ─æ╞░ß╗úc th├¬m v├áo `unlockedLevels`; ng╞░ß╗¥i ch╞íi v├áo qua `Btn_TiepTuc` (EndGame UI ΓåÆ `OnNextLevelClicked`).
+-- [x] Kiß╗âm tra trß║íng th├íi mß╗ƒ kh├│a: `SaveSystem.IsLevelUnlocked(levelIndex)` ΓÇö sß║╡n s├áng cho MainMenu/Level Select UI d├╣ng.
+-- [x] **PERSISTENCE (Nhß╗¢ khi v├áo game lß║ºn sau)**:
+-  - `SaveSystem.UnlockNextLevel()` giß╗¥ c┼⌐ng cß║¡p nhß║¡t `data.currentLevel` l├¬n level mß╗ƒ kh├│a mß╗¢i nhß║Ñt.
+-  - `SaveSystem.GetCurrentLevel()` ΓÇö ─æß╗ìc level hiß╗çn tß║íi (1-based) tß╗½ file JSON.
+-  - `GameManager.Start()` gß╗ìi `SaveSystem.GetCurrentLevel()` ΓåÆ `StartLevel(savedLevel - 1)` ─æß╗â kh├┤i phß╗Ñc ─æ├║ng level khi mß╗ƒ game lß║ºn sau.
+-  - Dß╗» liß╗çu ghi xuß╗æng `Application.persistentDataPath/player_data.json` ΓåÆ tß╗ôn tß║íi qua nhiß╗üu lß║ºn mß╗ƒ/─æ├│ng game.
+-
+-
+diff --git a/YummyExpress/check_guids.ps1 b/YummyExpress/check_guids.ps1
+deleted file mode 100644
+index 5583a4c..0000000
+--- a/YummyExpress/check_guids.ps1
++++ /dev/null
+@@ -1,19 +0,0 @@
+-$sceneGuids = @()
+-$scene = Select-String -Path 'd:\YummyExpress\YummyExpress\Assets\UI.unity' -Pattern 'm_Script: {fileID: 11500000, guid: ([a-f0-9]+)'
+-foreach ($hit in $scene) {
+-    $sceneGuids += $hit.Matches[0].Groups[1].Value
+-}
+-$sceneGuids = $sceneGuids | Sort-Object -Unique
+-
+-$metaGuids = @()
+-Get-ChildItem -Path 'd:\YummyExpress\YummyExpress\Assets\Scripts' -Recurse -Filter '*.cs.meta' | ForEach-Object {
+-    $m = Select-String -Path $_.FullName -Pattern 'guid: ([a-f0-9]+)'
+-    if ($m) { $metaGuids += $m.Matches[0].Groups[1].Value }
+-}
+-
+-Write-Output '=== Scene GUIDs ==='
+-$sceneGuids
+-Write-Output ''
+-Write-Output '=== Missing (in scene but NOT in any .cs.meta) ==='
+-$missing = @($sceneGuids | Where-Object { $_ -notin $metaGuids })
+-if ($missing.Count -gt 0) { $missing } else { Write-Output '(none)' }
+diff --git a/YummyExpress/fill_detail.txt b/YummyExpress/fill_detail.txt
+deleted file mode 100644
+index fc538bd..0000000
+--- a/YummyExpress/fill_detail.txt
++++ /dev/null
+@@ -1,96 +0,0 @@
+-L6805: --- !u!114 &1497781328
+-L6806: MonoBehaviour:
+-L6807:   m_ObjectHideFlags: 0
+-L6808:   m_CorrespondingSourceObject: {fileID: 0}
+-L6809:   m_PrefabInstance: {fileID: 0}
+-L6810:   m_PrefabAsset: {fileID: 0}
+-L6811:   m_GameObject: {fileID: 1497781326}
+-L6812:   m_Enabled: 1
+-L6813:   m_EditorHideFlags: 0
+-L6814:   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+-L6815:   m_Name: 
+-L6816:   m_EditorClassIdentifier: 
+-L6817:   m_Material: {fileID: 0}
+-L6818:   m_Color: {r: 0.19607843, g: 0.8627451, b: 0.15686275, a: 1}
+-L6819:   m_RaycastTarget: 1
+-L6820:   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+-L6821:   m_Maskable: 1
+-L6822:   m_OnCullStateChanged:
+-L6823:     m_PersistentCalls:
+-L6824:       m_Calls: []
+-L6825:   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+-L6826:   m_Type: 1
+-L6827:   m_PreserveAspect: 0
+-L6828:   m_FillCenter: 1
+-L6829:   m_FillMethod: 4
+-L6830:   m_FillAmount: 1
+-L6831:   m_FillClockwise: 1
+-L6832:   m_FillOrigin: 0
+-L6833:   m_UseSpriteMesh: 0
+-L6834:   m_PixelsPerUnitMultiplier: 1
+-L6835: --- !u!222 &1497781329
+-L6836: CanvasRenderer:
+-L6837:   m_ObjectHideFlags: 0
+-L6838:   m_CorrespondingSourceObject: {fileID: 0}
+-L6839:   m_PrefabInstance: {fileID: 0}
+-L6840:   m_PrefabAsset: {fileID: 0}
+-L6841:   m_GameObject: {fileID: 1497781326}
+-L6842:   m_CullTransparentMesh: 1
+-L6843: --- !u!1 &1504542285
+-L6844: GameObject:
+-L6845:   m_ObjectHideFlags: 0
+-L6846:   m_CorrespondingSourceObject: {fileID: 0}
+-L6847:   m_PrefabInstance: {fileID: 0}
+-L6848:   m_PrefabAsset: {fileID: 0}
+-L6849:   serializedVersion: 6
+-L6850:   m_Component:
+-L6851:   - component: {fileID: 1504542286}
+-L6852:   - component: {fileID: 1504542288}
+-L6853:   - component: {fileID: 1504542287}
+-L6854:   m_Layer: 5
+-L6855:   m_Name: Text (TMP)
+-L6856:   m_TagString: Untagged
+-L6857:   m_Icon: {fileID: 0}
+-L6858:   m_NavMeshLayer: 0
+-L6859:   m_StaticEditorFlags: 0
+-L6860:   m_IsActive: 1
+-L6861: --- !u!224 &1504542286
+-L6862: RectTransform:
+-L6863:   m_ObjectHideFlags: 0
+-L6864:   m_CorrespondingSourceObject: {fileID: 0}
+-L6865:   m_PrefabInstance: {fileID: 0}
+-L6866:   m_PrefabAsset: {fileID: 0}
+-L6867:   m_GameObject: {fileID: 1504542285}
+-L6868:   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+-L6869:   m_LocalPosition: {x: 0, y: 0, z: 0}
+-L6870:   m_LocalScale: {x: 1, y: 1, z: 1}
+-L6871:   m_ConstrainProportionsScale: 0
+-L6872:   m_Children: []
+-L6873:   m_Father: {fileID: 1476933604}
+-L6874:   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+-L6875:   m_AnchorMin: {x: 0, y: 0}
+-L6876:   m_AnchorMax: {x: 1, y: 1}
+-L6877:   m_AnchoredPosition: {x: 0, y: 0}
+-L6878:   m_SizeDelta: {x: 0, y: 0}
+-L6879:   m_Pivot: {x: 0.5, y: 0.5}
+-L6880: --- !u!114 &1504542287
+-L6881: MonoBehaviour:
+-L6882:   m_ObjectHideFlags: 0
+-L6883:   m_CorrespondingSourceObject: {fileID: 0}
+-L6884:   m_PrefabInstance: {fileID: 0}
+-L6885:   m_PrefabAsset: {fileID: 0}
+-L6886:   m_GameObject: {fileID: 1504542285}
+-L6887:   m_Enabled: 1
+-L6888:   m_EditorHideFlags: 0
+-L6889:   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+-L6890:   m_Name: 
+-L6891:   m_EditorClassIdentifier: 
+-L6892:   m_Material: {fileID: 0}
+-L6893:   m_Color: {r: 1, g: 1, b: 1, a: 1}
+-L6894:   m_RaycastTarget: 1
+-L6895:   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+-L6896:   m_Maskable: 1
+-L6897:   m_OnCullStateChanged:
+-L6898:     m_PersistentCalls:
+-L6899:       m_Calls: []
+-L6900:   m_text: Button
+diff --git a/YummyExpress/fill_temp.txt b/YummyExpress/fill_temp.txt
+deleted file mode 100644
+index 681c908..0000000
+--- a/YummyExpress/fill_temp.txt
++++ /dev/null
+@@ -1,3 +0,0 @@
+-FOUND at L6768: --- !u!1 &1497781326
+-FOUND at L6786: --- !u!224 &1497781327
+-FOUND at L6805: --- !u!114 &1497781328
+diff --git a/YummyExpress/filltypes_temp.txt b/YummyExpress/filltypes_temp.txt
+deleted file mode 100644
+index 1eb3c92..0000000
+--- a/YummyExpress/filltypes_temp.txt
++++ /dev/null
+@@ -1,18 +0,0 @@
+-=== Image 721629104 at L2999 ===
+-  L3008: m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+-  L3012: m_Color: {r: 0.19607843, g: 0.8627451, b: 0.15686275, a: 1}
+-  L3020: m_Type: 1
+-  L3023: m_FillMethod: 4
+-  L3024: m_FillAmount: 1
+-=== Image 1497781328 at L6805 ===
+-  L6814: m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+-  L6818: m_Color: {r: 0.19607843, g: 0.8627451, b: 0.15686275, a: 1}
+-  L6826: m_Type: 1
+-  L6829: m_FillMethod: 4
+-  L6830: m_FillAmount: 1
+-=== Image 1620769226 at L7426 ===
+-  L7435: m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+-  L7439: m_Color: {r: 0.19607843, g: 0.8627451, b: 0.15686275, a: 1}
+-  L7447: m_Type: 1
+-  L7450: m_FillMethod: 4
+-  L7451: m_FillAmount: 1
+diff --git a/YummyExpress/patience_detail.txt b/YummyExpress/patience_detail.txt
+deleted file mode 100644
+index 062dce3..0000000
+--- a/YummyExpress/patience_detail.txt
++++ /dev/null
+@@ -1,97 +0,0 @@
+-L1234: --- !u!1 &194324688
+-L1235: GameObject:
+-L1236:   m_ObjectHideFlags: 0
+-L1237:   m_CorrespondingSourceObject: {fileID: 0}
+-L1238:   m_PrefabInstance: {fileID: 0}
+-L1239:   m_PrefabAsset: {fileID: 0}
+-L1240:   serializedVersion: 6
+-L1241:   m_Component:
+-L1242:   - component: {fileID: 194324689}
+-L1243:   - component: {fileID: 194324690}
+-L1244:   m_Layer: 5
+-L1245:   m_Name: Patience_Bar
+-L1246:   m_TagString: Untagged
+-L1247:   m_Icon: {fileID: 0}
+-L1248:   m_NavMeshLayer: 0
+-L1249:   m_StaticEditorFlags: 0
+-L1250:   m_IsActive: 1
+-L1251: --- !u!224 &194324689
+-L1252: RectTransform:
+-L1253:   m_ObjectHideFlags: 0
+-L1254:   m_CorrespondingSourceObject: {fileID: 0}
+-L1255:   m_PrefabInstance: {fileID: 0}
+-L1256:   m_PrefabAsset: {fileID: 0}
+-L1257:   m_GameObject: {fileID: 194324688}
+-L1258:   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+-L1259:   m_LocalPosition: {x: 0, y: 0, z: 0}
+-L1260:   m_LocalScale: {x: 1, y: 1, z: 1}
+-L1261:   m_ConstrainProportionsScale: 0
+-L1262:   m_Children:
+-L1263:   - {fileID: 1543973002}
+-L1264:   - {fileID: 979381964}
+-L1265:   m_Father: {fileID: 1434089496}
+-L1266:   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+-L1267:   m_AnchorMin: {x: 0.5, y: 0}
+-L1268:   m_AnchorMax: {x: 0.5, y: 0}
+-L1269:   m_AnchoredPosition: {x: 0.000030517578, y: 0}
+-L1270:   m_SizeDelta: {x: 160, y: 20}
+-L1271:   m_Pivot: {x: 0.5, y: 0}
+-L1272: --- !u!114 &194324690
+-L1273: MonoBehaviour:
+-L1274:   m_ObjectHideFlags: 0
+-L1275:   m_CorrespondingSourceObject: {fileID: 0}
+-L1276:   m_PrefabInstance: {fileID: 0}
+-L1277:   m_PrefabAsset: {fileID: 0}
+-L1278:   m_GameObject: {fileID: 194324688}
+-L1279:   m_Enabled: 1
+-L1280:   m_EditorHideFlags: 0
+-L1281:   m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+-L1282:   m_Name: 
+-L1283:   m_EditorClassIdentifier: 
+-L1284:   m_Navigation:
+-L1285:     m_Mode: 3
+-L1286:     m_WrapAround: 0
+-L1287:     m_SelectOnUp: {fileID: 0}
+-L1288:     m_SelectOnDown: {fileID: 0}
+-L1289:     m_SelectOnLeft: {fileID: 0}
+-L1290:     m_SelectOnRight: {fileID: 0}
+-L1291:   m_Transition: 1
+-L1292:   m_Colors:
+-L1293:     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+-L1294:     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+-L1295:     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+-L1296:     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+-L1297:     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+-L1298:     m_ColorMultiplier: 1
+-L1299:     m_FadeDuration: 0.1
+-L1300:   m_SpriteState:
+-L1301:     m_HighlightedSprite: {fileID: 0}
+-L1302:     m_PressedSprite: {fileID: 0}
+-L1303:     m_SelectedSprite: {fileID: 0}
+-L1304:     m_DisabledSprite: {fileID: 0}
+-L1305:   m_AnimationTriggers:
+-L1306:     m_NormalTrigger: Normal
+-L1307:     m_HighlightedTrigger: Highlighted
+-L1308:     m_PressedTrigger: Pressed
+-L1309:     m_SelectedTrigger: Selected
+-L1310:     m_DisabledTrigger: Disabled
+-L1311:   m_Interactable: 0
+-L1312:   m_TargetGraphic: {fileID: 0}
+-L1313:   m_FillRect: {fileID: 1497781327}
+-L1314:   m_HandleRect: {fileID: 0}
+-L1315:   m_Direction: 0
+-L1316:   m_MinValue: 0
+-L1317:   m_MaxValue: 1
+-L1318:   m_WholeNumbers: 0
+-L1319:   m_Value: 0
+-L1320:   m_OnValueChanged:
+-L1321:     m_PersistentCalls:
+-L1322:       m_Calls: []
+-L1323: --- !u!1 &396252188
+-L1324: GameObject:
+-L1325:   m_ObjectHideFlags: 0
+-L1326:   m_CorrespondingSourceObject: {fileID: 0}
+-L1327:   m_PrefabInstance: {fileID: 0}
+-L1328:   m_PrefabAsset: {fileID: 0}
+-L1329:   serializedVersion: 6
+-L1330:   m_Component:
+diff --git a/YummyExpress/patience_temp.txt b/YummyExpress/patience_temp.txt
+deleted file mode 100644
+index b031da8..0000000
+--- a/YummyExpress/patience_temp.txt
++++ /dev/null
+@@ -1,6 +0,0 @@
+-GO=194324688 Patience_Bar (line 1234)
+-GO=484495683 Patience_Bar (line 1747)
+-GO=979381963 Fill Area (line 4202)
+-GO=1291358989 Fill Area (line 5376)
+-GO=1538757990 Fill Area (line 7123)
+-GO=1707457906 Patience_Bar (line 7796)
+diff --git a/YummyExpress/slotui_temp.txt b/YummyExpress/slotui_temp.txt
+deleted file mode 100644
+index e6f31d2..0000000
+--- a/YummyExpress/slotui_temp.txt
++++ /dev/null
+@@ -1,15 +0,0 @@
+-=== CustomerSlotUI at L2815 ===
+-  L2818: avatarImage: {fileID: 791052861}
+-  L2819: orderBubble: {fileID: 1446298517}
+-  L2820: orderItemImage: {fileID: 1226784250}
+-  L2821: patienceBar: {fileID: 1620769226}
+-=== CustomerSlotUI at L4841 ===
+-  L4844: avatarImage: {fileID: 945592349}
+-  L4845: orderBubble: {fileID: 602988804}
+-  L4846: orderItemImage: {fileID: 1328046404}
+-  L4847: patienceBar: {fileID: 721629104}
+-=== CustomerSlotUI at L6369 ===
+-  L6372: avatarImage: {fileID: 921301082}
+-  L6373: orderBubble: {fileID: 1201703755}
+-  L6374: orderItemImage: {fileID: 1041177803}
+-  L6375: patienceBar: {fileID: 1497781328}

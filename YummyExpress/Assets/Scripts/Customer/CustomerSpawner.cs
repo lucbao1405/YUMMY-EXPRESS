@@ -42,7 +42,8 @@ public class CustomerSpawner : MonoBehaviour
 
     private void Start()
     {
-        StartSpawning();
+        // Chờ GameManager cấu hình level và kích hoạt spawning qua CustomerManager.ResumeSpawning().
+        activeCustomerDatabase = customerDatabase;
     }
 
     /// <summary>Được GameManager gọi mỗi khi vào level để đổi tập đơn hàng cho AI Spawner.</summary>

@@ -28,6 +28,8 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     [SerializeField] private TextMeshProUGUI thongKeGoldText;
     [Tooltip("Text số Khách trong Dong_Khach (TextMeshProUGUI) — tùy chọn")]
     [SerializeField] private TextMeshProUGUI thongKeCustomerText;
+    [Tooltip("Text số khách giận bỏ về trong Dong_Khach_Gian (TextMeshProUGUI) — tùy chọn")]
+    [SerializeField] private TextMeshProUGUI thongKeAngryText;
     [Tooltip("Text số Combo trong Dong_Combo (TextMeshProUGUI) — tùy chọn")]
     [SerializeField] private TextMeshProUGUI thongKeComboText;
     [Tooltip("Btn_TiepTuc (Button) — chuyển màn tiếp theo")]
@@ -93,7 +95,7 @@ private bool listenersReady = false;
     {
         if (result.IsWin)
         {
-            ShowWinPopup(result.Stars, result.TotalGold, result.ServedCustomers, result.TotalCustomers, result.MaxCombo);
+            ShowWinPopup(result.Stars, result.TotalGold, result.ServedCustomers, result.TotalCustomers, result.MaxCombo, result.AngryCustomers);
         }
         else
         {
@@ -129,6 +131,11 @@ private bool listenersReady = false;
     /// <param name="maxCombo">Combo cao nhất đạt được.</param>
     public void ShowWinPopup(int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo)
     {
+        ShowWinPopup(stars, totalGold, servedCustomers, totalCustomers, maxCombo, 0);
+    }
+
+    public void ShowWinPopup(int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo, int angryCustomers)
+    {
         // Bật Popup_Overlay (cha) để đảm bảo UI hiển thị
         gameObject.SetActive(true);
 
@@ -139,7 +146,7 @@ private bool listenersReady = false;
         CenterPopup(winPopup);
 
         // Cập nhật đầy đủ: số sao + bảng thống kê (Vàng / Khách / Combo).
-        UpdateWinUI(stars, totalGold, servedCustomers, totalCustomers, maxCombo);
+        UpdateWinUI(stars, totalGold, servedCustomers, totalCustomers, maxCombo, angryCustomers);
 
         // Tạm dừng game
         Time.timeScale = 0f;
@@ -201,7 +208,7 @@ private bool listenersReady = false;
     /// <param name="servedCustomers">Số khách đã phục vụ thành công.</param>
     /// <param name="totalCustomers">Tổng số khách dự kiến trong level.</param>
     /// <param name="maxCombo">Combo cao nhất đạt được (hiện "x{maxCombo}" ở Dong_Combo).</param>
-    public void UpdateWinUI(int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo)
+    public void UpdateWinUI(int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo, int angryCustomers)
     {
         // 1. Cập nhật số sao qua StarDisplayController (đổi Sprite Vàng/Xám trên 3 ô cố định).
         if (starDisplay != null)
@@ -224,12 +231,17 @@ private bool listenersReady = false;
             thongKeCustomerText.text = $"{servedCustomers}/{totalCustomers}";
         }
 
+        if (thongKeAngryText != null)
+        {
+            thongKeAngryText.text = angryCustomers.ToString();
+        }
+
         if (thongKeComboText != null)
         {
             thongKeComboText.text = $"x{maxCombo}";
         }
 
-        Debug.Log($"<color=cyan>[ENDGAME-UI] Win: {stars} sao | Vàng {totalGold} | Khách {servedCustomers}/{totalCustomers} | Combo x{maxCombo}</color>");
+        Debug.Log($"<color=cyan>[ENDGAME-UI] Win: {stars} sao | Vàng {totalGold} | Khách {servedCustomers}/{totalCustomers} | Angry {angryCustomers} | Combo x{maxCombo}</color>");
     }
 
     /// <summary>
@@ -395,6 +407,8 @@ private bool listenersReady = false;
             thongKeGoldText = EnsureThongKeText(bangThongKe.transform, "Dong_Vang", "Vàng");
         if (thongKeCustomerText == null && bangThongKe != null)
             thongKeCustomerText = EnsureThongKeText(bangThongKe.transform, "Dong_Khach", "Khách");
+        if (thongKeAngryText == null && bangThongKe != null)
+            thongKeAngryText = EnsureThongKeText(bangThongKe.transform, "Dong_Khach_Gian", "Khách Giận");
         if (thongKeComboText == null && bangThongKe != null)
             thongKeComboText = EnsureThongKeText(bangThongKe.transform, "Dong_Combo", "Combo");
 

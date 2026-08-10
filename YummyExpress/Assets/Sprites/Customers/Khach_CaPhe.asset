@@ -16,5 +16,5 @@ MonoBehaviour:
   avatarSprite: {fileID: 21300000, guid: b8e84c0d96ce33a4e8ea7edac6a9536b, type: 3}
   requiredFoods:
   - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
-  requiredFood: {fileID: 0}
+  requiredFood: {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
   maxPatienceTime: 25

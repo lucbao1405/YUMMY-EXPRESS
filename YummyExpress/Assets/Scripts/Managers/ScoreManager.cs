@@ -16,10 +16,11 @@ public class ScoreManager : MonoBehaviour
 
     /// <summary>
     /// Sự kiện phát ra khi số sao cuối cùng được tính xong (kết thúc màn chơi).
-    /// - SaveSystem lắng nghe để lưu điểm.
-    /// - UIManager/EndGameUI lắng nghe để hiển thị Win/Lose.
+    /// - SaveSystem lắng nghe để lưu số sao Level.
+    /// - EndGameUI/Win UI lắng nghe để cập nhật nếu cần.
+    /// Tham số: levelIndex (0-based), stars.
     /// </summary>
-    public static Action<int> OnStarsCalculated;
+    public static Action<int, int> OnStarsCalculated;
 
     [Header("Level Config")]
     [SerializeField] private int totalCustomersInLevel;
@@ -193,7 +194,8 @@ public class ScoreManager : MonoBehaviour
         // Phát sự kiện để SaveSystem/UIManager lắng nghe (ghi nhận/lưu số sao).
         try
         {
-            OnStarsCalculated?.Invoke(finalStars);
+            int levelIndex = GameManager.Instance != null ? GameManager.Instance.CurrentLevelIndex : 0;
+            OnStarsCalculated?.Invoke(levelIndex, finalStars);
         }
         catch (Exception e)
         {
