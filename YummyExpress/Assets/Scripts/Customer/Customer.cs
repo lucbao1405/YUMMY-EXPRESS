@@ -18,11 +18,16 @@ public class Customer : MonoBehaviour
     [Header("Patience")]
     [SerializeField] private float maxPatience = 1f;
     [SerializeField] private float patienceDecreaseSpeed = 0.02f;
+    private float patienceDuration = 1f;
+
+    [Header("Visual")]
+    [SerializeField] private CustomerVisualController visualController;
 
     public string CurrentOrderFoodID { get; private set; }
     public IReadOnlyList<FoodData> CurrentOrderFoods => currentOrderFoods;
     public int TargetSlotIndex { get; private set; }
     public CustomerState CurrentState { get; private set; } = CustomerState.Moving;
+    public IReadOnlyList<FoodData> RequiredItems => currentOrderFoods;
 
     public System.Action<Customer> OnCustomerInit;
     public System.Action<Customer> OnCustomerServed;
@@ -59,11 +64,31 @@ public class Customer : MonoBehaviour
         CurrentOrderFoodID = currentOrderFoods.Count > 0 ? currentOrderFoods[0].foodID : "BanhMi";
         TargetSlotIndex = slotIndex;
         this.targetPosition = targetPosition;
-        currentPatience = maxPatience;
+        patienceDuration = Mathf.Max(0.01f, CalculatePatienceDuration(currentOrderFoods));
+        currentPatience = patienceDuration;
         transform.position = startPosition;
         CurrentState = CustomerState.Moving;
         StartCoroutine(MoveToTargetRoutine());
         OnCustomerInit?.Invoke(this);
+    }
+
+    private float CalculatePatienceDuration(IReadOnlyList<FoodData> foods)
+    {
+        if (foods == null || foods.Count == 0)
+        {
+            return maxPatience;
+        }
+
+        float total = 0f;
+        foreach (FoodData food in foods)
+        {
+            if (food != null)
+            {
+                total += Mathf.Max(0f, food.patienceTime);
+            }
+        }
+
+        return total > 0f ? total : maxPatience;
     }
 
     private IEnumerator MoveToTargetRoutine()
@@ -86,6 +111,7 @@ public class Customer : MonoBehaviour
         }
 
         currentPatience = Mathf.Clamp01(currentPatience - patienceDecreaseSpeed * Time.deltaTime);
+        visualController?.UpdateExpression(currentPatience / Mathf.Max(0.01f, patienceDuration));
         if (currentPatience <= 0f)
         {
             LeaveCustomer();
@@ -99,9 +125,19 @@ public class Customer : MonoBehaviour
             return;
         }
 
-        if (string.Equals(food.foodID, CurrentOrderFoodID, System.StringComparison.OrdinalIgnoreCase))
+        int matchedIndex = currentOrderFoods.FindIndex(item => item != null && item.Matches(food));
+        if (matchedIndex < 0)
+        {
+            return;
+        }
+
+        currentOrderFoods.RemoveAt(matchedIndex);
+        CurrentOrderFoodID = currentOrderFoods.Count > 0 ? currentOrderFoods[0].foodID : string.Empty;
+
+        if (currentOrderFoods.Count == 0)
         {
             CurrentState = CustomerState.Served;
+            visualController?.SetHappyExpression();
             OnCustomerServed?.Invoke(this);
         }
     }
