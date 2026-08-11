@@ -38,6 +38,7 @@ public class CustomerSpawner : MonoBehaviour
     private bool isSpawning = false;
     private List<CustomerData> activeCustomerDatabase;
     private List<CustomerOrderOption> activeOrderOptions;
+    private int activeLevelIndex;
 
     private void Awake()
     {
@@ -58,6 +59,7 @@ public class CustomerSpawner : MonoBehaviour
     /// <summary>Được GameManager gọi mỗi khi vào level để đổi tập đơn hàng cho AI Spawner.</summary>
     public void ConfigureForLevel(int levelIndex)
     {
+        activeLevelIndex = levelIndex;
         int levelNumber = levelIndex + 1;
         LevelSpawnProfile profile = levelSpawnProfiles.Find(p => p != null && p.level == levelNumber && p.customers != null && p.customers.Count > 0);
         activeCustomerDatabase = profile != null ? profile.customers : customerDatabase;
@@ -102,7 +104,7 @@ public class CustomerSpawner : MonoBehaviour
         }
         else
         {
-            emptySlot.SpawnCustomerWithAnimation(randomCustomer);
+            emptySlot.SpawnCustomerWithAnimation(randomCustomer, BuildLevelOrder(randomCustomer, activeLevelIndex + 1));
         }
     }
 
@@ -169,6 +171,75 @@ public class CustomerSpawner : MonoBehaviour
         List<CustomerOrderOption> validOrders = activeOrderOptions.FindAll(order =>
             order != null && order.foods != null && order.foods.Exists(food => food != null));
         return validOrders.Count > 0 ? validOrders[Random.Range(0, validOrders.Count)] : null;
+    }
+
+    private List<FoodData> BuildLevelOrder(CustomerData customer, int currentLevel)
+    {
+        List<FoodData> finalOrder = new List<FoodData>();
+        if (customer == null) return finalOrder;
+
+        IReadOnlyList<FoodData> requiredFoods = customer.GetRequiredFoods();
+        List<FoodData> possibleFoods = customer.possibleFoods != null
+            ? customer.possibleFoods.FindAll(food => food != null)
+            : new List<FoodData>();
+
+        if (currentLevel == 1)
+        {
+            if (possibleFoods.Count > 0)
+            {
+                finalOrder.Add(possibleFoods[Random.Range(0, possibleFoods.Count)]);
+                return finalOrder;
+            }
+
+            if (requiredFoods != null && requiredFoods.Count > 0)
+            {
+                finalOrder.Add(requiredFoods[Random.Range(0, requiredFoods.Count)]);
+            }
+            return finalOrder;
+        }
+
+        if (customer.randomizeOrder && possibleFoods.Count > 0)
+        {
+            int count = Mathf.Min(Random.Range(customer.minRandomOrderItems, customer.maxRandomOrderItems + 1), possibleFoods.Count);
+            List<FoodData> tempPool = new List<FoodData>(possibleFoods);
+            for (int i = 0; i < count; i++)
+            {
+                int index = Random.Range(0, tempPool.Count);
+                finalOrder.Add(tempPool[index]);
+                tempPool.RemoveAt(index);
+            }
+            return finalOrder;
+        }
+
+        if (requiredFoods != null && requiredFoods.Count > 0)
+        {
+            finalOrder = new List<FoodData>(requiredFoods);
+        }
+
+        return finalOrder;
+    }
+
+    /// <summary>
+    /// Spawn a specific customer with a defined order immediately if a free slot exists.
+    /// Returns true only when the customer is successfully spawned.
+    /// </summary>
+    public bool SpawnCustomer(CustomerData customer, IReadOnlyList<FoodData> orderFoods)
+    {
+        if (customer == null) return false;
+
+        CustomerSlotUI emptySlot = GetRandomEmptySlot();
+        if (emptySlot == null) return false;
+
+        if (orderFoods != null && orderFoods.Count > 0)
+        {
+            emptySlot.SpawnCustomerWithAnimation(customer, orderFoods);
+        }
+        else
+        {
+            emptySlot.SpawnCustomerWithAnimation(customer);
+        }
+
+        return true;
     }
 
     public void StopSpawning()
