@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -37,6 +38,8 @@ public class ScoreManager : MonoBehaviour
     private int totalEarnedPoints = 0;
     private int servedCustomersCount = 0;
     private int angryCustomersCount = 0;
+    // Chỉ được reset tại InitializeLevel(), không reset khi EndGame/UI đang đọc dữ liệu.
+    private readonly List<float> customerSatisfactions = new List<float>();
 
     [Header("References")]
     [Tooltip("Gán StarDisplayController (3 ô sao) để hiển thị sao trên Win Popup. Nếu null sẽ tự tìm.")]
@@ -71,6 +74,9 @@ public class ScoreManager : MonoBehaviour
 
     /// <summary>Property cho UI hiển thị điểm đã tích lũy.</summary>
     public int TotalEarnedPoints => totalEarnedPoints;
+    public int MaxComboReached => maxCombo;
+    public int ServedCustomers => servedCustomersCount;
+    public int AngryCustomers => angryCustomersCount;
 
     /// <summary>Tỷ lệ hài lòng hiện tại (0.0 - 1.0), dùng cho UI progress bar nếu cần.</summary>
     public float CurrentSatisfactionRate
@@ -96,6 +102,7 @@ public class ScoreManager : MonoBehaviour
         currentCombo = 0;
         maxCombo = 0;
         lastServeTime = -999f;
+        customerSatisfactions.Clear();
 
         Debug.Log($"<color=cyan>[SCORE] Khởi tạo level: {totalCustomersInLevel} khách, MaxPossiblePoints = {totalCustomersInLevel * 3}.</color>");
     }
@@ -136,6 +143,7 @@ public class ScoreManager : MonoBehaviour
             : 0;
         int customerSatisfaction = Mathf.Clamp(basePoints + comboPoints, 0, 3);
         totalEarnedPoints += customerSatisfaction;
+        customerSatisfactions.Add(customerSatisfaction / 3f);
 
         // 4. Combo → thưởng VÀNG +5/10/15/20. GameManager cộng khoản này cùng
         //    tiền món ăn để sự kiện OnGoldChanged không thể kết thúc màn giữa chừng.
@@ -153,15 +161,13 @@ public class ScoreManager : MonoBehaviour
     /// Gọi khi 1 khách giận bỏ về (hết kiên nhẫn).
     /// - Tăng angryCustomersCount.
     /// - Reset Combo về 0.
-    /// - Trừ 3 điểm (không xuống dưới 0).
+    /// - Sao sẽ bị trừ khi kết thúc màn; không trừ điểm ở đây để tránh phạt kép.
     /// </summary>
     public void OnCustomerLeftAngry()
     {
         angryCustomersCount++;
         currentCombo = 0; // Reset combo khi làm khách giận
-        totalEarnedPoints = Mathf.Max(0, totalEarnedPoints - 3); // Trừ 3 điểm
-
-        Debug.Log($"<color=orange>[SCORE] Customer Left Angry! Penalty -3pts. Total Points: {totalEarnedPoints} | Angry: {angryCustomersCount}</color>");
+        Debug.Log($"<color=orange>[SCORE] Customer Left Angry! Star penalty queued. Angry: {angryCustomersCount}</color>");
     }
 
 /// <summary>
@@ -175,11 +181,25 @@ public class ScoreManager : MonoBehaviour
     /// <returns>Số sao (1, 2 hoặc 3).</returns>
     public int CalculateAndDisplayStars()
     {
-        // Tính sao dựa trên Tỷ lệ phục vụ khách (KHÔNG BAO GIỜ trả về 0 khi Win).
-        int finalStars = CalculateStars();
+        float averageSatisfaction = 0f;
+        foreach (float satisfaction in customerSatisfactions)
+        {
+            averageSatisfaction += satisfaction;
+        }
+        if (customerSatisfactions.Count > 0)
+        {
+            averageSatisfaction /= customerSatisfactions.Count;
+        }
 
-        Debug.Log($"<color=green>[SCORE FINAL] Earned: {totalEarnedPoints}/{totalCustomersInLevel * 3} | " +
-                  $"Khách: {servedCustomersCount}/{totalCustomersInLevel} | Angry: {angryCustomersCount} | Stars: {finalStars}</color>");
+        int baseStars = 1;
+        if (averageSatisfaction >= 0.70f) baseStars = 3;
+        else if (averageSatisfaction >= 0.35f) baseStars = 2;
+
+        // Luật mới: mỗi khách giận bỏ về giảm một sao, nhưng thắng luôn còn tối thiểu một sao.
+        int finalStars = Mathf.Clamp(baseStars - angryCustomersCount, 1, 3);
+
+        Debug.Log($"<color=green>[SCORE FINAL] Avg Sat: {averageSatisfaction:P0} | Base: {baseStars} | " +
+                  $"Angry: {angryCustomersCount} | Final Stars: {finalStars}</color>");
 
         // Cập nhật UI sao qua StarDisplayController (đổi Sprite Vàng/Xám trên 3 ô cố định).
         if (starDisplay != null)
@@ -219,35 +239,7 @@ public class ScoreManager : MonoBehaviour
     /// <returns>Số sao (1, 2 hoặc 3).</returns>
     public int CalculateStars()
     {
-        if (totalCustomersInLevel <= 0) return 1;
-
-        // Max điểm dựa trên tổng số khách của level
-        int maxPossiblePoints = totalCustomersInLevel * 3;
-        float satisfactionRate = Mathf.Clamp01((float)totalEarnedPoints / maxPossiblePoints);
-
-        int finalStars = 1;
-
-        // Use documented thresholds for star calculation:
-        // - 3 stars: satisfactionRate >= 0.70
-        // - 2 stars: satisfactionRate >= 0.40
-        // - 1 star : otherwise
-        // This is simpler and matches the comments used elsewhere in the codebase.
-        if (satisfactionRate >= 0.70f)
-        {
-            finalStars = 3;
-        }
-        else if (satisfactionRate >= 0.40f)
-        {
-            finalStars = 2;
-        }
-        else
-        {
-            finalStars = 1;
-        }
-
-        Debug.Log($"[SCORE FINAL] Earned: {totalEarnedPoints}/{maxPossiblePoints} | Rate: {satisfactionRate * 100:F1}% | Angry: {angryCustomersCount} | Calculated Stars: {finalStars}");
-
-        return finalStars;
+        return CalculateAndDisplayStars();
     }
 
     // Giữ API cũ cho các UnityEvent hoặc script đã gọi hàm trước đây.

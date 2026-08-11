@@ -111,7 +111,7 @@ private bool listenersReady = false;
 
     private void OnLevelCleared(WinData data)
     {
-        ShowWinPopup(data.stars, data.gold, 0, 0, data.combos);
+        ShowWinPopup(data.stars, data.gold, data.servedCustomers, data.totalCustomers, data.combos);
     }
 
     // =====================================================================

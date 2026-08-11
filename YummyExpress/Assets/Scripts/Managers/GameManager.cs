@@ -34,12 +34,16 @@ public struct WinData
     public int stars;
     public int gold;
     public int combos;
+    public int servedCustomers;
+    public int totalCustomers;
 
-    public WinData(int stars, int gold, int combos)
+    public WinData(int stars, int gold, int combos, int servedCustomers, int totalCustomers)
     {
         this.stars = stars;
         this.gold = gold;
         this.combos = combos;
+        this.servedCustomers = servedCustomers;
+        this.totalCustomers = totalCustomers;
     }
 }
 
@@ -267,7 +271,7 @@ EndGameUI endGameUIRef = GetEndGameUI();
                     SaveManager.UnlockNextLevel(currentLevelIndex);
                 }
 
-                OnLevelCleared?.Invoke(new WinData(stars, totalGold, maxCombo));
+                OnLevelCleared?.Invoke(new WinData(stars, totalGold, maxCombo, served, totalC));
                 GameOver?.Invoke(new GameOverData(true, currentLevelIndex, stars, totalGold, served, totalC, maxCombo, customerManager != null ? customerManager.LostCustomerCount : 0, string.Empty));
             }
 else
