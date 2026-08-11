@@ -2,84 +2,74 @@ using UnityEngine;
 
 public class PlateManagerSystem : MonoBehaviour
 {
-public static PlateManagerSystem Instance;
+    public static PlateManagerSystem Instance;
 
+    [Header("3 Plates")]
+    public PlateManager[] plates;
 
-[Header("3 Plates")]
-public PlateManager[] plates;
-
-private void Awake()
-{
-    Instance = this;
-}
-
-// ================= Bottom Bread =================
-// Đĩa chưa có ổ dưới sẽ nhận BottomBread
-public PlateManager GetPlateForBottomBread()
-{
-    foreach (var plate in plates)
+    private void Awake()
     {
-        if (plate == null) continue;
-
-        if (!plate.HasBottomBread() && !plate.HasCompletedFood())
-            return plate;
+        Instance = this;
     }
 
-    return null;
-}
-
-// ================= Meat =================
-// Đĩa nào có BottomBread nhưng chưa có Meat thì nhận Meat
-public PlateManager GetPlateForMeat()
-{
-    foreach (var plate in plates)
+    // ===== Bread =====
+    public PlateManager GetPlateForBread()
     {
-        if (plate == null) continue;
-
-        if (plate.HasBottomBread() &&
-            !plate.HasMeat() &&
-            !plate.HasCompletedFood())
+        foreach (var plate in plates)
         {
-            return plate;
+            if (plate != null &&
+                plate.CurrentStage == PlateManager.PlateStage.Empty)
+            {
+                return plate;
+            }
         }
+
+        return null;
     }
 
-    return null;
-}
-
-// ================= Vegetable =================
-// Đĩa nào có BottomBread nhưng chưa có Vegetable thì nhận Vegetable
-public PlateManager GetPlateForVegetable()
-{
-    foreach (var plate in plates)
+    // ===== Vegetable =====
+    public PlateManager GetPlateForVegetable()
     {
-        if (plate == null) continue;
-
-        if (plate.HasBottomBread() &&
-            !plate.HasVegetable() &&
-            !plate.HasCompletedFood())
+        foreach (var plate in plates)
         {
-            return plate;
+            if (plate != null &&
+                plate.CurrentStage == PlateManager.PlateStage.Bread)
+            {
+                return plate;
+            }
         }
+
+        return null;
     }
 
-    return null;
-}
-
-// ================= Top Bread =================
-// Ưu tiên hoàn thành đĩa đã đủ Meat + Vegetable
-public PlateManager GetPlateForTopBread()
-{
-    foreach (var plate in plates)
+    // ===== Meat =====
+    public PlateManager GetPlateForMeat()
     {
-        if (plate == null) continue;
+        foreach (var plate in plates)
+        {
+            if (plate != null &&
+                plate.CurrentStage == PlateManager.PlateStage.BreadVegetable)
+            {
+                return plate;
+            }
+        }
 
-        if (plate.CanPlaceTopBread())
-            return plate;
+        return null;
     }
 
-    return null;
-}
+    // ===== Sauce =====
+    public PlateManager GetPlateForSauce()
+    {
+        foreach (var plate in plates)
+        {
+            if (plate != null &&
+                plate.CurrentStage == PlateManager.PlateStage.BreadVegetableMeat)
+            {
+                return plate;
+            }
+        }
 
+        return null;
+    }
 
 }

@@ -3,11 +3,10 @@ using UnityEngine;
 
 public class MeatController : MonoBehaviour
 {
-private CookableFood food;
+private CookableIngredient ingredient;
 private GrillStation currentGrill;
 
 [Header("Trash")]
-[SerializeField] private Transform trashTarget;
 [SerializeField] private float doubleTapTime = 0.5f;
 
 private bool waitingSecondTap = false;
@@ -15,7 +14,7 @@ private float firstTapTime;
 
 private void Awake()
 {
-    food = GetComponent<CookableFood>();
+    ingredient = GetComponent<CookableIngredient>();
 }
 
 public void SetGrill(GrillStation grill)
@@ -25,93 +24,61 @@ public void SetGrill(GrillStation grill)
 
 public void OnClick()
 {
-    if (food == null)
+    if (ingredient == null)
         return;
 
-    // ===== THỊT CHÁY =====
-    if (food.currentState == FoodState.Burnt)
+    // Thịt sống hoặc đang nấu: không làm gì
+    if (ingredient.currentState == CookState.Raw ||
+        ingredient.currentState == CookState.Cooking)
+        return;
+
+    // Nếu đang chờ tap lần 2 → vứt
+    if (waitingSecondTap && Time.time - firstTapTime <= doubleTapTime)
     {
-        if (!waitingSecondTap)
+        HandleTrash();
+        return;
+    }
+
+    // Tap lần đầu
+    waitingSecondTap = true;
+    firstTapTime = Time.time;
+    StartCoroutine(ResetTap());
+
+    // Nếu thịt chín thì lấy xuống đĩa
+    if (ingredient.currentState == CookState.Cooked)
+    {
+        PlateManager plate = PlateManagerSystem.Instance.GetPlateForMeat();
+
+        if (plate != null && plate.AddMeat())
         {
-            waitingSecondTap = true;
-            firstTapTime = Time.time;
-            return;
+            if (currentGrill != null)
+            {
+                currentGrill.RemoveIngredient();
+                currentGrill = null;
+            }
+
+            Destroy(gameObject);
         }
-
-        if (Time.time - firstTapTime <= doubleTapTime)
-        {
-            StartCoroutine(ThrowToTrashRoutine());
-            return;
-        }
-
-        // Quá thời gian thì tính lại từ đầu
-        firstTapTime = Time.time;
-        return;
     }
-
-    // ===== THỊT CHÍN =====
-    if (food.currentState != FoodState.Cooked)
-        return;
-
-    PlateManager plate = PlateManagerSystem.Instance.GetPlateForMeat();
-
-    if (plate == null)
-    {
-        Debug.Log("No plate available for meat");
-        return;
-    }
-
-    if (!plate.PlaceMeat(gameObject))
-        return;
-
-    GetComponent<SpawnedIngredient>()?.NotifyTaken();
-
-    if (currentGrill != null)
-    {
-        currentGrill.ClearGrill();
-        currentGrill = null;
-    }
-
-    CookingProcess cooking = GetComponent<CookingProcess>();
-    if (cooking != null)
-        cooking.StopCooking();
 }
 
-private IEnumerator ThrowToTrashRoutine()
+private IEnumerator ResetTap()
+{
+    yield return new WaitForSeconds(doubleTapTime);
+    waitingSecondTap = false;
+}
+
+private void HandleTrash()
 {
     waitingSecondTap = false;
 
-    if (trashTarget == null)
-    {
-        GameObject trash = GameObject.FindWithTag("Trash");
-        if (trash != null)
-            trashTarget = trash.transform;
-    }
-
-    if (trashTarget != null)
-    {
-        Vector3 start = transform.position;
-        Vector3 end = trashTarget.position;
-
-        float t = 0f;
-        float duration = 0.3f;
-
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            transform.position = Vector3.Lerp(start, end, t / duration);
-            yield return null;
-        }
-    }
-
     if (currentGrill != null)
     {
-        currentGrill.ClearGrill();
+        currentGrill.RemoveIngredient();
         currentGrill = null;
     }
 
     Destroy(gameObject);
 }
-
 
 }

@@ -5,7 +5,10 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Quản lý giao diện Thắng/Thua (Win_Popup / Lose_Popup) trong Popup_Overlay.
-
+/// Số sao hiển thị bằng StarDisplayController (3 ô Image cố định, đổi Sprite Vàng/Xám).
+/// Bảng thống kê (Vàng / Khách / Combo) được hiển thị trên 3 dòng cố định riêng biệt
+/// để tránh chữ đè lên Icon.
+/// </summary>
 public class EndGameUI : SingletonBehaviour<EndGameUI>
 {
     [Header("=== Panels (Popup_Overlay) ===")]
@@ -17,17 +20,17 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     [Header("=== Win_Popup ===")]
     [Tooltip("icon_Win (Image)")]
     [SerializeField] private GameObject iconWin;
-    [Tooltip("Khung_3_Sao (container chứa Sao_1..Sao_3)")]
-    [SerializeField] private GameObject khung3Sao;
-    [Tooltip("Mảng 3 ngôi sao: Sao_1, Sao_2, Sao_3 (Image) — kéo lần lượt")]
-    [SerializeField] private Image[] starImages = new Image[3];
+    [Tooltip("StarDisplayController (3 ô sao cố định) — nếu null sẽ tự tìm trong Win_Popup")]
+    [SerializeField] private StarDisplayController starDisplay;
     [Tooltip("Bang_Thong_Ke (container thống kê thưởng)")]
     [SerializeField] private GameObject bangThongKe;
     [Tooltip("Text số Vàng trong Dong_Vang (TextMeshProUGUI)")]
     [SerializeField] private TextMeshProUGUI thongKeGoldText;
     [Tooltip("Text số Khách trong Dong_Khach (TextMeshProUGUI) — tùy chọn")]
     [SerializeField] private TextMeshProUGUI thongKeCustomerText;
-    [Tooltip("Text Combo trong Dong_Combo (TextMeshProUGUI) — tùy chọn")]
+    [Tooltip("Text số khách giận bỏ về trong Dong_Khach_Gian (TextMeshProUGUI) — tùy chọn")]
+    [SerializeField] private TextMeshProUGUI thongKeAngryText;
+    [Tooltip("Text số Combo trong Dong_Combo (TextMeshProUGUI) — tùy chọn")]
     [SerializeField] private TextMeshProUGUI thongKeComboText;
     [Tooltip("Btn_TiepTuc (Button) — chuyển màn tiếp theo")]
     [SerializeField] private Button btnTiepTuc;
@@ -43,7 +46,7 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     [SerializeField] private TextMeshProUGUI lyDoThuaText;
     [Tooltip("Text_Meo_Tip (TextMeshProUGUI) — gợi ý (tùy chọn)")]
     [SerializeField] private TextMeshProUGUI meoTipText;
-[Tooltip("Btn_ChoiLai (Button) — chơi lại màn hiện tại")]
+    [Tooltip("Btn_ChoiLai (Button) — chơi lại màn hiện tại")]
     [SerializeField] private Button btnReplay;
     [Tooltip("Btn_CuuTro (Button) — quay về MainMenu (tùy chọn)")]
     [SerializeField] private Button btnMainMenu;
@@ -55,12 +58,18 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     public System.Action onWatchAdClicked;
 
     // Tránh gán listener trùng lặp khi ShowWinPopup/ShowLosePopup gọi lại.
-    private bool listenersReady = false;
+private bool listenersReady = false;
 
     protected override void Awake()
     {
         // BẮT BUỘC: gọi base.Awake() để SingletonBehaviour set EndGameUI.Instance.
         base.Awake();
+
+        // Đăng ký lắng nghe sự kiện GameOver NGAY trong Awake (thay vì OnEnable).
+        // LÝ DO: Popup_Overlay (GameObject chứa EndGameUI) bị tắt lúc bắt đầu scene,
+        // nên OnEnable/OnDisable/Start không bao giờ chạy → EndGameUI không đăng ký
+        // được sự kiện → popup không hiện khi thắng/thua. Đăng ký trong Awake đảm bảo
+        // luôn lắng nghe dù GameObject cha bị tắt.
 
         // Tự động tìm các reference theo tên (nếu chưa kéo thả) để giảm rủi ro thiếu ref.
         ResolveReferences();
@@ -69,9 +78,40 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
         HideAllPanels();
     }
 
+    protected override void OnDestroy()
+    {
+        // Hủy đăng ký sự kiện để tránh rò rỉ listener khi scene bị hủy.
+        base.OnDestroy();
+    }
+
     private void Start()
     {
         SetupButtons();
+    }
+
+    private void OnEnable()
+    {
+        GameManager.GameOver += OnGameOver;
+        GameManager.OnLevelCleared += OnLevelCleared;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.GameOver -= OnGameOver;
+        GameManager.OnLevelCleared -= OnLevelCleared;
+    }
+
+    private void OnGameOver(GameOverData result)
+    {
+        if (!result.IsWin)
+        {
+            ShowLosePopup(result.LoseReason);
+        }
+    }
+
+    private void OnLevelCleared(WinData data)
+    {
+        ShowWinPopup(data.stars, data.gold, 0, 0, data.combos);
     }
 
     // =====================================================================
@@ -85,21 +125,39 @@ public class EndGameUI : SingletonBehaviour<EndGameUI>
     /// - Tạm dừng game (Time.timeScale = 0f).
     /// - Cập nhật sao và bảng thống kê.
     /// </summary>
-    /// <param name="stars">Số sao đạt được (0-3).</param>
+    /// <param name="stars">Số sao đạt được (1-3).</param>
     /// <param name="totalGold">Tổng vàng thưởng hiển thị trong Bang_Thong_Ke.</param>
     public void ShowWinPopup(int stars, int totalGold)
+    {
+        ShowWinPopup(stars, totalGold, 0, 0, 0);
+    }
+
+    /// <summary>
+    /// Hiển thị Popup THẮNG và cập nhật đầy đủ UI (sao + bảng thống kê).
+    /// </summary>
+    /// <param name="stars">Số sao đạt được (1-3).</param>
+    /// <param name="totalGold">Tổng vàng kiếm được trong màn.</param>
+    /// <param name="servedCustomers">Số khách đã phục vụ thành công.</param>
+    /// <param name="totalCustomers">Tổng số khách dự kiến trong level.</param>
+    /// <param name="maxCombo">Combo cao nhất đạt được.</param>
+    public void ShowWinPopup(int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo)
+    {
+        ShowWinPopup(stars, totalGold, servedCustomers, totalCustomers, maxCombo, 0);
+    }
+
+    public void ShowWinPopup(int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo, int angryCustomers)
     {
         // Bật Popup_Overlay (cha) để đảm bảo UI hiển thị
         gameObject.SetActive(true);
 
-SetPanelActive(losePopup, false);
+        SetPanelActive(losePopup, false);
         SetPanelActive(winPopup, true);
 
         // Căn giữa popup trên màn hình (bỏ qua giá trị y lệch trong scene).
         CenterPopup(winPopup);
 
-        SetStars(stars);
-        UpdateThongKe(totalGold, null, null);
+        // Cập nhật đầy đủ: số sao + bảng thống kê (Vàng / Khách / Combo).
+        UpdateWinUI(stars, totalGold, servedCustomers, totalCustomers, maxCombo, angryCustomers);
 
         // Tạm dừng game
         Time.timeScale = 0f;
@@ -109,10 +167,6 @@ SetPanelActive(losePopup, false);
 
     /// <summary>
     /// Hiển thị Popup THUA.
-    /// - Bật Popup_Overlay (gameObject cha) để đảm bảo hiển thị.
-    /// - Bật Lose_Popup, ẩn Win_Popup.
-    /// - Tạm dừng game (Time.timeScale = 0f).
-    /// - Cập nhật lý do thua với null-check đầy đủ.
     /// </summary>
     /// <param name="reason">Lý do thua, VD: "Hết thời gian", "Chưa đạt chỉ tiêu tiền".</param>
     public void ShowLosePopup(string reason)
@@ -120,7 +174,7 @@ SetPanelActive(losePopup, false);
         // Bật Popup_Overlay (cha) để đảm bảo UI hiển thị
         gameObject.SetActive(true);
 
-SetPanelActive(winPopup, false);
+        SetPanelActive(winPopup, false);
         SetPanelActive(losePopup, true);
 
         // Căn giữa popup trên màn hình (bỏ qua giá trị y lệch trong scene).
@@ -151,6 +205,54 @@ SetPanelActive(winPopup, false);
         if (thongKeGoldText != null && gold != null) thongKeGoldText.text = gold;
         if (thongKeCustomerText != null && customers != null) thongKeCustomerText.text = customers;
         if (thongKeComboText != null && combo != null) thongKeComboText.text = combo;
+    }
+
+    /// <summary>
+    /// Cập nhật toàn bộ UI Win_Popup: số sao + bảng thống kê (Vàng / Khách / Combo).
+    ///   - Sao: delegate cho StarDisplayController (3 ô cố định, đổi Sprite Vàng/Xám).
+    ///   - Vàng: hiển thị số vàng ở Dong_Vang.
+    ///   - Khách: hiển thị "x/y" ở Dong_Khach.
+    ///   - Combo: hiển thị "xN" ở Dong_Combo (KHÔNG kèm chữ "Combo" để tránh đè Icon).
+    /// </summary>
+    /// <param name="stars">Số sao đạt được (1-3).</param>
+    /// <param name="totalGold">Tổng vàng kiếm được trong màn (hiện ở Dong_Vang).</param>
+    /// <param name="servedCustomers">Số khách đã phục vụ thành công.</param>
+    /// <param name="totalCustomers">Tổng số khách dự kiến trong level.</param>
+    /// <param name="maxCombo">Combo cao nhất đạt được (hiện "x{maxCombo}" ở Dong_Combo).</param>
+    public void UpdateWinUI(int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo, int angryCustomers)
+    {
+        // 1. Cập nhật số sao qua StarDisplayController (đổi Sprite Vàng/Xám trên 3 ô cố định).
+        if (starDisplay != null)
+        {
+            starDisplay.SetStars(stars);
+        }
+        else
+        {
+            Debug.LogWarning("EndGameUI.UpdateWinUI: starDisplay chưa được gán/tìm thấy → không hiển thị sao.", this);
+        }
+
+        // 2. Bảng thống kê — mỗi số nằm trên dòng riêng (không kèm nhãn để tránh đè Icon).
+        if (thongKeGoldText != null)
+        {
+            thongKeGoldText.text = totalGold.ToString();
+        }
+
+        if (thongKeCustomerText != null)
+        {
+            thongKeCustomerText.text = $"{servedCustomers}/{totalCustomers}";
+        }
+
+        if (thongKeAngryText != null)
+        {
+            thongKeAngryText.text = angryCustomers.ToString();
+        }
+
+        if (thongKeComboText != null)
+        {
+            thongKeComboText.text = $"x{maxCombo}";
+        }
+
+        Debug.Log($"<color=cyan>[ENDGAME-UI] Win: {stars} sao | Vàng {totalGold} | Khách {servedCustomers}/{totalCustomers} | Angry {angryCustomers} | Combo x{maxCombo}</color>");
     }
 
     /// <summary>
@@ -273,7 +375,7 @@ SetPanelActive(winPopup, false);
         else
             Debug.LogWarning("EndGameUI: btnXemVideo (Btn_XemVideo) chưa được gán.", this);
 
-if (btnMainMenu != null)
+        if (btnMainMenu != null)
             btnMainMenu.onClick.AddListener(OnMainMenuClicked);
 
         if (btnHomeLose != null)
@@ -282,39 +384,6 @@ if (btnMainMenu != null)
             Debug.LogWarning("EndGameUI: btnHomeLose (Btn_Home trong Lose_Popup) chưa được gán.", this);
 
         listenersReady = true;
-    }
-
-    // =====================================================================
-    //  HELPERS — HIỂN THỊ SAO & BẢNG THỐNG KÊ
-    // =====================================================================
-
-    private void SetStars(int stars)
-    {
-        if (starImages == null) return;
-
-        stars = Mathf.Clamp(stars, 0, starImages.Length);
-
-        for (int i = 0; i < starImages.Length; i++)
-        {
-            if (starImages[i] == null) continue;
-
-            bool lit = i < stars;
-            Color c = starImages[i].color;
-            c.a = lit ? 1f : 0.15f; // Sao đạt = sáng, chưa đạt = mờ
-            starImages[i].color = c;
-        }
-    }
-
-private void UpdateThongKe(int totalGold, string customers, string combo)
-    {
-        // thongKeGoldText được tự tìm/tạo trong ResolveReferences() → đã có sẵn,
-        // chỉ cần null-check để an toàn tuyệt đối (không bắn Warning spam).
-        if (thongKeGoldText != null)
-        {
-            thongKeGoldText.text = totalGold.ToString();
-        }
-
-        SetThongKe(null, customers, combo);
     }
 
     // =====================================================================
@@ -333,21 +402,14 @@ private void UpdateThongKe(int totalGold, string customers, string combo)
 
         // --- Win ---
         if (iconWin == null && win != null) iconWin = FindChild(win, "icon_Win");
-        if (khung3Sao == null && win != null) khung3Sao = FindChild(win, "Khung_3_Sao");
 
-        if (starImages == null) starImages = new Image[3];
-
-        if (khung3Sao != null)
+        // Tự tìm StarDisplayController trong Win_Popup (fallback nếu chưa kéo thả).
+        if (starDisplay == null && win != null)
         {
-            if (starImages.Length >= 1 && starImages[0] == null)
-                starImages[0] = GetComponentInChild<Image>(khung3Sao.transform, "Sao_1");
-            if (starImages.Length >= 2 && starImages[1] == null)
-                starImages[1] = GetComponentInChild<Image>(khung3Sao.transform, "Sao_2");
-            if (starImages.Length >= 3 && starImages[2] == null)
-                starImages[2] = GetComponentInChild<Image>(khung3Sao.transform, "Sao_3");
+            starDisplay = win.GetComponentInChildren<StarDisplayController>(true);
         }
 
-if (bangThongKe == null && win != null) bangThongKe = FindChild(win, "Bang_Thong_Ke");
+        if (bangThongKe == null && win != null) bangThongKe = FindChild(win, "Bang_Thong_Ke");
 
         // ✅ Tự động tìm TextMeshProUGUI trong từng dòng của Bang_Thong_Ke.
         // Nếu Dong_Vang/Dong_Khach/Dong_Combo CHƯA có TMP (chỉ có Icon_Vang Image),
@@ -356,6 +418,8 @@ if (bangThongKe == null && win != null) bangThongKe = FindChild(win, "Bang_Thong
             thongKeGoldText = EnsureThongKeText(bangThongKe.transform, "Dong_Vang", "Vàng");
         if (thongKeCustomerText == null && bangThongKe != null)
             thongKeCustomerText = EnsureThongKeText(bangThongKe.transform, "Dong_Khach", "Khách");
+        if (thongKeAngryText == null && bangThongKe != null)
+            thongKeAngryText = EnsureThongKeText(bangThongKe.transform, "Dong_Khach_Gian", "Khách Giận");
         if (thongKeComboText == null && bangThongKe != null)
             thongKeComboText = EnsureThongKeText(bangThongKe.transform, "Dong_Combo", "Combo");
 
@@ -373,7 +437,7 @@ if (bangThongKe == null && win != null) bangThongKe = FindChild(win, "Bang_Thong
         if (meoTipText == null && khuVucLyDoThua != null)
             meoTipText = GetComponentInChild<TextMeshProUGUI>(khuVucLyDoThua.transform, "Text_Meo_Tip");
 
-if (btnReplay == null && lose != null)
+        if (btnReplay == null && lose != null)
             btnReplay = GetComponentInChild<Button>(lose, "Btn/Btn_ChoiLai");
         if (btnMainMenu == null && lose != null)
             btnMainMenu = GetComponentInChild<Button>(lose, "Btn/Btn_CuuTro");
@@ -390,7 +454,7 @@ if (btnReplay == null && lose != null)
     //  UTILITY
     // =====================================================================
 
-private static void SetPanelActive(GameObject panel, bool active)
+    private static void SetPanelActive(GameObject panel, bool active)
     {
         if (panel != null)
         {
@@ -491,4 +555,3 @@ private static void SetPanelActive(GameObject panel, bool active)
         }
     }
 }
-

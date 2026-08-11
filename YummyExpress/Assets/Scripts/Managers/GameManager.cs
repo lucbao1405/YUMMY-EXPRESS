@@ -1,11 +1,46 @@
 using UnityEngine;
 using TMPro;
+using System;
 
 public enum GameState
 {
     Playing,
     Win,
     Lose
+}
+
+/// <summary>Dữ liệu bất biến được phát khi một màn chơi kết thúc.</summary>
+public readonly struct GameOverData
+{
+    public readonly bool IsWin;
+    public readonly int LevelIndex;
+    public readonly int Stars;
+    public readonly int TotalGold;
+    public readonly int ServedCustomers;
+    public readonly int TotalCustomers;
+    public readonly int MaxCombo;
+    public readonly int AngryCustomers;
+    public readonly string LoseReason;
+
+    public GameOverData(bool isWin, int levelIndex, int stars, int totalGold, int servedCustomers, int totalCustomers, int maxCombo, int angryCustomers, string loseReason)
+    {
+        IsWin = isWin; LevelIndex = levelIndex; Stars = stars; TotalGold = totalGold;
+        ServedCustomers = servedCustomers; TotalCustomers = totalCustomers; MaxCombo = maxCombo; AngryCustomers = angryCustomers; LoseReason = loseReason;
+    }
+}
+
+public struct WinData
+{
+    public int stars;
+    public int gold;
+    public int combos;
+
+    public WinData(int stars, int gold, int combos)
+    {
+        this.stars = stars;
+        this.gold = gold;
+        this.combos = combos;
+    }
 }
 
 [System.Serializable]
@@ -15,10 +50,17 @@ public class LevelConfig
     public int targetGold = 100;
     public float levelTimeLimit = 60f;
     public int maxLostCustomers = 3;
+
+    [Header("Khách hàng")]
+    [Tooltip("Tổng số khách dự kiến trong level (dùng để tính Tỷ lệ hài lòng / số sao).")]
+    public int totalCustomers = 8;
 }
 
 public class GameManager : SingletonBehaviour<GameManager>
 {
+    /// <summary>UI và các hệ thống khác lắng nghe event này thay vì phụ thuộc trực tiếp vào GameManager.</summary>
+    public static event Action<GameOverData> GameOver;
+    public static event Action<WinData> OnLevelCleared;
     #region Fields
 
     [Header("UI References")]
@@ -66,7 +108,9 @@ private int currentLevelIndex = 0;
             EconomyManager.Instance.OnGoldChanged += OnGoldChanged;
         }
 
-        StartLevel(0);
+        // YUM-242: Khi vào game lần sau, load level đã mở khóa gần nhất từ SaveSystem.
+        int savedLevel = SaveSystem.GetCurrentLevel(); // 1-based
+        StartLevel(savedLevel - 1); // Đổi về 0-based cho StartLevel
     }
 
     protected override void OnDestroy()
@@ -108,7 +152,7 @@ private int currentLevelIndex = 0;
 
     #region Level Flow
 
-    public void StartLevel(int levelIndex)
+public void StartLevel(int levelIndex)
     {
         if (levelConfigs == null || levelConfigs.Length == 0)
         {
@@ -119,10 +163,22 @@ private int currentLevelIndex = 0;
         currentLevelIndex = Mathf.Clamp(levelIndex, 0, levelConfigs.Length - 1);
         currentLevel = levelConfigs[currentLevelIndex];
 
+        if (CustomerSpawner.Instance != null)
+        {
+            CustomerSpawner.Instance.ConfigureForLevel(currentLevelIndex);
+        }
+
 Time.timeScale = 1f;
         currentState = GameState.Playing;
         timeRemaining = currentLevel.levelTimeLimit;
         servedCustomerCount = 0;
+
+// Khởi tạo lại dữ liệu chấm điểm cho ScoreManager.
+        // totalCustomersInLevel = Số khách dự kiến trong level (từ LevelConfig).
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.InitializeLevel(currentLevel.totalCustomers);
+        }
 
         if (customerManager != null)
         {
@@ -143,9 +199,16 @@ Time.timeScale = 1f;
             customerManager.ResumeSpawning();
         }
 
-        EndGameUI endGameUIRef = GetEndGameUI();
+EndGameUI endGameUIRef = GetEndGameUI();
         if (endGameUIRef != null)
         {
+            // Kích hoạt GameObject chứa EndGameUI ngay khi bắt đầu màn.
+            // LÝ DO: Popup_Overlay (GameObject chứa EndGameUI) bị tắt lúc bắt đầu scene,
+            // nên Awake()/OnEnable()/Start() không bao giờ chạy → EndGameUI không đăng ký
+            // sự kiện GameOver → popup không hiện khi thắng/thua.
+            // SetActive(true) sẽ kích hoạt Awake() → EndGameUI đăng ký GameOver và ẩn các panel.
+            // (Overlay vẫn không hiện gì vì Win_Popup/Lose_Popup bị ẩn trong HideAllPanels).
+            endGameUIRef.gameObject.SetActive(true);
             endGameUIRef.HideAllPanels();
         }
 
@@ -182,23 +245,45 @@ Time.timeScale = 1f;
 
         Time.timeScale = 0f;
 
-        EndGameUI endGameUIRef = GetEndGameUI();
-        if (endGameUIRef != null)
-        {
-            if (isWin)
+        if (isWin)
             {
                 int totalGold = EconomyManager.Instance != null ? EconomyManager.Instance.CurrentGold : 0;
-                int stars = CalculateStars();
-                endGameUIRef.ShowWinPopup(stars, totalGold);
+
+                // Tính sao dựa trên ĐỘ HÀI LÒNG (ScoreManager) thay vì thời gian.
+                int stars = ScoreManager.Instance != null
+                    ? ScoreManager.Instance.CalculateAndDisplayStars()
+                    : 1;
+
+                // Lấy số khách đã phục vụ / tổng khách để hiển thị bảng thống kê.
+                int served = ScoreManager.Instance != null ? ScoreManager.Instance.GetServedCustomers() : servedCustomerCount;
+                int totalC = ScoreManager.Instance != null ? ScoreManager.Instance.TotalCustomersInLevel : (currentLevel != null ? currentLevel.totalCustomers : 0);
+                int maxCombo = ScoreManager.Instance != null ? ScoreManager.Instance.GetMaxCombo() : 0;
+
+                // YUM-242: Tự động mở khóa level kế tiếp (nếu chưa mở).
+                // Chỉ khi THẮNG mới mở khóa level sau → người chơi vào qua Btn_TiepTuc trong EndGame UI.
+                SaveManager.SaveLevelStars(currentLevelIndex, stars);
+                if (currentLevelIndex < levelConfigs.Length - 1)
+                {
+                    SaveManager.UnlockNextLevel(currentLevelIndex);
+                }
+
+                OnLevelCleared?.Invoke(new WinData(stars, totalGold, maxCombo));
+                GameOver?.Invoke(new GameOverData(true, currentLevelIndex, stars, totalGold, served, totalC, maxCombo, customerManager != null ? customerManager.LostCustomerCount : 0, string.Empty));
             }
-            else
+else
             {
-                endGameUIRef.ShowLosePopup(GetLoseReason());
+                // Thua màn → hiển thị 0 sao rõ ràng trên Lose popup (tránh để lại sao cũ).
+                if (ScoreManager.Instance != null)
+                {
+                    ScoreManager.Instance.DisplayNoStars();
+                }
+
+                GameOver?.Invoke(new GameOverData(false, currentLevelIndex, 0, 0, 0,
+                    currentLevel != null ? currentLevel.totalCustomers : 0, 0, customerManager != null ? customerManager.LostCustomerCount : 0, GetLoseReason()));
             }
-        }
     }
 
-    private EndGameUI GetEndGameUI()
+private EndGameUI GetEndGameUI()
     {
         if (EndGameUI.Instance != null)
         {
@@ -206,19 +291,6 @@ Time.timeScale = 1f;
         }
 
         return FindObjectOfType<EndGameUI>(true);
-    }
-
-    private int CalculateStars()
-    {
-        if (currentLevel == null || currentLevel.levelTimeLimit <= 0f)
-        {
-            return 1;
-        }
-
-        float ratio = timeRemaining / currentLevel.levelTimeLimit;
-        if (ratio >= 0.8f) return 3;
-        if (ratio >= 0.5f) return 2;
-        return 1;
     }
 
     private string GetLoseReason()
@@ -317,7 +389,9 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             return false;
         }
 
-        // Duyệt danh sách slot khách để tìm ai đang order đúng món này.
+        // Tìm khách đúng đơn hàng đã chờ lâu nhất (ưu tiên đến trước).
+        CustomerSlotUI targetSlot = null;
+        float earliestArrival = float.PositiveInfinity;
         foreach (var slot in slots)
         {
             if (slot == null || !slot.IsOrdering(servedFood))
@@ -325,35 +399,76 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
                 continue;
             }
 
-            // 1. Cho khách nhận món và hoàn tất order → trả về tiền thưởng.
-            int earnedGold = slot.OnReceiveFood();
-            if (earnedGold <= 0)
+            if (slot.CustomerArrivalTime < earliestArrival)
             {
-                earnedGold = servedFood.price;
+                earliestArrival = slot.CustomerArrivalTime;
+                targetSlot = slot;
             }
-
-            // 2. Cộng tiền thưởng vào EconomyManager.
-            if (EconomyManager.Instance != null)
-            {
-                EconomyManager.Instance.AddGold(earnedGold);
-            }
-            else
-            {
-                Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: EconomyManager.Instance chưa được khởi tạo → không cộng được vàng.", this);
-            }
-
-            // 3. Tăng số khách đã phục vụ thành công.
-            servedCustomerCount++;
-
-            // 4. Dọn đĩa nguồn về trạng thái trống (chỉ khi thành công).
-            if (sourcePlate != null)
-            {
-                sourcePlate.ClearPlate();
-            }
-
-            Debug.Log($"<color=green>[SERVE SUCCESS] Đã giao món '{servedFood.foodName}' cho khách! Cộng +{earnedGold} vàng. (Tổng khách đã phục vụ: {servedCustomerCount})</color>", this);
-            return true;
         }
+
+        if (targetSlot == null)
+        {
+            Debug.LogWarning($"[SERVE FAILED] Không có khách nào đang chờ món '{servedFood.foodName}'!", this);
+            return false;
+        }
+
+        var customerSlot = targetSlot;
+
+// 0. Lấy % kiên nhẫn còn lại của khách TRƯỚC khi dọn slot (để tính điểm sao).
+        //    LƯU Ý: phải đọc TRƯỚC vì OnReceiveFood() gọi ClearSlot() → hasCustomer = false.
+        float remainingPatience = customerSlot.RemainingPatiencePercent;
+
+// 1. Cho khách nhận món và hoàn tất order → trả về tiền thưởng.
+        bool completesCustomerOrder = customerSlot.RemainingOrderFoods.Count == 1;
+        int earnedGold = customerSlot.OnReceiveFood(servedFood);
+        if (earnedGold <= 0)
+        {
+            earnedGold = servedFood.price;
+        }
+
+        // 2. ⚠️ CẬP NHẬT ĐIỂM TRƯỚC KHI CỘNG VÀNG.
+        //    Quan trọng: AddGold() bên dưới kích hoạt OnGoldChanged → CheckWinCondition(),
+        //    có thể gọi EndGame(true) NGAY trong cùng frame này.
+        //    Nếu increment servedCustomerCount / ScoreManager.OnCustomerServed SAU AddGold,
+        //    EndGame sẽ đọc được giá trị cũ (thiếu khách vừa phục vụ) → sai số sao & sai "x/y".
+        //    → Do đó phải tăng count + ghi nhận điểm TRƯỚC khi AddGold.
+
+        // 2.1 Tăng số khách đã phục vụ thành công.
+        if (completesCustomerOrder)
+        {
+            servedCustomerCount++;
+        }
+
+        // 2.2 Thông báo cho ScoreManager tính điểm sao nhỏ dựa trên % kiên nhẫn còn lại.
+        int comboGold = 0;
+        if (completesCustomerOrder && ScoreManager.Instance != null)
+        {
+            comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
+        }
+        else if (completesCustomerOrder)
+        {
+            Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: ScoreManager.Instance chưa được tạo → không tính điểm sao.", this);
+        }
+
+        // 3. Cộng tiền thưởng vào EconomyManager.
+        //    (Có thể kích hoạt CheckWinCondition → EndGame(true) ở đây, nhưng count đã đồng bộ rồi).
+        if (EconomyManager.Instance != null)
+        {
+            EconomyManager.Instance.AddGold(earnedGold + comboGold);
+        }
+        else
+        {
+            Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: EconomyManager.Instance chưa được khởi tạo → không cộng được vàng.", this);
+        }
+
+        // 4. Dọn đĩa nguồn về trạng thái trống (chỉ khi thành công).
+        if (sourcePlate != null)
+        {
+            sourcePlate.ClearPlate();
+        }
+
+        Debug.Log($"<color=green>[SERVE SUCCESS] Đã giao món '{servedFood.foodName}' cho khách! Cộng +{earnedGold} vàng. (Tổng khách đã phục vụ: {servedCustomerCount})</color>", this);
+        return true;
 
         // Không có khách nào đang chờ món này → giữ nguyên món trên đĩa.
         Debug.LogWarning($"[SERVE FAILED] Không có khách nào đang chờ món '{servedFood.foodName}'!", this);
