@@ -11,6 +11,14 @@ public class CustomerSpawner : MonoBehaviour
         public int level = 1;
         [Tooltip("Danh sách khách/đơn được phép sinh ở level này.")]
         public List<CustomerData> customers = new List<CustomerData>();
+        [Tooltip("Đơn AI có thể random: một món Cà phê, hoặc hai món Bánh mì + Cà phê.")]
+        public List<CustomerOrderOption> possibleOrders = new List<CustomerOrderOption>();
+    }
+
+    [System.Serializable]
+    public class CustomerOrderOption
+    {
+        public List<FoodData> foods = new List<FoodData>();
     }
 
     public static CustomerSpawner Instance { get; private set; }
@@ -29,6 +37,7 @@ public class CustomerSpawner : MonoBehaviour
 
     private bool isSpawning = false;
     private List<CustomerData> activeCustomerDatabase;
+    private List<CustomerOrderOption> activeOrderOptions;
 
     private void Awake()
     {
@@ -52,6 +61,7 @@ public class CustomerSpawner : MonoBehaviour
         int levelNumber = levelIndex + 1;
         LevelSpawnProfile profile = levelSpawnProfiles.Find(p => p != null && p.level == levelNumber && p.customers != null && p.customers.Count > 0);
         activeCustomerDatabase = profile != null ? profile.customers : customerDatabase;
+        activeOrderOptions = profile != null ? profile.possibleOrders : null;
     }
 
     private IEnumerator SpawnRoutine()
@@ -85,7 +95,15 @@ public class CustomerSpawner : MonoBehaviour
         CustomerData randomCustomer = GetRandomCustomerData();
         if (randomCustomer == null) return;
 
-emptySlot.SpawnCustomerWithAnimation(randomCustomer);
+        CustomerOrderOption order = GetRandomOrderOption();
+        if (order != null)
+        {
+            emptySlot.SpawnCustomerWithAnimation(randomCustomer, order.foods);
+        }
+        else
+        {
+            emptySlot.SpawnCustomerWithAnimation(randomCustomer);
+        }
     }
 
     private CustomerSlotUI GetRandomEmptySlot()
@@ -142,6 +160,15 @@ emptySlot.SpawnCustomerWithAnimation(randomCustomer);
 
         int fallbackIndex = Random.Range(0, database.Count);
         return database[fallbackIndex];
+    }
+
+    private CustomerOrderOption GetRandomOrderOption()
+    {
+        if (activeOrderOptions == null || activeOrderOptions.Count == 0) return null;
+
+        List<CustomerOrderOption> validOrders = activeOrderOptions.FindAll(order =>
+            order != null && order.foods != null && order.foods.Exists(food => food != null));
+        return validOrders.Count > 0 ? validOrders[Random.Range(0, validOrders.Count)] : null;
     }
 
     public void StopSpawning()

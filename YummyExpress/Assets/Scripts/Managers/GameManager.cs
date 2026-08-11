@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System;
 
 public enum GameState
 {
@@ -28,6 +29,20 @@ public readonly struct GameOverData
     }
 }
 
+public struct WinData
+{
+    public int stars;
+    public int gold;
+    public int combos;
+
+    public WinData(int stars, int gold, int combos)
+    {
+        this.stars = stars;
+        this.gold = gold;
+        this.combos = combos;
+    }
+}
+
 [System.Serializable]
 public class LevelConfig
 {
@@ -44,7 +59,8 @@ public class LevelConfig
 public class GameManager : SingletonBehaviour<GameManager>
 {
     /// <summary>UI và các hệ thống khác lắng nghe event này thay vì phụ thuộc trực tiếp vào GameManager.</summary>
-    public static event System.Action<GameOverData> GameOver;
+    public static event Action<GameOverData> GameOver;
+    public static event Action<WinData> OnLevelCleared;
     #region Fields
 
     [Header("UI References")]
@@ -245,8 +261,13 @@ EndGameUI endGameUIRef = GetEndGameUI();
 
                 // YUM-242: Tự động mở khóa level kế tiếp (nếu chưa mở).
                 // Chỉ khi THẮNG mới mở khóa level sau → người chơi vào qua Btn_TiepTuc trong EndGame UI.
-                SaveSystem.UnlockNextLevel(currentLevelIndex + 1, levelConfigs.Length);
+                SaveManager.SaveLevelStars(currentLevelIndex, stars);
+                if (currentLevelIndex < levelConfigs.Length - 1)
+                {
+                    SaveManager.UnlockNextLevel(currentLevelIndex);
+                }
 
+                OnLevelCleared?.Invoke(new WinData(stars, totalGold, maxCombo));
                 GameOver?.Invoke(new GameOverData(true, currentLevelIndex, stars, totalGold, served, totalC, maxCombo, customerManager != null ? customerManager.LostCustomerCount : 0, string.Empty));
             }
 else
@@ -368,7 +389,9 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
             return false;
         }
 
-        // Duyệt danh sách slot khách để tìm ai đang order đúng món này.
+        // Tìm khách đúng đơn hàng đã chờ lâu nhất (ưu tiên đến trước).
+        CustomerSlotUI targetSlot = null;
+        float earliestArrival = float.PositiveInfinity;
         foreach (var slot in slots)
         {
             if (slot == null || !slot.IsOrdering(servedFood))
@@ -376,62 +399,76 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
                 continue;
             }
 
+            if (slot.CustomerArrivalTime < earliestArrival)
+            {
+                earliestArrival = slot.CustomerArrivalTime;
+                targetSlot = slot;
+            }
+        }
+
+        if (targetSlot == null)
+        {
+            Debug.LogWarning($"[SERVE FAILED] Không có khách nào đang chờ món '{servedFood.foodName}'!", this);
+            return false;
+        }
+
+        var customerSlot = targetSlot;
+
 // 0. Lấy % kiên nhẫn còn lại của khách TRƯỚC khi dọn slot (để tính điểm sao).
-            //    LƯU Ý: phải đọc TRƯỚC vì OnReceiveFood() gọi ClearSlot() → hasCustomer = false.
-            float remainingPatience = slot.RemainingPatiencePercent;
+        //    LƯU Ý: phải đọc TRƯỚC vì OnReceiveFood() gọi ClearSlot() → hasCustomer = false.
+        float remainingPatience = customerSlot.RemainingPatiencePercent;
 
 // 1. Cho khách nhận món và hoàn tất order → trả về tiền thưởng.
-            bool completesCustomerOrder = slot.RemainingOrderFoods.Count == 1;
-            int earnedGold = slot.OnReceiveFood(servedFood);
-            if (earnedGold <= 0)
-            {
-                earnedGold = servedFood.price;
-            }
-
-            // 2. ⚠️ CẬP NHẬT ĐIỂM TRƯỚC KHI CỘNG VÀNG.
-            //    Quan trọng: AddGold() bên dưới kích hoạt OnGoldChanged → CheckWinCondition(),
-            //    có thể gọi EndGame(true) NGAY trong cùng frame này.
-            //    Nếu increment servedCustomerCount / ScoreManager.OnCustomerServed SAU AddGold,
-            //    EndGame sẽ đọc được giá trị cũ (thiếu khách vừa phục vụ) → sai số sao & sai "x/y".
-            //    → Do đó phải tăng count + ghi nhận điểm TRƯỚC khi AddGold.
-
-            // 2.1 Tăng số khách đã phục vụ thành công.
-            if (completesCustomerOrder)
-            {
-                servedCustomerCount++;
-            }
-
-            // 2.2 Thông báo cho ScoreManager tính điểm sao nhỏ dựa trên % kiên nhẫn còn lại.
-            int comboGold = 0;
-            if (completesCustomerOrder && ScoreManager.Instance != null)
-            {
-                comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
-            }
-            else if (completesCustomerOrder)
-            {
-                Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: ScoreManager.Instance chưa được tạo → không tính điểm sao.", this);
-            }
-
-            // 3. Cộng tiền thưởng vào EconomyManager.
-            //    (Có thể kích hoạt CheckWinCondition → EndGame(true) ở đây, nhưng count đã đồng bộ rồi).
-            if (EconomyManager.Instance != null)
-            {
-                EconomyManager.Instance.AddGold(earnedGold + comboGold);
-            }
-            else
-            {
-                Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: EconomyManager.Instance chưa được khởi tạo → không cộng được vàng.", this);
-            }
-
-            // 4. Dọn đĩa nguồn về trạng thái trống (chỉ khi thành công).
-            if (sourcePlate != null)
-            {
-                sourcePlate.ClearPlate();
-            }
-
-            Debug.Log($"<color=green>[SERVE SUCCESS] Đã giao món '{servedFood.foodName}' cho khách! Cộng +{earnedGold} vàng. (Tổng khách đã phục vụ: {servedCustomerCount})</color>", this);
-            return true;
+        bool completesCustomerOrder = customerSlot.RemainingOrderFoods.Count == 1;
+        int earnedGold = customerSlot.OnReceiveFood(servedFood);
+        if (earnedGold <= 0)
+        {
+            earnedGold = servedFood.price;
         }
+
+        // 2. ⚠️ CẬP NHẬT ĐIỂM TRƯỚC KHI CỘNG VÀNG.
+        //    Quan trọng: AddGold() bên dưới kích hoạt OnGoldChanged → CheckWinCondition(),
+        //    có thể gọi EndGame(true) NGAY trong cùng frame này.
+        //    Nếu increment servedCustomerCount / ScoreManager.OnCustomerServed SAU AddGold,
+        //    EndGame sẽ đọc được giá trị cũ (thiếu khách vừa phục vụ) → sai số sao & sai "x/y".
+        //    → Do đó phải tăng count + ghi nhận điểm TRƯỚC khi AddGold.
+
+        // 2.1 Tăng số khách đã phục vụ thành công.
+        if (completesCustomerOrder)
+        {
+            servedCustomerCount++;
+        }
+
+        // 2.2 Thông báo cho ScoreManager tính điểm sao nhỏ dựa trên % kiên nhẫn còn lại.
+        int comboGold = 0;
+        if (completesCustomerOrder && ScoreManager.Instance != null)
+        {
+            comboGold = ScoreManager.Instance.OnCustomerServed(remainingPatience);
+        }
+        else if (completesCustomerOrder)
+        {
+            Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: ScoreManager.Instance chưa được tạo → không tính điểm sao.", this);
+        }
+
+        // 3. Cộng tiền thưởng vào EconomyManager.
+        //    (Có thể kích hoạt CheckWinCondition → EndGame(true) ở đây, nhưng count đã đồng bộ rồi).
+        if (EconomyManager.Instance != null)
+        {
+            EconomyManager.Instance.AddGold(earnedGold + comboGold);
+        }
+        else
+        {
+            Debug.LogWarning("[SERVE WARNING] GameManager.ServeFoodToCustomer: EconomyManager.Instance chưa được khởi tạo → không cộng được vàng.", this);
+        }
+
+        // 4. Dọn đĩa nguồn về trạng thái trống (chỉ khi thành công).
+        if (sourcePlate != null)
+        {
+            sourcePlate.ClearPlate();
+        }
+
+        Debug.Log($"<color=green>[SERVE SUCCESS] Đã giao món '{servedFood.foodName}' cho khách! Cộng +{earnedGold} vàng. (Tổng khách đã phục vụ: {servedCustomerCount})</color>", this);
+        return true;
 
         // Không có khách nào đang chờ món này → giữ nguyên món trên đĩa.
         Debug.LogWarning($"[SERVE FAILED] Không có khách nào đang chờ món '{servedFood.foodName}'!", this);
