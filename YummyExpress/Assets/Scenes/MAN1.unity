@@ -3004,6 +3004,7 @@ GameObject:
   - component: {fileID: 608045592}
   - component: {fileID: 608045591}
   - component: {fileID: 608045595}
+  - component: {fileID: 608045596}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -3041,10 +3042,14 @@ MonoBehaviour:
   timerText: {fileID: 1886536804}
   goldProgressText: {fileID: 609304598}
   levelConfigs:
-  - targetGold: 200
+  - targetGold: 125
+    levelTimeLimit: 60
+    maxLostCustomers: 3
+    totalCustomers: 5
+  - targetGold: 265
     levelTimeLimit: 90
     maxLostCustomers: 3
-    totalCustomers: 8
+    totalCustomers: 9
   customerManager: {fileID: 608045593}
 --- !u!114 &608045591
 MonoBehaviour:
@@ -3098,9 +3103,82 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   totalCustomersInLevel: 8
   comboTimeout: 3.5
-  comboSatisfactionStartsAt: 2
-  comboSatisfactionBonus: 1
+  comboBonusStartAt: 2
+  comboBonusStars: 0.5
   starDisplay: {fileID: 1922866993}
+--- !u!114 &608045596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 608045587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4193e158fc070ec46b9217da3bfc4276, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  customerSpawner: {fileID: 1344992291}
+  gameManager: {fileID: 608045590}
+  customerPool: []
+  breadFoodPlain: {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+  breadFoodSauce: {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+  coffeeFood: {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+  levelConfigs:
+  - levelIndex: 1
+    levelName: Level 1
+    totalTime: 60
+    totalCustomers: 5
+    targetGold: 0
+    spawnTimeline:
+    - spawnTime: 3
+      orderFoods: []
+      description: 
+    - spawnTime: 18
+      orderFoods: []
+      description: 
+    - spawnTime: 33
+      orderFoods: []
+      description: 
+    - spawnTime: 48
+      orderFoods: []
+      description: 
+    - spawnTime: 58
+      orderFoods: []
+      description: 
+  - levelIndex: 2
+    levelName: Level 2
+    totalTime: 90
+    totalCustomers: 9
+    targetGold: 250
+    spawnTimeline:
+    - spawnTime: 3
+      orderFoods: []
+      description: 
+    - spawnTime: 15
+      orderFoods: []
+      description: 
+    - spawnTime: 25
+      orderFoods: []
+      description: 
+    - spawnTime: 36
+      orderFoods: []
+      description: 
+    - spawnTime: 46
+      orderFoods: []
+      description: 
+    - spawnTime: 54
+      orderFoods: []
+      description: 
+    - spawnTime: 62
+      orderFoods: []
+      description: 
+    - spawnTime: 70
+      orderFoods: []
+      description: 
+    - spawnTime: 78
+      orderFoods: []
+      description: 
 --- !u!1 &609304596
 GameObject:
   m_ObjectHideFlags: 0
@@ -3481,10 +3559,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   avatarImage: {fileID: 791052861}
   orderBubble: {fileID: 1446298517}
-  orderItemImage: {fileID: 1226784250}
-  orderItemImages: []
+  orderItemImages:
+  - {fileID: 1226784250}
+  - {fileID: 598933048}
   patienceSlider: {fileID: 484495685}
   fillImage: {fileID: 1620769226}
+  defaultSprite: {fileID: 0}
+  worriedSprite: {fileID: 0}
+  angrySprite: {fileID: 0}
+  happySprite: {fileID: 0}
+  happyDisplayDuration: 0.45
   moveDuration: 0.6
   slideDistance: 800
   slideFromLeft: 1
@@ -5875,10 +5959,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   avatarImage: {fileID: 945592349}
   orderBubble: {fileID: 602988804}
-  orderItemImage: {fileID: 1328046404}
-  orderItemImages: []
+  orderItemImages:
+  - {fileID: 1328046404}
+  - {fileID: 151506433}
   patienceSlider: {fileID: 1504077478}
   fillImage: {fileID: 475802441}
+  defaultSprite: {fileID: 0}
+  worriedSprite: {fileID: 0}
+  angrySprite: {fileID: 0}
+  happySprite: {fileID: 0}
+  happyDisplayDuration: 0.45
   moveDuration: 0.6
   slideDistance: 800
   slideFromLeft: 1
@@ -7672,10 +7762,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   avatarImage: {fileID: 921301082}
   orderBubble: {fileID: 1201703755}
-  orderItemImage: {fileID: 1041177803}
-  orderItemImages: []
+  orderItemImages:
+  - {fileID: 1041177803}
+  - {fileID: 1083181319}
   patienceSlider: {fileID: 194324690}
   fillImage: {fileID: 1497781328}
+  defaultSprite: {fileID: 0}
+  worriedSprite: {fileID: 0}
+  angrySprite: {fileID: 0}
+  happySprite: {fileID: 0}
+  happyDisplayDuration: 0.45
   moveDuration: 0.6
   slideDistance: 800
   slideFromLeft: 1
@@ -8720,7 +8816,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 671ea0deffea96a478b1dcb28cbc601d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  meatPrefab: {fileID: 4401504796145802785, guid: 9764dd16e35107f47a802da0f4e08f91, type: 3}
+  meatPrefab: {fileID: 5249260429130311290, guid: 6c183f8a28daba14cabd9006eb973e9c, type: 3}
 --- !u!1 &1538757990
 GameObject:
   m_ObjectHideFlags: 0
