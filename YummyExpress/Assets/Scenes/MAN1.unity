@@ -6927,16 +6927,11 @@ MonoBehaviour:
   - level: 2
     customers:
     - {fileID: 11400000, guid: 1f20f6b0bdcf40bda99f4f43ce2d73d7, type: 2}
-    possibleOrders:
-    - foods:
-      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+    possibleOrders: []
   - level: 3
     customers:
     - {fileID: 11400000, guid: 3ef97f4bfe514b9d8ae930795e915a34, type: 2}
-    possibleOrders:
-    - foods:
-      - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
-      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+    possibleOrders: []
   minSpawnDelay: 3
   maxSpawnDelay: 6
 --- !u!1 &1359215229
@@ -10055,6 +10050,7 @@ MonoBehaviour:
   bangThongKe: {fileID: 25606268}
   thongKeGoldText: {fileID: 1509051663}
   thongKeCustomerText: {fileID: 1970867046}
+  thongKeAngryText: {fileID: 0}
   thongKeComboText: {fileID: 473949563}
   btnTiepTuc: {fileID: 731507369}
   btnXemVideo: {fileID: 764497911}

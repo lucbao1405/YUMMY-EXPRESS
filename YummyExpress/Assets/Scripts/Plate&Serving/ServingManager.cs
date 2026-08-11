@@ -48,8 +48,6 @@ public class ServingManager : SingletonBehaviour<ServingManager>
         }
 
         var customerSlot = targetSlot;
-
-// Lấy % kiên nhẫn còn lại của khách TRƯỚC khi dọn slot (để tính điểm sao).
         float remainingPatience = customerSlot.RemainingPatiencePercent;
 
         bool completesCustomerOrder = customerSlot.RemainingOrderFoods.Count == 1;
@@ -59,9 +57,6 @@ public class ServingManager : SingletonBehaviour<ServingManager>
             earnedGold = food.price;
         }
 
-        // ⚠️ GHI NHẬN ĐIỂM TRƯỚC KHI CỘNG VÀNG.
-        // EconomyManager.AddGold() có thể kích hoạt sự kiện OnGoldChanged → EndGame() ngay trong frame này.
-        // Nếu gọi ScoreManager.OnCustomerServed SAU AddGold, EndGame sẽ đọc được count thiếu khách vừa phục vụ.
         int comboGold = 0;
         if (completesCustomerOrder && ScoreManager.Instance != null)
         {
@@ -83,8 +78,5 @@ public class ServingManager : SingletonBehaviour<ServingManager>
 
         Debug.Log($"Phục vụ {food.foodName} cho khách thành công! +{earnedGold} vàng.");
         return true;
-
-        Debug.Log("ServingManager: Không có khách nào đang chờ món này.");
-        return false;
     }
 }
