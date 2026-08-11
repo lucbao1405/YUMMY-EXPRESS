@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class GrillStation : MonoBehaviour
@@ -5,25 +6,18 @@ public class GrillStation : MonoBehaviour
 public Transform grillPoint;
 
 private GameObject currentMeat;
-private bool occupied = false;
+private bool coolingDown = false;
+
+[SerializeField] private float grillCooldown = 0.5f;
 
 public bool IsOccupied()
 {
-    return occupied;
-}
-
-public bool TryReserve()
-{
-    if (occupied)
-        return false;
-
-    occupied = true;
-    return true;
+    return currentMeat != null || coolingDown;
 }
 
 public bool PlaceMeat(GameObject meat)
 {
-    if (currentMeat != null)
+    if (IsOccupied())
         return false;
 
     currentMeat = meat;
@@ -42,9 +36,11 @@ public bool PlaceMeat(GameObject meat)
         meat.transform.localScale = Vector3.one;
     }
 
-    MeatController controller = meat.GetComponent<MeatController>();
-    if (controller != null)
-        controller.SetGrill(this);
+    MeatController mc = meat.GetComponent<MeatController>();
+    if (mc != null)
+    {
+        mc.SetGrill(this);
+    }
 
     return true;
 }
@@ -52,7 +48,17 @@ public bool PlaceMeat(GameObject meat)
 public void ClearGrill()
 {
     currentMeat = null;
-    occupied = false;
+
+    StopAllCoroutines();
+    StartCoroutine(CooldownRoutine());
 }
+
+private IEnumerator CooldownRoutine()
+{
+    coolingDown = true;
+    yield return new WaitForSeconds(grillCooldown);
+    coolingDown = false;
+}
+
 
 }
