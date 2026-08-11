@@ -2,32 +2,17 @@ using UnityEngine;
 
 public class VegetableSpawner : MonoBehaviour
 {
-public GameObject vegetablePrefab;
-
-
-public void SpawnVegetable()
-{
-    // Tìm đĩa phù hợp để đặt rau
+    public void OnVegetableButtonClick()
+    {
     PlateManager plate = PlateManagerSystem.Instance.GetPlateForVegetable();
 
-    if (plate == null)
-    {
-        Debug.Log("No plate available for vegetable");
-        return;
-    }
+        if (plate == null)
+        {
+            Debug.Log("No plate waiting for vegetable");
+            return;
+        }
 
-    GameObject veg = Instantiate(vegetablePrefab);
-
-    // Đặt rau lên đĩa
-    if (plate.PlaceVegetable(veg))
-    {
-        // Thành công
+        plate.AddVegetable();
     }
-    else
-    {
-        Destroy(veg);
-    }
-}
-
 
 }
