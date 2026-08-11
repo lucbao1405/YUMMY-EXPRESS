@@ -13,7 +13,17 @@ MonoBehaviour:
   m_Name: Khach3
   m_EditorClassIdentifier: 
   customerName: Anime Girl
-  avatarSprite: {fileID: 21300000, guid: b4cc0b5fbe4ed6e44a375330dca173ac, type: 3}
+  avatarSprite: {fileID: 21300000, guid: 40d7a177a70614647b5ded801d3e8006, type: 3}
+  defaultSprite: {fileID: 21300000, guid: 40d7a177a70614647b5ded801d3e8006, type: 3}
+  worriedSprite: {fileID: 21300000, guid: 708e7486c1658324db4fffee7532f1d5, type: 3}
+  angrySprite: {fileID: 21300000, guid: b09f2d3a74fd43747a29e0ce9659faa0, type: 3}
+  happySprite: {fileID: 21300000, guid: 0390087d3efcd2b4da6d943602873211, type: 3}
+  randomizeOrder: 1
+  possibleFoods:
+  - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+  - {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+  - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+  minRandomOrderItems: 1
+  maxRandomOrderItems: 2
   requiredFoods: []
-  requiredFood: {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
-  maxPatienceTime: 25
+  requiredFood: {fileID: 0}

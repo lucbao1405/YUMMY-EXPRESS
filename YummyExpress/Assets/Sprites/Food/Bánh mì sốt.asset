@@ -16,4 +16,5 @@ MonoBehaviour:
   foodName: "B\xE1nh m\xEC s\u1ED1t"
   foodIcon: {fileID: 21300000, guid: 7812d0d4862704e49b9f0fe3b41b0fd9, type: 3}
   price: 30
-
+  patienceTime: 15
+  hasSauce: 1
