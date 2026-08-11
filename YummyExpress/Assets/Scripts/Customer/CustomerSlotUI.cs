@@ -34,6 +34,8 @@ public bool IsOccupied => hasCustomer;
     public CustomerData CurrentData => currentCustomerData;
     public FoodData RequiredFood => remainingOrderFoods.Count > 0 ? remainingOrderFoods[0] : null;
     public IReadOnlyList<FoodData> RemainingOrderFoods => remainingOrderFoods;
+    /// <summary>Thời điểm khách được đặt vào slot, dùng để phục vụ theo thứ tự đến trước.</summary>
+    public float CustomerArrivalTime { get; private set; } = float.PositiveInfinity;
 
     /// <summary>
     /// Tỷ lệ kiên nhẫn còn lại của khách hiện tại (0.0f - 1.0f).
@@ -128,9 +130,23 @@ public bool IsOccupied => hasCustomer;
         slideCoroutine = StartCoroutine(AnimateSlideIn());
     }
 
+    public void SpawnCustomerWithAnimation(CustomerData data, IReadOnlyList<FoodData> orderedFoods)
+    {
+        if (data == null)
+        {
+            ClearSlot();
+            return;
+        }
+
+        ShowCustomer(data, orderedFoods);
+        if (slideCoroutine != null) StopCoroutine(slideCoroutine);
+        slideCoroutine = StartCoroutine(AnimateSlideIn());
+    }
+
     private void ShowCustomer(CustomerData data, IReadOnlyList<FoodData> foods)
     {
         currentCustomerData = data;
+        CustomerArrivalTime = Time.time;
         remainingOrderFoods.Clear();
         if (foods != null)
         {
@@ -307,6 +323,7 @@ public bool IsOccupied => hasCustomer;
         if (slideCoroutine != null) StopCoroutine(slideCoroutine);
 
         hasCustomer = false;
+        CustomerArrivalTime = float.PositiveInfinity;
         currentCustomerData = null;
         orderedFood = null;
         remainingOrderFoods.Clear();

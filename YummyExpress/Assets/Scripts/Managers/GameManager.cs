@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System;
 
 public enum GameState
 {
@@ -28,6 +29,20 @@ public readonly struct GameOverData
     }
 }
 
+public struct WinData
+{
+    public int stars;
+    public int gold;
+    public int combos;
+
+    public WinData(int stars, int gold, int combos)
+    {
+        this.stars = stars;
+        this.gold = gold;
+        this.combos = combos;
+    }
+}
+
 [System.Serializable]
 public class LevelConfig
 {
@@ -44,7 +59,8 @@ public class LevelConfig
 public class GameManager : SingletonBehaviour<GameManager>
 {
     /// <summary>UI và các hệ thống khác lắng nghe event này thay vì phụ thuộc trực tiếp vào GameManager.</summary>
-    public static event System.Action<GameOverData> GameOver;
+    public static event Action<GameOverData> GameOver;
+    public static event Action<WinData> OnLevelCleared;
     #region Fields
 
     [Header("UI References")]
@@ -245,8 +261,13 @@ EndGameUI endGameUIRef = GetEndGameUI();
 
                 // YUM-242: Tự động mở khóa level kế tiếp (nếu chưa mở).
                 // Chỉ khi THẮNG mới mở khóa level sau → người chơi vào qua Btn_TiepTuc trong EndGame UI.
-                SaveSystem.UnlockNextLevel(currentLevelIndex + 1, levelConfigs.Length);
+                SaveManager.SaveLevelStars(currentLevelIndex, stars);
+                if (currentLevelIndex < levelConfigs.Length - 1)
+                {
+                    SaveManager.UnlockNextLevel(currentLevelIndex);
+                }
 
+                OnLevelCleared?.Invoke(new WinData(stars, totalGold, maxCombo));
                 GameOver?.Invoke(new GameOverData(true, currentLevelIndex, stars, totalGold, served, totalC, maxCombo, customerManager != null ? customerManager.LostCustomerCount : 0, string.Empty));
             }
 else

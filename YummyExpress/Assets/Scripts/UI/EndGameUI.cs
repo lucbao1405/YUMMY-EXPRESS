@@ -70,7 +70,6 @@ private bool listenersReady = false;
         // nên OnEnable/OnDisable/Start không bao giờ chạy → EndGameUI không đăng ký
         // được sự kiện → popup không hiện khi thắng/thua. Đăng ký trong Awake đảm bảo
         // luôn lắng nghe dù GameObject cha bị tắt.
-        GameManager.GameOver += OnGameOver;
 
         // Tự động tìm các reference theo tên (nếu chưa kéo thả) để giảm rủi ro thiếu ref.
         ResolveReferences();
@@ -82,7 +81,6 @@ private bool listenersReady = false;
     protected override void OnDestroy()
     {
         // Hủy đăng ký sự kiện để tránh rò rỉ listener khi scene bị hủy.
-        GameManager.GameOver -= OnGameOver;
         base.OnDestroy();
     }
 
@@ -91,16 +89,29 @@ private bool listenersReady = false;
         SetupButtons();
     }
 
+    private void OnEnable()
+    {
+        GameManager.GameOver += OnGameOver;
+        GameManager.OnLevelCleared += OnLevelCleared;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.GameOver -= OnGameOver;
+        GameManager.OnLevelCleared -= OnLevelCleared;
+    }
+
     private void OnGameOver(GameOverData result)
     {
-        if (result.IsWin)
-        {
-            ShowWinPopup(result.Stars, result.TotalGold, result.ServedCustomers, result.TotalCustomers, result.MaxCombo, result.AngryCustomers);
-        }
-        else
+        if (!result.IsWin)
         {
             ShowLosePopup(result.LoseReason);
         }
+    }
+
+    private void OnLevelCleared(WinData data)
+    {
+        ShowWinPopup(data.stars, data.gold, 0, 0, data.combos);
     }
 
     // =====================================================================

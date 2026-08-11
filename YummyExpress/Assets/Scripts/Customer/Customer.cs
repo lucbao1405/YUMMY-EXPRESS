@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Customer : MonoBehaviour
@@ -19,6 +20,7 @@ public class Customer : MonoBehaviour
     [SerializeField] private float patienceDecreaseSpeed = 0.02f;
 
     public string CurrentOrderFoodID { get; private set; }
+    public IReadOnlyList<FoodData> CurrentOrderFoods => currentOrderFoods;
     public int TargetSlotIndex { get; private set; }
     public CustomerState CurrentState { get; private set; } = CustomerState.Moving;
 
@@ -27,6 +29,7 @@ public class Customer : MonoBehaviour
 
     private Vector3 targetPosition;
     private float currentPatience;
+    private readonly List<FoodData> currentOrderFoods = new List<FoodData>();
 
     public void InitCustomer(string foodID, int slotIndex, Vector3 startPosition, Vector3 targetPosition)
     {
@@ -37,6 +40,28 @@ public class Customer : MonoBehaviour
         transform.position = startPosition;
         CurrentState = CustomerState.Moving;
 
+        StartCoroutine(MoveToTargetRoutine());
+        OnCustomerInit?.Invoke(this);
+    }
+
+    /// <summary>Khởi tạo khách với đơn một hoặc nhiều món.</summary>
+    public void InitCustomer(IReadOnlyList<FoodData> foods, int slotIndex, Vector3 startPosition, Vector3 targetPosition)
+    {
+        currentOrderFoods.Clear();
+        if (foods != null)
+        {
+            foreach (FoodData food in foods)
+            {
+                if (food != null) currentOrderFoods.Add(food);
+            }
+        }
+
+        CurrentOrderFoodID = currentOrderFoods.Count > 0 ? currentOrderFoods[0].foodID : "BanhMi";
+        TargetSlotIndex = slotIndex;
+        this.targetPosition = targetPosition;
+        currentPatience = maxPatience;
+        transform.position = startPosition;
+        CurrentState = CustomerState.Moving;
         StartCoroutine(MoveToTargetRoutine());
         OnCustomerInit?.Invoke(this);
     }
