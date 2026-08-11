@@ -1,163 +1,259 @@
+using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class PlateManager : MonoBehaviour
 {
-[Header("Points")]
-public RectTransform bottomBreadPoint;
-public RectTransform meatPoint;
-public RectTransform vegetablePoint;
-public RectTransform topBreadPoint;
-
-[Header("Food Data")]
-public FoodData banhMiFoodData;
-
-[Header("UI")]
-public Image completedBanhMiImage;
-
-private GameObject bottomBread;
-private GameObject meat;
-private GameObject vegetable;
-private GameObject topBread;
-
-private FoodData currentFood;
-private bool isServing = false;
-
-public bool HasBottomBread() => bottomBread != null;
-public bool HasMeat() => meat != null;
-public bool HasVegetable() => vegetable != null;
-public bool HasTopBread() => topBread != null;
-public bool HasCompletedFood() => currentFood != null;
-
-public bool PlaceBottomBread(GameObject bread)
-{
-    if (bottomBread != null || currentFood != null)
-        return false;
-
-    bottomBread = bread;
-    Attach(bread, bottomBreadPoint);
-    return true;
-}
-
-public bool PlaceMeat(GameObject meatObj)
-{
-    if (bottomBread == null || meat != null || currentFood != null)
-        return false;
-
-    meat = meatObj;
-    Attach(meatObj, meatPoint);
-    return true;
-}
-
-public bool PlaceVegetable(GameObject vegObj)
-{
-    if (bottomBread == null || vegetable != null || currentFood != null)
-        return false;
-
-    vegetable = vegObj;
-    Attach(vegObj, vegetablePoint);
-    return true;
-}
-
-public bool CanPlaceTopBread()
-{
-    return bottomBread != null &&
-           meat != null &&
-           vegetable != null &&
-           topBread == null &&
-           currentFood == null;
-}
-
-public bool PlaceTopBread(GameObject bread)
-{
-    if (!CanPlaceTopBread())
-        return false;
-
-    topBread = bread;
-    Attach(bread, topBreadPoint);
-
-    CompleteBanhMi();
-    return true;
-}
-
-private void CompleteBanhMi()
-{
-    if (bottomBread != null) Destroy(bottomBread);
-    if (meat != null) Destroy(meat);
-    if (vegetable != null) Destroy(vegetable);
-    if (topBread != null) Destroy(topBread);
-
-    bottomBread = null;
-    meat = null;
-    vegetable = null;
-    topBread = null;
-
-    if (completedBanhMiImage != null)
+    public enum PlateStage
     {
-        completedBanhMiImage.sprite = banhMiFoodData.foodIcon;
-        completedBanhMiImage.gameObject.SetActive(true);
+        Empty,
+        Bread,
+        BreadVegetable,
+        BreadVegetableMeat,
+        BreadVegetableMeatSauce
     }
 
-    currentFood = banhMiFoodData;
-}
+    [Header("Spawn Point")]
+    public Transform spawnPoint;
 
-public void OnPlateClick()
-{
-    if (isServing || currentFood == null)
-        return;
+    [Header("Prefabs")]
+    public GameObject breadPrefab;
+    public GameObject breadVegetablePrefab;
+    public GameObject breadVegetableMeatPrefab;
+    public GameObject breadVegetableMeatSaucePrefab;
 
-    isServing = true;
+    [Header("Food Data")]
+    public FoodData breadVegetableMeatFood;
+    public FoodData breadVegetableMeatSauceFood;
 
-    bool success = GameManager.Instance.ServeFoodToCustomer(currentFood, this);
+    [Header("Trash")]
+    [SerializeField] private float doubleTapTime = 0.5f;
 
-    if (success)
-        ClearPlate();
+    private GameObject currentFoodObject;
 
-    isServing = false;
-}
+    private bool waitingSecondTap = false;
+    private float firstTapTime;
 
-public void ClearPlate()
-{
-    if (bottomBread != null) Destroy(bottomBread);
-    if (meat != null) Destroy(meat);
-    if (vegetable != null) Destroy(vegetable);
-    if (topBread != null) Destroy(topBread);
+    public PlateStage CurrentStage { get; private set; } = PlateStage.Empty;
 
-    bottomBread = null;
-    meat = null;
-    vegetable = null;
-    topBread = null;
+    // ================= Thêm nguyên liệu =================
 
-    currentFood = null;
-
-    if (completedBanhMiImage != null)
+    public bool AddBread()
     {
-        completedBanhMiImage.gameObject.SetActive(false);
-        completedBanhMiImage.sprite = null;
-    }
-}
+        if (CurrentStage != PlateStage.Empty)
+            return false;
 
-private void Attach(GameObject obj, RectTransform point)
-{
-    if (point == null)
-    {
-        Debug.LogError($"Missing plate point on {name}");
-        return;
+        CurrentStage = PlateStage.Bread;
+        RefreshPrefab();
+
+        return true;
     }
 
-    obj.transform.SetParent(point, false);
-
-    RectTransform rt = obj.GetComponent<RectTransform>();
-    if (rt != null)
+    public bool AddVegetable()
     {
-        rt.anchoredPosition = Vector2.zero;
-        rt.localScale = Vector3.one;
-    }
-    else
-    {
-        obj.transform.localPosition = Vector3.zero;
-        obj.transform.localScale = Vector3.one;
-    }
-}
+        if (CurrentStage != PlateStage.Bread)
+            return false;
 
+        CurrentStage = PlateStage.BreadVegetable;
+        RefreshPrefab();
+
+        return true;
+    }
+
+    public bool AddMeat()
+    {
+        if (CurrentStage != PlateStage.BreadVegetable)
+            return false;
+
+        CurrentStage = PlateStage.BreadVegetableMeat;
+        RefreshPrefab();
+
+        return true;
+    }
+
+    public bool AddSauce()
+    {
+        if (CurrentStage != PlateStage.BreadVegetableMeat)
+            return false;
+
+        CurrentStage = PlateStage.BreadVegetableMeatSauce;
+        RefreshPrefab();
+
+        return true;
+    }
+
+    // ================= Kiểm tra món hoàn thành =================
+
+    public bool IsCompleted()
+    {
+        return CurrentStage == PlateStage.BreadVegetableMeat ||
+               CurrentStage == PlateStage.BreadVegetableMeatSauce;
+    }
+
+    // ================= Lấy FoodData =================
+
+    private FoodData GetFoodDataFromPlate()
+    {
+        switch (CurrentStage)
+        {
+            case PlateStage.BreadVegetableMeat:
+                return breadVegetableMeatFood;
+
+            case PlateStage.BreadVegetableMeatSauce:
+                return breadVegetableMeatSauceFood;
+
+            default:
+                return null;
+        }
+    }
+
+    // ================= Giao món =================
+
+    public void ServeFood()
+    {
+        if (!IsCompleted())
+            return;
+
+        FoodData food = GetFoodDataFromPlate();
+
+        if (food == null)
+        {
+            Debug.LogWarning(
+                "PlateManager: FoodData của món trên đĩa đang bị null."
+            );
+
+            return;
+        }
+
+        if (ServingManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "PlateManager: ServingManager chưa được khởi tạo."
+            );
+
+            return;
+        }
+
+        bool served = ServingManager.Instance.ServeFoodToCustomer(food);
+
+        if (served)
+        {
+            Debug.Log(
+                $"Đã giao món {food.foodName} cho khách."
+            );
+
+            ClearPlate();
+        }
+        else
+        {
+            Debug.Log(
+                $"Không có khách nào đang gọi món {food.foodName}."
+            );
+        }
+    }
+
+    // ================= Tap 2 lần để vứt =================
+
+    public void OnClick()
+    {
+        if (CurrentStage == PlateStage.Empty)
+            return;
+
+        // Nếu món đã hoàn thành thì click 1 lần = giao món
+        if (IsCompleted())
+        {
+            ServeFood();
+            return;
+        }
+
+        // Các món chưa hoàn thành:
+        // click 2 lần = vứt
+
+        if (!waitingSecondTap)
+        {
+            waitingSecondTap = true;
+            firstTapTime = Time.time;
+
+            StartCoroutine(ResetTapRoutine());
+
+            return;
+        }
+
+        if (Time.time - firstTapTime <= doubleTapTime)
+        {
+            waitingSecondTap = false;
+            ClearPlate();
+        }
+    }
+
+    private IEnumerator ResetTapRoutine()
+    {
+        yield return new WaitForSeconds(doubleTapTime);
+
+        waitingSecondTap = false;
+    }
+
+    // ================= Xóa đĩa =================
+
+    public void ClearPlate()
+    {
+        CurrentStage = PlateStage.Empty;
+
+        if (currentFoodObject != null)
+        {
+            Destroy(currentFoodObject);
+            currentFoodObject = null;
+        }
+
+        waitingSecondTap = false;
+    }
+
+    // ================= Đổi prefab =================
+
+    private void RefreshPrefab()
+    {
+        if (currentFoodObject != null)
+        {
+            Destroy(currentFoodObject);
+            currentFoodObject = null;
+        }
+
+        GameObject prefab = null;
+
+        switch (CurrentStage)
+        {
+            case PlateStage.Bread:
+                prefab = breadPrefab;
+                break;
+
+            case PlateStage.BreadVegetable:
+                prefab = breadVegetablePrefab;
+                break;
+
+            case PlateStage.BreadVegetableMeat:
+                prefab = breadVegetableMeatPrefab;
+                break;
+
+            case PlateStage.BreadVegetableMeatSauce:
+                prefab = breadVegetableMeatSaucePrefab;
+                break;
+        }
+
+        if (prefab == null)
+            return;
+
+        if (spawnPoint == null)
+        {
+            Debug.LogWarning(
+                "PlateManager: spawnPoint chưa được gán."
+            );
+
+            return;
+        }
+
+        currentFoodObject = Instantiate(prefab, spawnPoint);
+
+        currentFoodObject.transform.localPosition = Vector3.zero;
+        currentFoodObject.transform.localRotation = Quaternion.identity;
+        currentFoodObject.transform.localScale = Vector3.one;
+    }
 }

@@ -4,51 +4,48 @@ using UnityEngine;
 public class GrillStation : MonoBehaviour
 {
 public Transform grillPoint;
+[SerializeField] private float cooldown = 0.5f;
 
-private GameObject currentMeat;
+private CookableIngredient currentIngredient;
 private bool coolingDown = false;
-
-[SerializeField] private float grillCooldown = 0.5f;
 
 public bool IsOccupied()
 {
-    return currentMeat != null || coolingDown;
+    return currentIngredient != null || coolingDown;
 }
 
-public bool PlaceMeat(GameObject meat)
+public bool PlaceIngredient(CookableIngredient ingredient)
 {
     if (IsOccupied())
         return false;
 
-    currentMeat = meat;
+    currentIngredient = ingredient;
 
-    meat.transform.SetParent(grillPoint, false);
+    ingredient.transform.SetParent(grillPoint, false);
+    ingredient.transform.localPosition = Vector3.zero;
+    ingredient.transform.localScale = Vector3.one;
 
-    RectTransform rt = meat.GetComponent<RectTransform>();
-    if (rt != null)
-    {
-        rt.anchoredPosition = Vector2.zero;
-        rt.localScale = Vector3.one;
-    }
-    else
-    {
-        meat.transform.localPosition = Vector3.zero;
-        meat.transform.localScale = Vector3.one;
-    }
+    ingredient.SetGrill(this);
 
-    MeatController mc = meat.GetComponent<MeatController>();
-    if (mc != null)
-    {
-        mc.SetGrill(this);
-    }
+    MeatController meat = ingredient.GetComponent<MeatController>();
+    if (meat != null)
+        meat.SetGrill(this);
+
+    CookingProcess cooking = ingredient.GetComponent<CookingProcess>();
+    if (cooking != null)
+        cooking.StartCooking();
 
     return true;
 }
 
-public void ClearGrill()
+public CookableIngredient GetCurrentIngredient()
 {
-    currentMeat = null;
+    return currentIngredient;
+}
 
+public void RemoveIngredient()
+{
+    currentIngredient = null;
     StopAllCoroutines();
     StartCoroutine(CooldownRoutine());
 }
@@ -56,9 +53,7 @@ public void ClearGrill()
 private IEnumerator CooldownRoutine()
 {
     coolingDown = true;
-    yield return new WaitForSeconds(grillCooldown);
+    yield return new WaitForSeconds(cooldown);
     coolingDown = false;
 }
-
-
 }
