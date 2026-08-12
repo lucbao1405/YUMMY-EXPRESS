@@ -118,28 +118,20 @@ private int currentLevelIndex = 0;
             EconomyManager.Instance.OnGoldChanged += OnGoldChanged;
         }
 
-        // Ưu tiên đọc level index từ PlayerPrefs (được LevelSelectUI lưu khi chọn level)
-        string levelIndexKey = "CurrentViewingLevelIndex";
-        int levelIndex = -1;
-
-        if (PlayerPrefs.HasKey(levelIndexKey))
+        // Ưu tiên đọc level từ PlayerPrefs nếu người chơi vừa chọn từ LevelSelectUI
+        if (PlayerPrefs.HasKey("SelectedLevelIndex"))
         {
-            levelIndex = PlayerPrefs.GetInt(levelIndexKey);
-            Debug.Log($"GameManager: Đọc level index {levelIndex} từ PlayerPrefs.", this);
-
-            // Xóa key sau khi đã đọc để tránh load lại level cũ
-            PlayerPrefs.DeleteKey(levelIndexKey);
-            PlayerPrefs.Save();
+            int selectedLevelIndex = PlayerPrefs.GetInt("SelectedLevelIndex");
+            PlayerPrefs.DeleteKey("SelectedLevelIndex"); // Xóa sau khi dùng
+            Debug.Log($"GameManager: Load level được chọn từ LevelSelectUI: {selectedLevelIndex}", this);
+            StartLevel(selectedLevelIndex);
         }
         else
         {
-            // Nếu không có trong PlayerPrefs, dùng SaveSystem làm fallback
+            // YUM-242: Khi vào game lần sau, load level đã mở khóa gần nhất từ SaveSystem.
             int savedLevel = SaveSystem.GetCurrentLevel(); // 1-based
-            levelIndex = savedLevel - 1; // Đổi về 0-based
-            Debug.Log($"GameManager: Không tìm thấy level index trong PlayerPrefs, dùng SaveSystem level {savedLevel}.", this);
+            StartLevel(savedLevel - 1); // Đổi về 0-based cho StartLevel
         }
-
-        StartLevel(levelIndex);
     }
 
     protected override void OnDestroy()

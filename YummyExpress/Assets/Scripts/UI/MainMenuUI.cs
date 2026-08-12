@@ -41,6 +41,14 @@ public class MainMenuUI : MonoBehaviour
         SceneManager.LoadScene(gameplaySceneName);
     }
 
+    /// <summary>Nút Play Game — chuyển sang scene LevelSelection.</summary>
+    public void OnClickPlayGame()
+    {
+        Time.timeScale = 1f;
+        Debug.Log("MainMenuUI: Bấm Play Game → Load scene 'LevelSelection'", this);
+        SceneManager.LoadScene("LevelSelection");
+    }
+
     /// <summary>Nút Thoát — thoát game (chỉ có tác dụng khi build).</summary>
     public void OnQuitClicked()
     {
