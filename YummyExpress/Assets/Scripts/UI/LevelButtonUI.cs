@@ -20,7 +20,10 @@ public class LevelButtonUI : MonoBehaviour
 
     public void Refresh()
     {
-        int stars = PlayerPrefs.GetInt($"Level{levelNumber}Stars", 0);
+        // Dùng SaveSystem để lấy số sao
+        int stars = SaveSystem.GetLevelStars(levelNumber - 1); // Chuyển sang 0-based
+
+        Debug.Log($"LevelButtonUI: Level {levelNumber} (index {levelNumber - 1}) - Stars: {stars}", this);
 
         for (int i = 0; i < 3; i++)
         {
@@ -28,13 +31,24 @@ public class LevelButtonUI : MonoBehaviour
             grayStars[i].gameObject.SetActive(i >= stars);
         }
 
-        bool unlocked = levelNumber == 1 ||
-                        PlayerPrefs.GetInt($"Level{levelNumber}Unlocked", 0) == 1;
+        // Dùng SaveSystem để kiểm tra level có được mở khóa không
+        bool unlocked = SaveSystem.IsLevelUnlocked(levelNumber - 1); // Chuyển sang 0-based
+
+        Debug.Log($"LevelButtonUI: Level {levelNumber} (index {levelNumber - 1}) - Unlocked: {unlocked}", this);
 
         if (lockIcon != null)
             lockIcon.SetActive(!unlocked);
 
         if (playButton != null)
             playButton.interactable = unlocked;
+    }
+
+    // Hàm debug để reset dữ liệu save (chỉ dùng trong development)
+    [ContextMenu("Reset Save Data")]
+    public void ResetSaveData()
+    {
+        SaveSystem.ResetAllData();
+        Debug.Log("LevelButtonUI: Đã reset toàn bộ dữ liệu save!", this);
+        Refresh();
     }
 }

@@ -112,9 +112,20 @@ private int currentLevelIndex = 0;
             EconomyManager.Instance.OnGoldChanged += OnGoldChanged;
         }
 
-        // YUM-242: Khi vào game lần sau, load level đã mở khóa gần nhất từ SaveSystem.
-        int savedLevel = SaveSystem.GetCurrentLevel(); // 1-based
-        StartLevel(savedLevel - 1); // Đổi về 0-based cho StartLevel
+        // Ưu tiên đọc level từ PlayerPrefs nếu người chơi vừa chọn từ LevelSelectUI
+        if (PlayerPrefs.HasKey("SelectedLevelIndex"))
+        {
+            int selectedLevelIndex = PlayerPrefs.GetInt("SelectedLevelIndex");
+            PlayerPrefs.DeleteKey("SelectedLevelIndex"); // Xóa sau khi dùng
+            Debug.Log($"GameManager: Load level được chọn từ LevelSelectUI: {selectedLevelIndex}", this);
+            StartLevel(selectedLevelIndex);
+        }
+        else
+        {
+            // YUM-242: Khi vào game lần sau, load level đã mở khóa gần nhất từ SaveSystem.
+            int savedLevel = SaveSystem.GetCurrentLevel(); // 1-based
+            StartLevel(savedLevel - 1); // Đổi về 0-based cho StartLevel
+        }
     }
 
     protected override void OnDestroy()

@@ -2,45 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
-public class CustomerSpawnPoint
-{
-    [Tooltip("Thời điểm spawn khách tính từ đầu màn (giây).")]
-    public float spawnTime = 0f;
-
-    [Tooltip("Danh sách món khách gọi khi spawn.")]
-    public List<FoodData> orderFoods = new List<FoodData>();
-
-    [Tooltip("Mô tả ngắn để dễ chỉnh sửa timeline trong Inspector.")]
-    public string description;
-}
-
-[Serializable]
-public class LevelConfigData
-{
-    [Tooltip("Level theo số hiển thị (ví dụ: Level 1 = 1).")]
-    public int levelIndex = 1;
-
-    [Tooltip("Tiêu đề level hiển thị trong Inspector.")]
-    public string levelName = "Level 1";
-
-    [Header("Level Timing")]
-    [Tooltip("Tổng thời gian màn chơi (giây).")]
-    public float totalTime = 60f;
-
-    [Tooltip("Tổng số khách dự kiến xuất hiện trong level.")]
-    public int totalCustomers = 5;
-
-    [Tooltip("Mục tiêu vàng / điểm để qua màn. Đặt 0 nếu không sử dụng mục tiêu vàng.")]
-    public int targetGold = 0;
-
-    [Header("Spawn Timeline")]
-    [Tooltip("Danh sách các mốc thời gian spawn khách; khách được spawn đúng theo thứ tự.")]
-    public List<CustomerSpawnPoint> spawnTimeline = new List<CustomerSpawnPoint>();
-}
-
 public class LevelManager : MonoBehaviour
 {
+    public static LevelManager Instance { get; private set; }
+
     [Header("References")]
     [SerializeField] private CustomerSpawner customerSpawner;
     [SerializeField] private GameManager gameManager;
@@ -74,6 +39,36 @@ public class LevelManager : MonoBehaviour
     public float TimeRemaining => timeRemaining;
     public LevelConfigData CurrentLevel => currentLevel;
     public int CurrentLevelIndex => currentLevelIndex;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("LevelManager: Đã có một instance khác đang tồn tại. Hủy instance này.", this);
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    public LevelConfigData GetLevelConfigByIndex(int index)
+    {
+        if (levelConfigs == null || levelConfigs.Count == 0)
+        {
+            Debug.LogWarning("LevelManager: levelConfigs chưa được cấu hình hoặc rỗng.", this);
+            return null;
+        }
+
+        if (index < 0 || index >= levelConfigs.Count)
+        {
+            Debug.LogWarning($"LevelManager: Index {index} nằm ngoài phạm vi (0-{levelConfigs.Count - 1}).", this);
+            return null;
+        }
+
+        return levelConfigs[index];
+    }
 
     private void Reset()
     {
