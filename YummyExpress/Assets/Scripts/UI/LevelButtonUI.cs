@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class LevelButtonUI : MonoBehaviour
 {
@@ -13,9 +14,40 @@ public class LevelButtonUI : MonoBehaviour
     public GameObject lockIcon;
     public Button playButton;
 
+    private static List<LevelButtonUI> allLevelButtons = new List<LevelButtonUI>();
+
+    private void OnEnable()
+    {
+        if (!allLevelButtons.Contains(this))
+        {
+            allLevelButtons.Add(this);
+        }
+        Refresh();
+    }
+
+    private void OnDisable()
+    {
+        allLevelButtons.Remove(this);
+    }
+
     private void Start()
     {
         Refresh();
+    }
+
+    /// <summary>
+    /// Refresh tất cả các nút level trong scene
+    /// Gọi method này khi quay lại scene level selection sau khi thắng level
+    /// </summary>
+    public static void RefreshAll()
+    {
+        foreach (var button in allLevelButtons)
+        {
+            if (button != null)
+            {
+                button.Refresh();
+            }
+        }
     }
 
     public void Refresh()

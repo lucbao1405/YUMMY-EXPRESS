@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System;
+using System.Collections.Generic;
 
 public enum GameState
 {
@@ -72,6 +73,10 @@ public class GameManager : SingletonBehaviour<GameManager>
     [SerializeField] private TextMeshProUGUI goldProgressText;
 
     [Header("Level Configurations")]
+    [Tooltip("Dùng asset từ Resources nếu muốn, hoặc để trống để dùng levelConfigs từ Inspector")]
+    [SerializeField] private LevelConfigAsset levelConfigAsset;
+
+    [Tooltip("Danh sách cấu hình level (dùng khi không dùng asset)")]
     [SerializeField] private LevelConfig[] levelConfigs;
 
     [Header("Managers")]
@@ -95,6 +100,7 @@ private int currentLevelIndex = 0;
     public int LostCustomerCount => customerManager != null ? customerManager.LostCustomerCount : 0;
     public float TimeRemaining => timeRemaining;
     public int ServedCustomerCount => servedCustomerCount;
+    public LevelConfig[] LevelConfigs => levelConfigs;
 
     #endregion
 
@@ -169,14 +175,25 @@ private int currentLevelIndex = 0;
 
 public void StartLevel(int levelIndex)
     {
-        if (levelConfigs == null || levelConfigs.Length == 0)
+        List<LevelConfigData> levelDataList = GetLevelConfigs();
+
+        if (levelDataList == null || levelDataList.Count == 0)
         {
             Debug.LogError("GameManager: Chưa cấu hình Level Configs!", this);
             return;
         }
 
-        currentLevelIndex = Mathf.Clamp(levelIndex, 0, levelConfigs.Length - 1);
-        currentLevel = levelConfigs[currentLevelIndex];
+        currentLevelIndex = Mathf.Clamp(levelIndex, 0, levelDataList.Count - 1);
+        LevelConfigData levelData = levelDataList[currentLevelIndex];
+
+        // Tạo LevelConfig từ LevelConfigData để tương thích với code cũ
+        currentLevel = new LevelConfig
+        {
+            targetGold = levelData.targetGold,
+            levelTimeLimit = levelData.totalTime,
+            maxLostCustomers = 3, // Mặc định, có thể thêm vào LevelConfigData sau
+            totalCustomers = levelData.totalCustomers
+        };
 
         if (CustomerSpawner.Instance != null)
         {
@@ -233,6 +250,51 @@ EndGameUI endGameUIRef = GetEndGameUI();
         Debug.Log($"<color=cyan>=== Bắt đầu màn {currentLevelIndex + 1}: Mục tiêu {currentLevel.targetGold} vàng, TG: {currentLevel.levelTimeLimit}s, Tối đa {currentLevel.maxLostCustomers} khách bỏ đi ===</color>");
     }
 
+    /// <summary>
+    /// Lấy danh sách level configs từ asset hoặc inspector
+    /// </summary>
+    private List<LevelConfigData> GetLevelConfigs()
+    {
+        // Ưu tiên dùng asset nếu có
+        if (levelConfigAsset != null && levelConfigAsset.levelConfigs != null && levelConfigAsset.levelConfigs.Count > 0)
+        {
+            return levelConfigAsset.levelConfigs;
+        }
+
+        // Nếu không có asset, thử load từ Resources
+        if (levelConfigAsset == null)
+        {
+            levelConfigAsset = Resources.Load<LevelConfigAsset>("LevelConfigData");
+            if (levelConfigAsset != null && levelConfigAsset.levelConfigs != null && levelConfigAsset.levelConfigs.Count > 0)
+            {
+                Debug.Log("GameManager: Đã load LevelConfigAsset từ Resources.", this);
+                return levelConfigAsset.levelConfigs;
+            }
+        }
+
+        // Cuối cùng dùng levelConfigs từ Inspector (cần chuyển đổi sang LevelConfigData)
+        if (levelConfigs != null && levelConfigs.Length > 0)
+        {
+            List<LevelConfigData> convertedList = new List<LevelConfigData>();
+            for (int i = 0; i < levelConfigs.Length; i++)
+            {
+                LevelConfig oldConfig = levelConfigs[i];
+                convertedList.Add(new LevelConfigData
+                {
+                    levelIndex = i + 1,
+                    levelName = $"Level {i + 1}",
+                    totalTime = oldConfig.levelTimeLimit,
+                    totalCustomers = oldConfig.totalCustomers,
+                    targetGold = oldConfig.targetGold,
+                    spawnTimeline = new List<CustomerSpawnPoint>() // Timeline rỗng khi dùng config cũ
+                });
+            }
+            return convertedList;
+        }
+
+        return null;
+    }
+
     public void RestartLevel()
     {
         StartLevel(currentLevelIndex);
@@ -240,7 +302,17 @@ EndGameUI endGameUIRef = GetEndGameUI();
 
     public void NextLevel()
     {
-        StartLevel(currentLevelIndex + 1);
+        List<LevelConfigData> levelDataList = GetLevelConfigs();
+        int maxLevel = levelDataList != null ? levelDataList.Count - 1 : currentLevelIndex;
+
+        if (currentLevelIndex < maxLevel)
+        {
+            StartLevel(currentLevelIndex + 1);
+        }
+        else
+        {
+            Debug.LogWarning("GameManager: Đã đến level cuối cùng!", this);
+        }
     }
 
     #endregion
@@ -277,7 +349,9 @@ EndGameUI endGameUIRef = GetEndGameUI();
                 // YUM-242: Tự động mở khóa level kế tiếp (nếu chưa mở).
                 // Chỉ khi THẮNG mới mở khóa level sau → người chơi vào qua Btn_TiepTuc trong EndGame UI.
                 SaveManager.SaveLevelStars(currentLevelIndex, stars);
-                if (currentLevelIndex < levelConfigs.Length - 1)
+
+                List<LevelConfigData> levelDataList = GetLevelConfigs();
+                if (levelDataList != null && currentLevelIndex < levelDataList.Count - 1)
                 {
                     SaveManager.UnlockNextLevel(currentLevelIndex);
                 }
