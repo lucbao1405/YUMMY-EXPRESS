@@ -2530,7 +2530,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1635826919}
   m_Father: {fileID: 1621010427}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
@@ -3195,6 +3196,7 @@ GameObject:
   - component: {fileID: 960818110}
   - component: {fileID: 960818109}
   - component: {fileID: 960818108}
+  - component: {fileID: 960818111}
   m_Layer: 5
   m_Name: Btn_Lever_1
   m_TagString: Untagged
@@ -3307,6 +3309,29 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 960818106}
   m_CullTransparentMesh: 1
+--- !u!114 &960818111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960818106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36fb1f9bff4e9cd48a27debeab204f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelNumber: 1
+  yellowStars:
+  - {fileID: 953626621}
+  - {fileID: 807601253}
+  - {fileID: 15480396}
+  grayStars:
+  - {fileID: 968239455}
+  - {fileID: 877696491}
+  - {fileID: 626749044}
+  lockIcon: {fileID: 0}
+  playButton: {fileID: 960818108}
 --- !u!1 &968239453
 GameObject:
   m_ObjectHideFlags: 0
@@ -5933,6 +5958,7 @@ GameObject:
   - component: {fileID: 1621010430}
   - component: {fileID: 1621010429}
   - component: {fileID: 1621010428}
+  - component: {fileID: 1621010431}
   m_Layer: 5
   m_Name: Btn_Lever_2
   m_TagString: Untagged
@@ -5955,7 +5981,6 @@ RectTransform:
   - {fileID: 2043859547}
   - {fileID: 429365534}
   - {fileID: 819404034}
-  - {fileID: 1635826919}
   - {fileID: 664541937}
   - {fileID: 1486807483}
   m_Father: {fileID: 1458290379}
@@ -6047,6 +6072,29 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1621010426}
   m_CullTransparentMesh: 1
+--- !u!114 &1621010431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1621010426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36fb1f9bff4e9cd48a27debeab204f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelNumber: 2
+  yellowStars:
+  - {fileID: 136362369}
+  - {fileID: 401657175}
+  - {fileID: 1584108998}
+  grayStars:
+  - {fileID: 960811375}
+  - {fileID: 714893791}
+  - {fileID: 47223923}
+  lockIcon: {fileID: 429365533}
+  playButton: {fileID: 1621010428}
 --- !u!1 &1622282147
 GameObject:
   m_ObjectHideFlags: 0
@@ -6259,7 +6307,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1621010427}
+  m_Father: {fileID: 819404034}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
