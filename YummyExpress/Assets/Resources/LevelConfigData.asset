@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b702cbc267ac7e46a73e14f9d21ca58, type: 3}
+  m_Name: LevelConfigData
+  m_EditorClassIdentifier: 
+  levelConfigs:
+  - levelIndex: 1
+    levelName: "M\xE0n 1"
+    totalTime: 60
+    totalCustomers: 5
+    targetGold: 125
+    spawnTimeline:
+    - spawnTime: 3
+      orderFoods:
+      - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+      description: 
+    - spawnTime: 15
+      orderFoods:
+      - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+      description: 
+    - spawnTime: 27
+      orderFoods: []
+      description: 
+    - spawnTime: 37
+      orderFoods:
+      - {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+      description: 
+    - spawnTime: 50
+      orderFoods:
+      - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+      description: 
+  - levelIndex: 2
+    levelName: "M\xE0n 2"
+    totalTime: 90
+    totalCustomers: 9
+    targetGold: 265
+    spawnTimeline:
+    - spawnTime: 3
+      orderFoods:
+      - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+      description: 
+    - spawnTime: 15
+      orderFoods:
+      - {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+      description: 
+    - spawnTime: 25
+      orderFoods:
+      - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+      description: 
+    - spawnTime: 36
+      orderFoods:
+      - {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+      description: 
+    - spawnTime: 46
+      orderFoods:
+      - {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+      description: 
+    - spawnTime: 54
+      orderFoods:
+      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+      - {fileID: 11400000, guid: 76041351f7b3ef049a2587adc49df79d, type: 2}
+      description: 
+    - spawnTime: 62
+      orderFoods:
+      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+      - {fileID: 11400000, guid: e4e24e370aa596a499ceb00216eca49d, type: 2}
+      description: 
+    - spawnTime: 70
+      orderFoods:
+      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+      description: 
+    - spawnTime: 78
+      orderFoods:
+      - {fileID: 11400000, guid: 8a4e5b2c7d914acb85082a67de5c8f1a, type: 2}
+      description: 

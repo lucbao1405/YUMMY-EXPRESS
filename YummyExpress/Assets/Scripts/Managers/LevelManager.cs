@@ -2,45 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
-public class CustomerSpawnPoint
-{
-    [Tooltip("Thời điểm spawn khách tính từ đầu màn (giây).")]
-    public float spawnTime = 0f;
-
-    [Tooltip("Danh sách món khách gọi khi spawn.")]
-    public List<FoodData> orderFoods = new List<FoodData>();
-
-    [Tooltip("Mô tả ngắn để dễ chỉnh sửa timeline trong Inspector.")]
-    public string description;
-}
-
-[Serializable]
-public class LevelConfigData
-{
-    [Tooltip("Level theo số hiển thị (ví dụ: Level 1 = 1).")]
-    public int levelIndex = 1;
-
-    [Tooltip("Tiêu đề level hiển thị trong Inspector.")]
-    public string levelName = "Level 1";
-
-    [Header("Level Timing")]
-    [Tooltip("Tổng thời gian màn chơi (giây).")]
-    public float totalTime = 60f;
-
-    [Tooltip("Tổng số khách dự kiến xuất hiện trong level.")]
-    public int totalCustomers = 5;
-
-    [Tooltip("Mục tiêu vàng / điểm để qua màn. Đặt 0 nếu không sử dụng mục tiêu vàng.")]
-    public int targetGold = 0;
-
-    [Header("Spawn Timeline")]
-    [Tooltip("Danh sách các mốc thời gian spawn khách; khách được spawn đúng theo thứ tự.")]
-    public List<CustomerSpawnPoint> spawnTimeline = new List<CustomerSpawnPoint>();
-}
-
 public class LevelManager : MonoBehaviour
 {
+    public static LevelManager Instance { get; private set; }
+
     [Header("References")]
     [SerializeField] private CustomerSpawner customerSpawner;
     [SerializeField] private GameManager gameManager;
@@ -60,6 +25,10 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private FoodData coffeeFood;
 
     [Header("Level Configurations")]
+    [Tooltip("Dùng asset từ Resources nếu muốn, hoặc để trống để dùng LevelConfigs từ Inspector")]
+    [SerializeField] private LevelConfigAsset levelConfigAsset;
+
+    [Tooltip("Danh sách cấu hình level (dùng khi không dùng asset)")]
     [SerializeField] private List<LevelConfigData> levelConfigs = new List<LevelConfigData>();
 
     private LevelConfigData currentLevel;
@@ -74,48 +43,35 @@ public class LevelManager : MonoBehaviour
     public float TimeRemaining => timeRemaining;
     public LevelConfigData CurrentLevel => currentLevel;
     public int CurrentLevelIndex => currentLevelIndex;
+    public List<LevelConfigData> LevelConfigs => levelConfigs;
+
+    public LevelConfigData GetLevelConfigByIndex(int levelIndex)
+    {
+        List<LevelConfigData> configs = GetLevelConfigs();
+        if (configs != null && levelIndex >= 0 && levelIndex < configs.Count)
+        {
+            return configs[levelIndex];
+        }
+        return null;
+    }
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     private void Reset()
     {
-        levelConfigs = new List<LevelConfigData>
-        {
-            new LevelConfigData
-            {
-                levelIndex = 1,
-                levelName = "Level 1",
-                totalTime = 60f,
-                totalCustomers = 5,
-                targetGold = 0,
-                spawnTimeline = new List<CustomerSpawnPoint>
-                {
-                    new CustomerSpawnPoint { spawnTime = 3f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 18f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 33f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 48f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 58f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" }
-                }
-            },
-            new LevelConfigData
-            {
-                levelIndex = 2,
-                levelName = "Level 2",
-                totalTime = 90f,
-                totalCustomers = 9,
-                targetGold = 200,
-                spawnTimeline = new List<CustomerSpawnPoint>
-                {
-                    new CustomerSpawnPoint { spawnTime = 3f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 15f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 25f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 36f, orderFoods = new List<FoodData> { breadFoodPlain, coffeeFood }, description = "Bread + Coffee" },
-                    new CustomerSpawnPoint { spawnTime = 46f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 54f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 62f, orderFoods = new List<FoodData> { breadFoodPlain, coffeeFood }, description = "Bread + Coffee" },
-                    new CustomerSpawnPoint { spawnTime = 70f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" },
-                    new CustomerSpawnPoint { spawnTime = 78f, orderFoods = new List<FoodData> { breadFoodPlain }, description = "Bread only" }
-                }
-            }
-        };
+        // Không tạo dữ liệu mặc định trong Reset nữa vì đã chuyển sang dùng asset
+        // Dữ liệu level sẽ được quản lý trong LevelConfigAsset
+        levelConfigs = new List<LevelConfigData>();
     }
 
     private void OnValidate()
@@ -161,14 +117,17 @@ public class LevelManager : MonoBehaviour
 
     public void StartLevel(int levelIndex)
     {
-        if (levelConfigs == null || levelConfigs.Count == 0)
+        // Ưu tiên đọc từ asset trước
+        List<LevelConfigData> configsToUse = GetLevelConfigs();
+
+        if (configsToUse == null || configsToUse.Count == 0)
         {
-            Debug.LogError("LevelManager: Chưa cấu hình LevelConfigs trong Inspector.", this);
+            Debug.LogError("LevelManager: Chưa cấu hình LevelConfigs (không có asset và không có dữ liệu trong Inspector).", this);
             return;
         }
 
-        currentLevelIndex = Mathf.Clamp(levelIndex, 0, levelConfigs.Count - 1);
-        currentLevel = levelConfigs[currentLevelIndex];
+        currentLevelIndex = Mathf.Clamp(levelIndex, 0, configsToUse.Count - 1);
+        currentLevel = configsToUse[currentLevelIndex];
         elapsedTime = 0f;
         timeRemaining = currentLevel.totalTime;
         nextSpawnIndex = 0;
@@ -183,6 +142,34 @@ public class LevelManager : MonoBehaviour
         UpdateTimerDisplay();
 
         Debug.Log($"<color=cyan>LevelManager: Bắt đầu {currentLevel.levelName} (Index {currentLevelIndex}) - Thời gian {currentLevel.totalTime}s, Tổng khách {currentLevel.totalCustomers}, Mục tiêu vàng {currentLevel.targetGold}</color>");
+    }
+
+    private List<LevelConfigData> GetLevelConfigs()
+    {
+        // Ưu tiên dùng asset nếu có
+        if (levelConfigAsset != null && levelConfigAsset.levelConfigs != null && levelConfigAsset.levelConfigs.Count > 0)
+        {
+            return levelConfigAsset.levelConfigs;
+        }
+
+        // Nếu không có asset, thử load từ Resources
+        if (levelConfigAsset == null)
+        {
+            levelConfigAsset = Resources.Load<LevelConfigAsset>("LevelConfigData");
+            if (levelConfigAsset != null && levelConfigAsset.levelConfigs != null && levelConfigAsset.levelConfigs.Count > 0)
+            {
+                Debug.Log("LevelManager: Đã load LevelConfigAsset từ Resources.", this);
+                return levelConfigAsset.levelConfigs;
+            }
+        }
+
+        // Cuối cùng dùng levelConfigs từ Inspector
+        if (levelConfigs != null && levelConfigs.Count > 0)
+        {
+            return levelConfigs;
+        }
+
+        return null;
     }
 
     public void StopLevel()

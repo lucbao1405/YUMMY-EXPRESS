@@ -118,6 +118,18 @@ public class ScoreManager : MonoBehaviour
 
         patiencePercent = Mathf.Clamp01(patiencePercent);
 
+        // Kiểm tra timeout combo: nếu quá lâu không phục vụ, reset combo
+        if (Time.time - lastServeTime > comboTimeout && lastServeTime > 0f)
+        {
+            if (currentCombo > 0)
+            {
+                Debug.Log($"<color=yellow>[SCORE] Combo timeout! Reset combo từ x{currentCombo} về 0.</color>");
+            }
+            currentCombo = 0;
+        }
+
+        lastServeTime = Time.time;
+
         int baseStars = 0;
         if (patiencePercent > 0.70f) baseStars = 3;
         else if (patiencePercent >= 0.30f) baseStars = 2;
