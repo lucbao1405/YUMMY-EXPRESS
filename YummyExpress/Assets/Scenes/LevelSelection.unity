@@ -7674,6 +7674,7 @@ MonoBehaviour:
   breadFoodPlain: {fileID: 0}
   breadFoodSauce: {fileID: 0}
   coffeeFood: {fileID: 0}
+  levelConfigAsset: {fileID: 0}
   levelConfigs:
   - levelIndex: 1
     levelName: Level 1

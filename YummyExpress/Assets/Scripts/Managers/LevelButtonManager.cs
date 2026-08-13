@@ -68,7 +68,7 @@ public class LevelButtonManager : MonoBehaviour
 
             // Gán sự kiện click với index (chuyển từ 1-based sang 0-based)
             int levelIndex = i - 1; // Btn_Lever_1 → index 0, Btn_Lever_2 → index 1, ...
-            button.onClick.AddListener(() => levelSelectUI.OnLevelButtonClicked(levelIndex));
+            button.onClick.AddListener(() => levelSelectUI.OnClickLevelButton(levelIndex));
 
             connectedCount++;
             Debug.Log($"[LevelButtonManager] Đã kết nối {buttonName} với level index {levelIndex}", this);

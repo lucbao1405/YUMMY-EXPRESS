@@ -558,10 +558,6 @@ public bool ServeFoodToCustomer(FoodData servedFood, PlateManager sourcePlate)
 
         Debug.Log($"<color=green>[SERVE SUCCESS] Đã giao món '{servedFood.foodName}' cho khách! Cộng +{earnedGold} vàng. (Tổng khách đã phục vụ: {servedCustomerCount})</color>", this);
         return true;
-
-        // Không có khách nào đang chờ món này → giữ nguyên món trên đĩa.
-        Debug.LogWarning($"[SERVE FAILED] Không có khách nào đang chờ món '{servedFood.foodName}'!", this);
-        return false;
     }
 
 #endregion

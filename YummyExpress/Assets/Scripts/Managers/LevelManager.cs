@@ -57,18 +57,6 @@ public class LevelManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void Awake()
-    {
         if (Instance != null && Instance != this)
         {
             Debug.LogWarning("LevelManager: Đã có một instance khác đang tồn tại. Hủy instance này.", this);
@@ -78,23 +66,6 @@ public class LevelManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
-
-    public LevelConfigData GetLevelConfigByIndex(int index)
-    {
-        if (levelConfigs == null || levelConfigs.Count == 0)
-        {
-            Debug.LogWarning("LevelManager: levelConfigs chưa được cấu hình hoặc rỗng.", this);
-            return null;
-        }
-
-        if (index < 0 || index >= levelConfigs.Count)
-        {
-            Debug.LogWarning($"LevelManager: Index {index} nằm ngoài phạm vi (0-{levelConfigs.Count - 1}).", this);
-            return null;
-        }
-
-        return levelConfigs[index];
     }
 
     private void Reset()
